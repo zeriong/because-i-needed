@@ -1,0 +1,43 @@
+{
+  "name": "ux-ui-builder",
+  "description": "Build web AND mobile UI end-to-end: measure the real render (chrome-devtools for web; mobile MCP or a CLI snapshot harness for RN/Flutter/iOS/Android), have an art-director agent critique the measured snapshots, iterate to elegant, and hard-block commits until APPROVED. Bundles its own browser + mobile MCPs and design bar.",
+  "version": "1.1.0",
+  "author": {
+    "name": "zeriong"
+  },
+  "homepage": "https://github.com/zeriong/because-i-needed/tree/main/plugins/ux-ui-builder",
+  "repository": "https://github.com/zeriong/because-i-needed",
+  "keywords": [
+    "ux",
+    "ui",
+    "frontend",
+    "mobile",
+    "react-native",
+    "flutter",
+    "ios",
+    "android",
+    "e2e",
+    "chrome-devtools",
+    "design-review",
+    "commit-gate"
+  ],
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"]
+    },
+    "mobile-mcp": {
+      "command": "npx",
+      "args": ["-y", "@mobilenext/mobile-mcp@latest"]
+    },
+    "ios-simulator": {
+      "command": "npx",
+      "args": ["-y", "ios-simulator-mcp@latest"]
+    },
+    "flutter": {
+      "command": "dart",
+      "args": ["mcp-server"]
+    }
+  }
+}

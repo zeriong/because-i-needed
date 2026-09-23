@@ -1,0 +1,17 @@
+{
+  "name": "plan-smith",
+  "description": "Two-stage planning pipeline: the main agent distills conversation intent into a context packet, a clean-context plan-writer agent drafts the plan using a battle-tested reasoning-frame library and Opus/Fable-derived writing styles, and the plan is relayed to the user verbatim — no summarization loss, no context contamination.",
+  "version": "1.4.2",
+  "author": {
+    "name": "zeriong"
+  },
+  "homepage": "https://github.com/zeriong/because-i-needed/tree/main/plugins/plan-smith",
+  "repository": "https://github.com/zeriong/because-i-needed",
+  "keywords": [
+    "planning",
+    "reasoning-frames",
+    "pipeline",
+    "context-engineering",
+    "plan-review"
+  ]
+}

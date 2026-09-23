@@ -1,0 +1,18 @@
+{
+  "name": "harness-builder",
+  "description": "Build a project-tailored Claude Code harness from-scratch by directly analyzing the target project's layer/concern separation. Generates project-rules + review-gate.sh + UserPromptSubmit hook in one workflow.",
+  "version": "1.0.0",
+  "author": {
+    "name": "zeriong"
+  },
+  "homepage": "https://github.com/zeriong/because-i-needed/tree/main/plugins/harness-builder",
+  "repository": "https://github.com/zeriong/because-i-needed",
+  "keywords": [
+    "harness",
+    "scaffolding",
+    "convention",
+    "review-gate",
+    "project-rules",
+    "fact-check"
+  ]
+}

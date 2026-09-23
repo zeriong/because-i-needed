@@ -1,0 +1,71 @@
+{
+  "name": "because-i-needed",
+  "owner": {
+    "name": "zeriong"
+  },
+  "metadata": {
+    "description": "Claude Code plugins built because I needed them — plan-smith, harness-builder, ux-ui-builder",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "plan-smith",
+      "source": "./plugins/plan-smith",
+      "description": "Forge plans through a two-stage pipeline: the main agent distills session intent into a context packet, a clean-context plan-writer drafts with a proven reasoning-frame library and Opus/Fable-derived writing styles, and the result is relayed verbatim. Includes a relay mode (disciplined draft + auditing revision) validated by a 26-plan experiment.",
+      "version": "1.4.2",
+      "author": {
+        "name": "zeriong"
+      },
+      "keywords": [
+        "planning",
+        "reasoning-frames",
+        "pipeline",
+        "context-engineering",
+        "plan-review"
+      ],
+      "category": "productivity"
+    },
+    {
+      "name": "harness-builder",
+      "source": "./plugins/harness-builder",
+      "description": "Meta-skill that analyzes a project's actual layering / separation-of-concerns and emits project-rules + review-gate.sh + UserPromptSubmit hook + harness-engineering skill from scratch.",
+      "version": "1.0.0",
+      "author": {
+        "name": "zeriong"
+      },
+      "keywords": [
+        "harness",
+        "scaffolding",
+        "convention",
+        "review-gate",
+        "project-rules",
+        "fact-check"
+      ],
+      "category": "development"
+    },
+    {
+      "name": "ux-ui-builder",
+      "source": "./plugins/ux-ui-builder",
+      "description": "Web + mobile: measure the real render (chrome-devtools for web; a mobile MCP or CLI snapshot harness for RN/Flutter/iOS/Android) → art-director critique of the measured snapshots → iterate to elegant → hard-block commits until APPROVED.",
+      "version": "1.1.0",
+      "author": {
+        "name": "zeriong"
+      },
+      "keywords": [
+        "ux",
+        "ui",
+        "frontend",
+        "mobile",
+        "react-native",
+        "flutter",
+        "ios",
+        "android",
+        "e2e",
+        "chrome-devtools",
+        "design-review",
+        "commit-gate"
+      ],
+      "category": "development"
+    }
+  ]
+}
