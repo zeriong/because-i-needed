@@ -1,6 +1,6 @@
 ---
 name: plan-writer
-description: The dedicated plan author of the plan-smith pipeline. Receives a self-contained context packet plus a reasoning-frame spec and a writing-style directive, and writes the plan in a clean context — no session noise. Read-only toward the codebase; writes exactly one output file. Invoked by the plan-smith skill in Stage 2 (single pass, or twice for relay mode).
+description: The dedicated plan author of the plan-smith pipeline. Receives a self-contained context packet plus a reasoning-frame spec and a writing-style directive, and writes the plan in a clean context — no session noise. Read-only toward the codebase; writes exactly one output file. Invoked by the `plan-smith:forge` skill in Stage 2 (single pass, or twice for relay mode).
 tools: Read, Glob, Grep, Write
 model: inherit
 ---

@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.4.2-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.5.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -66,7 +66,7 @@
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git   # 或本機路徑
-claude plugin install plan-smith@because-i-needed
+claude plugin install plan-smith@bin
 ```
 
 ### 或直接寫入 `~/.claude/settings.json`
@@ -74,27 +74,27 @@ claude plugin install plan-smith@because-i-needed
 ```json
 {
   "extraKnownMarketplaces": {
-    "because-i-needed": {
+    "bin": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "plan-smith@because-i-needed": true }
+  "enabledPlugins": { "plan-smith@bin": true }
 }
 ```
 
 ## 使用方式
 
 ```
-/plan-smith:plan-smith 將工作階段儲存區從 Redis 遷移到 Postgres
-/plan-smith:plan-smith frame=premortem style=relay 付費電子報的上線計畫
-/plan-smith:plan-smith style=fable 審查並強化部署維運手冊
+/plan-smith:forge 將工作階段儲存區從 Redis 遷移到 Postgres
+/plan-smith:forge frame=premortem style=relay 付費電子報的上線計畫
+/plan-smith:forge style=fable 審查並強化部署維運手冊
 ```
 
 或直接用自然語言提出——說 *「幫我寫一份 X 的計畫」* 就會觸發這個技能。參數：
 
 | 參數 | 值 | 預設 |
 |---|---|---|
-| `frame` | [frames.md](skills/plan-smith/references/frames.md) 中的任一框架 | 依 4 個述詞自動路由，並記錄理由 |
+| `frame` | [frames.md](skills/forge/references/frames.md) 中的任一框架 | 依 4 個述詞自動路由，並記錄理由 |
 | `style` | `opus` \| `fable` \| `relay` \| `auto` | `auto`——依任務訊號路由，並記錄理由 |
 
 產出物會存放在 `plans/<slug>/`：`packet.md`、`plan.md`（relay 模式下另有 `draft.md`、`audit.md`）。
@@ -122,16 +122,16 @@ claude plugin install plan-smith@because-i-needed
 
 | 元件 | 路徑 | 角色 |
 |---|---|---|
-| 技能 `plan-smith` | [`skills/plan-smith/SKILL.md`](skills/plan-smith/SKILL.md) | 供**主代理**使用的管線編排：階段 1 意圖提煉 → 封包 + 使用者確認閘門、階段 2 委派、**階段 2c 接線稽核**（build-out，全新撰寫者實例）、階段 3 原文轉交 + 回顧紀錄。 |
-| 框架庫 | [`skills/plan-smith/references/frames.md`](skills/plan-smith/references/frames.md) | 6 個家族共 26 個推理框架——各自附有起點、**必要組件**、失敗模式與注意事項——外加 Gate 0 + 4 述詞路由、通用計畫範本，以及每個 build-out 都必須遵守的三條規格規則：**承重路徑**（不超過 5 跳的鏈，每個守衛條件都註明它最初在何處成立，並附冷啟動表）、**帳本之外的動詞句**，以及**實作者契約**（復活觸發條件、鎖定的版本，以及能以結束狀態證明當初選用該技術堆疊所要換取之保證的指令）——再加上 **Gate 0 的實作者軸與機制預算**（1.3）：弱或未知的實作者會拿到要求最少機制的計畫，風險最高的黏合碼則以**可逐字複製的區塊**提供（1.4，發布前經閘門驗證）。 |
-| 風格指示 | [`skills/plan-smith/references/styles.md`](skills/plan-smith/references/styles.md) | `opus` 風格（涵蓋優先的紀律化草稿 + 自白紀錄）、`fable` 風格（稽核結構的修訂 + 寫成規則的判斷），以及附帶 T1–T6 汙染稽核的 `relay` 兩輪協定。 |
-| 封包範本 | [`skills/plan-smith/references/packet-template.md`](skills/plan-smith/references/packet-template.md) | 上下文封包的契約——從工作階段通往撰寫者的唯一管道。 |
+| 技能 `forge` | [`skills/forge/SKILL.md`](skills/forge/SKILL.md) | 供**主代理**使用的管線編排：階段 1 意圖提煉 → 封包 + 使用者確認閘門、階段 2 委派、**階段 2c 接線稽核**（build-out，全新撰寫者實例）、階段 3 原文轉交 + 回顧紀錄。 |
+| 框架庫 | [`skills/forge/references/frames.md`](skills/forge/references/frames.md) | 6 個家族共 26 個推理框架——各自附有起點、**必要組件**、失敗模式與注意事項——外加 Gate 0 + 4 述詞路由、通用計畫範本，以及每個 build-out 都必須遵守的三條規格規則：**承重路徑**（不超過 5 跳的鏈，每個守衛條件都註明它最初在何處成立，並附冷啟動表）、**帳本之外的動詞句**，以及**實作者契約**（復活觸發條件、鎖定的版本，以及能以結束狀態證明當初選用該技術堆疊所要換取之保證的指令）——再加上 **Gate 0 的實作者軸與機制預算**（1.3）：弱或未知的實作者會拿到要求最少機制的計畫，風險最高的黏合碼則以**可逐字複製的區塊**提供（1.4，發布前經閘門驗證）。 |
+| 風格指示 | [`skills/forge/references/styles.md`](skills/forge/references/styles.md) | `opus` 風格（涵蓋優先的紀律化草稿 + 自白紀錄）、`fable` 風格（稽核結構的修訂 + 寫成規則的判斷），以及附帶 T1–T6 汙染稽核的 `relay` 兩輪協定。 |
+| 封包範本 | [`skills/forge/references/packet-template.md`](skills/forge/references/packet-template.md) | 上下文封包的契約——從工作階段通往撰寫者的唯一管道。 |
 | 代理 `plan-writer` | [`agents/plan-writer.md`](agents/plan-writer.md) | 乾淨上下文的撰寫者。自給自足的輸入契約、對程式碼庫唯讀、只寫入指定的輸出檔案（計畫，relay 第 2 輪另含 audit.md），只回傳路徑——絕不回傳計畫內文。 |
 
 ## 框架與風格
 
-- **[frames.md](skills/plan-smith/references/frames.md)**——6 個家族（反向、負面／失敗、量化／限制、診斷、多視角、形式）共 26 個框架，各自附有起點、必要組件、失敗模式，以及從語料庫歸納出的注意事項。路由會**先執行 Gate 0**——*是決策文件，還是 build-out？*（規格已完整、風險在於遺漏者，會導向 `spec-coverage`，因為收窄範圍的框架會默許遺漏）——接著才是四個述詞：*不確定性在哪裡／資源有多僵固／執行者有多少認知餘裕／能否對某個尺度達成共識*。
-- **[styles.md](skills/plan-smith/references/styles.md)**——兩種寫作紀律與 relay 協定。風格是提示詞層級的紀律，**而不是**模型選擇——設計上可在任何模型上運作（跨模型的可移植性仍在透過回顧持續驗證中）。
+- **[frames.md](skills/forge/references/frames.md)**——6 個家族（反向、負面／失敗、量化／限制、診斷、多視角、形式）共 26 個框架，各自附有起點、必要組件、失敗模式，以及從語料庫歸納出的注意事項。路由會**先執行 Gate 0**——*是決策文件，還是 build-out？*（規格已完整、風險在於遺漏者，會導向 `spec-coverage`，因為收窄範圍的框架會默許遺漏）——接著才是四個述詞：*不確定性在哪裡／資源有多僵固／執行者有多少認知餘裕／能否對某個尺度達成共識*。
+- **[styles.md](skills/forge/references/styles.md)**——兩種寫作紀律與 relay 協定。風格是提示詞層級的紀律，**而不是**模型選擇——設計上可在任何模型上運作（跨模型的可移植性仍在透過回顧持續驗證中）。
 
 ## 實測結果
 

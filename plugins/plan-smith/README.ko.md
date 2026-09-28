@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.4.2-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.5.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -66,7 +66,7 @@
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git   # 또는 로컬 경로
-claude plugin install plan-smith@because-i-needed
+claude plugin install plan-smith@bin
 ```
 
 ### 또는 `~/.claude/settings.json`에 직접 연결
@@ -74,27 +74,27 @@ claude plugin install plan-smith@because-i-needed
 ```json
 {
   "extraKnownMarketplaces": {
-    "because-i-needed": {
+    "bin": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "plan-smith@because-i-needed": true }
+  "enabledPlugins": { "plan-smith@bin": true }
 }
 ```
 
 ## 사용법
 
 ```
-/plan-smith:plan-smith 세션 스토어를 Redis에서 Postgres로 이전
-/plan-smith:plan-smith frame=premortem style=relay 유료 뉴스레터 런칭 계획
-/plan-smith:plan-smith style=fable 배포 런북 점검·보강
+/plan-smith:forge 세션 스토어를 Redis에서 Postgres로 이전
+/plan-smith:forge frame=premortem style=relay 유료 뉴스레터 런칭 계획
+/plan-smith:forge style=fable 배포 런북 점검·보강
 ```
 
 자연어로 요청해도 됩니다 — *"X 플랜 짜줘"*가 스킬을 트리거합니다. 인자:
 
 | 인자 | 값 | 기본 |
 |---|---|---|
-| `frame` | [frames.md](skills/plan-smith/references/frames.md)의 아무 프레임 | 4개 술어로 자동 라우팅, 근거 기록 |
+| `frame` | [frames.md](skills/forge/references/frames.md)의 아무 프레임 | 4개 술어로 자동 라우팅, 근거 기록 |
 | `style` | `opus` \| `fable` \| `relay` \| `auto` | `auto` — 태스크 신호로 라우팅, 근거 기록 |
 
 산출물은 `plans/<slug>/`에 저장됩니다: `packet.md`, `plan.md` (relay 모드에서는 + `draft.md`, `audit.md`).
@@ -122,16 +122,16 @@ claude plugin install plan-smith@because-i-needed
 
 | 구성 요소 | 경로 | 역할 |
 |---|---|---|
-| 스킬 `plan-smith` | [`skills/plan-smith/SKILL.md`](skills/plan-smith/SKILL.md) | **메인 에이전트**용 파이프라인 오케스트레이션: 1단계 의도 증류 → 패킷 + 사용자 확인 게이트, 2단계 위임, **2c단계 배선 감사**(build-out 한정, 새 집필자 인스턴스), 3단계 원문 릴레이 + 회고 기록. |
-| 프레임 라이브러리 | [`skills/plan-smith/references/frames.md`](skills/plan-smith/references/frames.md) | 6개 계열 26개 추론 프레임 — 각각 시작점·**필수 부품**·실패 모드·watch-outs — 와 Gate 0 + 4술어 라우팅, 공통 플랜 템플릿, 그리고 모든 build-out이 지는 명세 규칙 3개: **하중 경로**(홉 5개 이하 사슬 — 각 가드가 처음 참이 되는 지점 병기 + 최초 진입 상태표), **원장 밖 동사 문장**, **구현자 계약**(부활 트리거·해석되는 고정 버전·스택이 산 보증을 증명하는 명령과 종료 코드) — 그리고 **Gate 0의 구현자 축과 기계장치 예산**(1.3): 약하거나 미상인 구현자는 기계장치를 가장 적게 요구하는 플랜을 받고, 최고 위험 접착부는 **복사 가능한 블록**으로 담는다(1.4, 출하 전 게이트 검증). |
-| 스타일 지시 | [`skills/plan-smith/references/styles.md`](skills/plan-smith/references/styles.md) | `opus` 스타일(망라 우선 규율형 초안 + 자백 로그), `fable` 스타일(구조 감사형 개정 + 판단의 규칙화), 그리고 T1~T6 오염 회계를 동반한 `relay` 2패스 프로토콜. |
-| 패킷 템플릿 | [`skills/plan-smith/references/packet-template.md`](skills/plan-smith/references/packet-template.md) | 컨텍스트 패킷 규약 — 세션에서 집필자로 가는 유일한 통로. |
+| 스킬 `forge` | [`skills/forge/SKILL.md`](skills/forge/SKILL.md) | **메인 에이전트**용 파이프라인 오케스트레이션: 1단계 의도 증류 → 패킷 + 사용자 확인 게이트, 2단계 위임, **2c단계 배선 감사**(build-out 한정, 새 집필자 인스턴스), 3단계 원문 릴레이 + 회고 기록. |
+| 프레임 라이브러리 | [`skills/forge/references/frames.md`](skills/forge/references/frames.md) | 6개 계열 26개 추론 프레임 — 각각 시작점·**필수 부품**·실패 모드·watch-outs — 와 Gate 0 + 4술어 라우팅, 공통 플랜 템플릿, 그리고 모든 build-out이 지는 명세 규칙 3개: **하중 경로**(홉 5개 이하 사슬 — 각 가드가 처음 참이 되는 지점 병기 + 최초 진입 상태표), **원장 밖 동사 문장**, **구현자 계약**(부활 트리거·해석되는 고정 버전·스택이 산 보증을 증명하는 명령과 종료 코드) — 그리고 **Gate 0의 구현자 축과 기계장치 예산**(1.3): 약하거나 미상인 구현자는 기계장치를 가장 적게 요구하는 플랜을 받고, 최고 위험 접착부는 **복사 가능한 블록**으로 담는다(1.4, 출하 전 게이트 검증). |
+| 스타일 지시 | [`skills/forge/references/styles.md`](skills/forge/references/styles.md) | `opus` 스타일(망라 우선 규율형 초안 + 자백 로그), `fable` 스타일(구조 감사형 개정 + 판단의 규칙화), 그리고 T1~T6 오염 회계를 동반한 `relay` 2패스 프로토콜. |
+| 패킷 템플릿 | [`skills/forge/references/packet-template.md`](skills/forge/references/packet-template.md) | 컨텍스트 패킷 규약 — 세션에서 집필자로 가는 유일한 통로. |
 | 에이전트 `plan-writer` | [`agents/plan-writer.md`](agents/plan-writer.md) | 깨끗한 컨텍스트의 집필자. 자기완결 입력 규약, 코드베이스 read-only, 지정된 출력 파일(플랜, relay 패스 2에서는 audit.md 포함)만 작성, 반환은 경로만(플랜 본문 반환 금지). |
 
 ## 프레임과 스타일
 
-- **[frames.md](skills/plan-smith/references/frames.md)** — 6개 계열(역산 / 부정·실패 / 정량·제약 / 진단 / 다관점 / 형태) 26개 프레임. 각각 시작점·필수 부품·실패 모드·코퍼스가 남긴 watch-outs 포함. 라우팅은 **Gate 0 먼저** — *결정 문서인가 build-out인가?*(요구가 완전하고 위험이 누락이면 `spec-coverage`로 — 좁히는 프레임은 누락을 허가하므로) — 그다음 4개 술어: *불확실성의 위치 / 자원의 경직성 / 실행자의 인지 여유 / 척도 합의 가능성*.
-- **[styles.md](skills/plan-smith/references/styles.md)** — 두 집필 규율과 relay 프로토콜. 스타일은 프롬프트 수준의 규율이지 **모델 선택이 아닙니다** — 어떤 모델에서든 동작하도록 설계되었습니다(모델 간 이식성은 회고 데이터로 검증 중인 가설입니다).
+- **[frames.md](skills/forge/references/frames.md)** — 6개 계열(역산 / 부정·실패 / 정량·제약 / 진단 / 다관점 / 형태) 26개 프레임. 각각 시작점·필수 부품·실패 모드·코퍼스가 남긴 watch-outs 포함. 라우팅은 **Gate 0 먼저** — *결정 문서인가 build-out인가?*(요구가 완전하고 위험이 누락이면 `spec-coverage`로 — 좁히는 프레임은 누락을 허가하므로) — 그다음 4개 술어: *불확실성의 위치 / 자원의 경직성 / 실행자의 인지 여유 / 척도 합의 가능성*.
+- **[styles.md](skills/forge/references/styles.md)** — 두 집필 규율과 relay 프로토콜. 스타일은 프롬프트 수준의 규율이지 **모델 선택이 아닙니다** — 어떤 모델에서든 동작하도록 설계되었습니다(모델 간 이식성은 회고 데이터로 검증 중인 가설입니다).
 
 ## 실측 결과
 

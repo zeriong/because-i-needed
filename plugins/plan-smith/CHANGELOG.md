@@ -12,6 +12,27 @@ version has to move. Release 1.1.1 exists for that reason alone.
 
 ---
 
+## [1.5.0] — 2026-09-28
+
+Rename. No change to skill behaviour, frames, styles, the packet contract, or the
+`plan-writer` agent — only names and paths moved.
+
+### Changed
+
+- The skill is now `forge`: invoke `/plan-smith:forge` instead of `/plan-smith:plan-smith`.
+  The folder moved from `skills/plan-smith/` to `skills/forge/`, and the frontmatter `name` matches.
+- The marketplace is now named `bin` (the repository URL is unchanged): install with
+  `claude plugin install plan-smith@bin`.
+
+### Why
+
+- With the plugin and the skill sharing one name, the command read `plan-smith:plan-smith`. The
+  repository now names every command "subject : action" — plugin = what it works on, skill = a
+  verb from a shared vocabulary (`build`, `forge`, `run`, `mode`, `audit`, `review`). `forge` is the
+  verb for "distill conversation context into a document". The plugin keeps its established name.
+- Changing an invocation name would normally be MAJOR. It ships as MINOR because the marketplace has
+  no users yet, so no existing usage breaks.
+
 ## [1.4.2] — 2026-08-13
 
 Documentation only. 1.4.1 put the measured economics in the **root** READMEs — which, per this
