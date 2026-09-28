@@ -38,7 +38,7 @@ the marketplace installer, not part of this plugin.
 ## Rule 3 — Environment facts carry the version they were checked on, and their evidence
 
 Checked on Claude Code 2.1.283, Codex CLI 0.157.1, and Orca 1.4.215 (2026-09-28). Raw outputs and generated metrics live in
-the public lab repository `zeriong/z-lab`: `claude-x-codex-lab/` (IDs F·K·C·D·L·E) and `plugin-platform-lab/` (IDs G·H). When
+the public lab repository `zeriong/z-lab`: `claude-x-codex-lab/` (IDs F·K·C·D·L·E) and `plugin-platform-lab/` (IDs G·H·V). When
 one of these CLIs changes, re-run the affected probes there and update the versions here, in the README Requirements,
 `context-bridge.md`, and `transport-standalone.md`.
 
@@ -66,6 +66,10 @@ one of these CLIs changes, re-run the affected probes there and update the versi
   twice when the field is present (H01–H03). `CXC_MODE=on` adds ~98 input tokens per prompt (F21).
 - `disable-model-invocation: true` keeps a skill listed but rejects the model's Skill call; the slash command still works (G07).
 - Orca `worker-start` takes `--model` and `--effort` and has no permission flag (F23).
+- In a skill, `${CLAUDE_PLUGIN_ROOT}` (braced) is replaced with the plugin path in the SKILL.md text at load; the unbraced
+  form is not, the Bash environment has no such variable (V01–V02), and a reference file read later keeps it literal, so a
+  command copied from one fails with exit 127 (V03). So scripts are called from SKILL.md text, and references name them as
+  `<plugin>/…`, which `run` defines in SKILL.md — that form ran the script 3/3 (V06).
 - Effort (E1–E6): Claude `--effort` takes `low, medium, high, xhigh, max`; Codex `gpt-6-sol` takes `low … xhigh, max, ultra`
   (`ultra` = max plus automatic task delegation), `gpt-6-luna` up to `max`. So `xhigh` is the same rung on both — one below
   `max`. `claude -p --model opus --effort xhigh` and `--model sonnet --effort high` run; an unknown value only warns on stderr
