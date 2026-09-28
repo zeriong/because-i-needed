@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.4.2-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.5.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -66,7 +66,7 @@
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git   # またはローカルパス
-claude plugin install plan-smith@because-i-needed
+claude plugin install plan-smith@bin
 ```
 
 ### または `~/.claude/settings.json` に直接記述
@@ -74,27 +74,27 @@ claude plugin install plan-smith@because-i-needed
 ```json
 {
   "extraKnownMarketplaces": {
-    "because-i-needed": {
+    "bin": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "plan-smith@because-i-needed": true }
+  "enabledPlugins": { "plan-smith@bin": true }
 }
 ```
 
 ## 使い方
 
 ```
-/plan-smith:plan-smith セッションストアを Redis から Postgres に移行する
-/plan-smith:plan-smith frame=premortem style=relay 有料ニュースレターのローンチ計画
-/plan-smith:plan-smith style=fable デプロイのランブックを見直して強化する
+/plan-smith:forge セッションストアを Redis から Postgres に移行する
+/plan-smith:forge frame=premortem style=relay 有料ニュースレターのローンチ計画
+/plan-smith:forge style=fable デプロイのランブックを見直して強化する
 ```
 
 自然な言葉で頼むだけでも構いません — *「X のプランを書いて」* でスキルが起動します。引数は次のとおりです。
 
 | 引数 | 値 | デフォルト |
 |---|---|---|
-| `frame` | [frames.md](skills/plan-smith/references/frames.md) にある任意のフレーム | 4 つの述語で自動ルーティング、根拠を記録 |
+| `frame` | [frames.md](skills/forge/references/frames.md) にある任意のフレーム | 4 つの述語で自動ルーティング、根拠を記録 |
 | `style` | `opus` \| `fable` \| `relay` \| `auto` | `auto` — タスクのシグナルでルーティング、根拠を記録 |
 
 成果物は `plans/<slug>/` に保存されます: `packet.md`、`plan.md`（relay モードでは + `draft.md`、`audit.md`）。
@@ -122,16 +122,16 @@ claude plugin install plan-smith@because-i-needed
 
 | コンポーネント | パス | 役割 |
 |---|---|---|
-| スキル `plan-smith` | [`skills/plan-smith/SKILL.md`](skills/plan-smith/SKILL.md) | **メインエージェント**向けのパイプラインのオーケストレーション: ステージ 1 の意図の蒸留 → パケット + ユーザー確認ゲート、ステージ 2 の委任、**ステージ 2c の配線監査**（build-out のみ、新しいライターインスタンス）、ステージ 3 の原文リレー + 振り返りの記録。 |
-| フレームライブラリ | [`skills/plan-smith/references/frames.md`](skills/plan-smith/references/frames.md) | 6 系統 26 個の推論フレーム（それぞれに出発点、**必須コンポーネント**、失敗モード、watch-outs）に加えて、Gate 0 + 4 述語のルーティング、共通のプランテンプレート、そしてすべての build-out が負う 3 つの仕様ルール: **load-bearing path**（各ガードが最初に真になる地点を示す 5 ホップ以下の連鎖 + コールドスタート表）、**台帳の外の動詞文**、**実装者契約**（復活トリガー、固定バージョン、そしてスタックを採用した目的である保証を終了ステータスで証明するコマンド）— さらに **Gate 0 の実装者軸と機構予算**（1.3）: 弱い実装者や不明な実装者には機構を最も少なく要求するプランを渡し、最もリスクの高い接着コードは**そのままコピーできるブロック**として含めます（1.4、リリース前にゲートで検証済み）。 |
-| スタイル指示 | [`skills/plan-smith/references/styles.md`](skills/plan-smith/references/styles.md) | `opus` スタイル（網羅性優先の規律ある草稿 + 告白ログ）、`fable` スタイル（構造を監査する改訂 + ルールとして符号化された判断）、そして T1–T6 汚染監査を伴う `relay` の 2 パスプロトコル。 |
-| パケットテンプレート | [`skills/plan-smith/references/packet-template.md`](skills/plan-smith/references/packet-template.md) | コンテキストパケットの規約 — セッションからライターへの唯一の経路。 |
+| スキル `forge` | [`skills/forge/SKILL.md`](skills/forge/SKILL.md) | **メインエージェント**向けのパイプラインのオーケストレーション: ステージ 1 の意図の蒸留 → パケット + ユーザー確認ゲート、ステージ 2 の委任、**ステージ 2c の配線監査**（build-out のみ、新しいライターインスタンス）、ステージ 3 の原文リレー + 振り返りの記録。 |
+| フレームライブラリ | [`skills/forge/references/frames.md`](skills/forge/references/frames.md) | 6 系統 26 個の推論フレーム（それぞれに出発点、**必須コンポーネント**、失敗モード、watch-outs）に加えて、Gate 0 + 4 述語のルーティング、共通のプランテンプレート、そしてすべての build-out が負う 3 つの仕様ルール: **load-bearing path**（各ガードが最初に真になる地点を示す 5 ホップ以下の連鎖 + コールドスタート表）、**台帳の外の動詞文**、**実装者契約**（復活トリガー、固定バージョン、そしてスタックを採用した目的である保証を終了ステータスで証明するコマンド）— さらに **Gate 0 の実装者軸と機構予算**（1.3）: 弱い実装者や不明な実装者には機構を最も少なく要求するプランを渡し、最もリスクの高い接着コードは**そのままコピーできるブロック**として含めます（1.4、リリース前にゲートで検証済み）。 |
+| スタイル指示 | [`skills/forge/references/styles.md`](skills/forge/references/styles.md) | `opus` スタイル（網羅性優先の規律ある草稿 + 告白ログ）、`fable` スタイル（構造を監査する改訂 + ルールとして符号化された判断）、そして T1–T6 汚染監査を伴う `relay` の 2 パスプロトコル。 |
+| パケットテンプレート | [`skills/forge/references/packet-template.md`](skills/forge/references/packet-template.md) | コンテキストパケットの規約 — セッションからライターへの唯一の経路。 |
 | エージェント `plan-writer` | [`agents/plan-writer.md`](agents/plan-writer.md) | クリーンなコンテキストの執筆者。自己完結した入力規約、コードベースに対しては read-only、指定された出力ファイル（プラン、relay パス 2 では audit.md も）だけを書き、パスを返します — プランの本文は決して返しません。 |
 
 ## フレームとスタイル
 
-- **[frames.md](skills/plan-smith/references/frames.md)** — 6 系統（逆算、否定 / 失敗、定量 / 制約、診断、多視点、形式）の 26 個のフレーム。それぞれに出発点、必須コンポーネント、失敗モード、コーパスから得た watch-outs が付きます。ルーティングでは**まず Gate 0** を通します — *意思決定文書か、build-out か？*（仕様が完全でリスクが欠落にある場合は `spec-coverage` へ。絞り込み型のフレームは欠落を容認してしまうため）— 続いて 4 つの述語: *不確実性はどこにあるか / 資源はどれだけ硬直的か / 実行者の認知的な余裕はどれだけあるか / 尺度に合意できるか*。
-- **[styles.md](skills/plan-smith/references/styles.md)** — 2 つの執筆規律と relay プロトコル。スタイルはプロンプトレベルの規律であり、モデルの選択では**ありません** — どのモデルでも動くように設計されています（モデル間の移植性は、振り返りを通じてまだ検証中です）。
+- **[frames.md](skills/forge/references/frames.md)** — 6 系統（逆算、否定 / 失敗、定量 / 制約、診断、多視点、形式）の 26 個のフレーム。それぞれに出発点、必須コンポーネント、失敗モード、コーパスから得た watch-outs が付きます。ルーティングでは**まず Gate 0** を通します — *意思決定文書か、build-out か？*（仕様が完全でリスクが欠落にある場合は `spec-coverage` へ。絞り込み型のフレームは欠落を容認してしまうため）— 続いて 4 つの述語: *不確実性はどこにあるか / 資源はどれだけ硬直的か / 実行者の認知的な余裕はどれだけあるか / 尺度に合意できるか*。
+- **[styles.md](skills/forge/references/styles.md)** — 2 つの執筆規律と relay プロトコル。スタイルはプロンプトレベルの規律であり、モデルの選択では**ありません** — どのモデルでも動くように設計されています（モデル間の移植性は、振り返りを通じてまだ検証中です）。
 
 ## 実測結果
 

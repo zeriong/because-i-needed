@@ -1,88 +1,133 @@
-# because-i-needed — 저장소 공통 규칙
+# because-i-needed — repository rules
 
-이 저장소는 플러그인 3개(plan-smith, harness-builder, ux-ui-builder)를 담은 Claude Code 마켓플레이스다.
-**공통 규칙은 이 파일**, **플러그인별 규칙은 `plugins/<이름>/CLAUDE.md`** 에 있다(그 플러그인의 파일을 읽을 때 자동으로 로드된다).
-플러그인 파일은 이 파일을 반복하지 않고 그 플러그인에만 해당하는 것만 쓴다 — 두 파일이 충돌하면 둘 다 고친다.
+This repository is a Claude Code marketplace holding three plugins (plan-smith, harness, ux-ui).
+**Shared rules live in this file**; **per-plugin rules live in `plugins/<name>/CLAUDE.md`** (loaded automatically when you read that plugin's files).
+A plugin file does not repeat this file — it holds only what applies to that plugin. If the two conflict, fix both.
 
-각 조항에 근거를 함께 적는다. 근거를 모르면 조항이 요식행위로 퇴화한다.
+Every rule carries its reason. A rule whose reason is forgotten decays into ritual.
 
 ---
 
-## 제1조 — 설치본에 도달하는 것은 `plugins/<이름>/` 뿐이다
+## Rule 1 — Only `plugins/<name>/` reaches an installed client
 
-- 설치 시 캐시 `~/.claude/plugins/cache/because-i-needed/<플러그인>/<버전>/` 에는 **플러그인 폴더만** 복사된다.
-  루트 README·이 파일은 설치한 사용자에게 가지 않는다. 사용자가 읽어야 할 내용은 플러그인 README에 쓴다.
-- `plugins/<이름>/CLAUDE.md` 는 패키지에 실려 가지만 **사용자 세션에는 로드되지 않는다**
-  (Claude Code는 작업 디렉터리 계층과 사용자 전역 CLAUDE.md만 읽는다). 그래서 이 파일들은 메인테이너용이다.
-  설치한 사용자에게 적용할 지시는 스킬·에이전트·훅으로 넣는다.
+- On install, the cache `~/.claude/plugins/cache/bin/<plugin>/<version>/` receives **only the plugin folder**.
+  The root READMEs and this file never reach users. Anything a user must read goes in the plugin README.
+- `plugins/<name>/CLAUDE.md` ships in the package but is **not loaded into user sessions**
+  (Claude Code reads only the working-directory hierarchy and the user's global CLAUDE.md). These files are for maintainers.
+  Instructions meant for installed users go into skills, agents, or hooks.
 
-**근거:** plan-smith 1.1.3 검증에서 캐시에 루트 CHANGELOG가 0건이었다. 2026-09-23, 활성화된
-humanize-korean 플러그인의 설치본에 CLAUDE.md가 있었지만 세션 컨텍스트에 로드되지 않았고,
-`claude plugin validate` 도 "CLAUDE.md at the plugin root is not loaded as project context" 경고로 같은 사실을 알린다.
+**Why:** in the plan-smith 1.1.3 check the cache held zero copies of the root CHANGELOG. On 2026-09-23 the installed copy of the
+enabled humanize-korean plugin contained a CLAUDE.md that was not loaded into the session context, and `claude plugin validate`
+reports the same fact with the warning "CLAUDE.md at the plugin root is not loaded as project context".
 
-## 제2조 — 동작이 바뀌면 버전을 올린다. 버전 문자열은 전부 같이 바꾼다
+## Rule 2 — A behavior change bumps the version, and every version string moves together
 
-- 플러그인은 **버전 키 캐시**에서 서비스된다. 소스만 고치면 설치된 클라이언트에 도달하지 않으면서
-  클라이언트는 자신을 "최신"으로 보고한다. 따라서 동작에 영향을 주는 변경은 반드시 버전을 올린다.
-  내용 변경 없이 버전만 올리는 전달용 릴리스도 정당하다.
-- 플러그인 하나의 버전 문자열은 **12곳**이다:
+- Plugins are served from a **version-keyed cache**. Editing the source alone never reaches installed clients, while each client
+  still reports itself as up to date. Any change that affects behavior must bump the version.
+  A delivery-only release — a version bump with no content change — is legitimate.
+- One plugin's version string lives in **12 places**:
 
-  | 파일 | 위치 |
+  | File | Location |
   |---|---|
-  | `plugins/<이름>/.claude-plugin/plugin.json` | `"version"` |
-  | `.claude-plugin/marketplace.json` | 그 플러그인 엔트리의 `"version"` (최상위 `metadata.version`은 마켓플레이스 자체 버전 — 별개) |
-  | `plugins/<이름>/README*.md` 5개 | 상단 shields.io 버전 배지 |
-  | `README*.md` 5개 (루트) | 플러그인 제목 옆 `` `vX.Y.Z` `` |
+  | `plugins/<name>/.claude-plugin/plugin.json` | `"version"` |
+  | `.claude-plugin/marketplace.json` | that plugin entry's `"version"` (the top-level `metadata.version` is the marketplace's own version — separate) |
+  | `plugins/<name>/README*.md` (5) | shields.io version badge at the top |
+  | `README*.md` (5, root) | `` `vX.Y.Z` `` next to the plugin heading |
 
-- 확인: `grep -rn --include='*.md' --include='*.json' -F '<이전버전>' . | grep -v CHANGELOG` 에
-  그 플러그인 줄이 남지 않아야 한다. 다른 플러그인이나 마켓플레이스가 같은 버전 문자열을 쓰면
-  (현재 harness-builder `1.0.0` = `metadata.version` `1.0.0`) 걸린 줄이 어느 것인지 눈으로 구분한다.
-- 버전 문자열·CHANGELOG(있는 플러그인만)·README 변경은 **한 커밋**으로 묶는다. 쪼개지 않는다.
-- SemVer: **MAJOR** 기존 사용법이 깨짐 / **MINOR** 동작 추가·변경 / **PATCH** 문서·오타·전달용(동작 변경 없음).
-  플러그인별 구체 기준은 각 플러그인 CLAUDE.md에 있다.
+- Check: `grep -rn --include='*.md' --include='*.json' -F '<old-version>' . | grep -v CHANGELOG` must show no line for that plugin.
+  When another plugin or the marketplace uses the same version string
+  (e.g. harness `1.1.0` is also ux-ui's previous version), tell the matching lines apart by eye.
+- Version strings, the CHANGELOG (plugins that have one) and README changes go in **one commit**. Do not split them.
+- SemVer: **MAJOR** existing usage breaks / **MINOR** behavior added or changed / **PATCH** docs, typos, delivery only (no behavior change).
+  Each plugin's CLAUDE.md gives its concrete criteria.
 
-**근거:** plan-smith 1.1.1이 존재하는 이유가 이것뿐이다 — 소스에 쓴 조항을 설치본이 1.1.0으로 계속 서비스했다.
+**Why:** plan-smith 1.1.1 exists for this reason alone — a rule was written into the source, and the installed copy kept serving 1.1.0.
 
-## 제3조 — README는 5개 언어, 같은 커밋
+## Rule 3 — READMEs: five languages, same commit
 
-- 모든 README는 5개 파일이다: `README.md`(영어, **원본**), `README.ko.md`, `README.ja.md`, `README.zh-CN.md`, `README.zh-TW.md`.
-  번역본은 영어 원본 기준으로 맞춘다.
-- README를 고치면 **5개를 같은 커밋에서** 고친다. 새 플러그인은 첫 커밋부터 5개를 갖춘다.
-- 사용자가 이해해야 하는 개념·동작이 바뀌면 그 플러그인 README 5개를, 플러그인 한 줄 소개가 바뀌면 루트 README 5개도 고친다.
-  내부 리팩터링·오타는 해당 없음.
-- 링크: 플러그인 README의 상대 경로는 플러그인 폴더 기준, 루트 README의 플러그인 링크는 `plugins/<이름>`(폴더 트리).
-  번역본의 페이지 내 앵커는 **번역된 제목의 GitHub slug** 다. README를 고친 뒤 상대 링크와 앵커가 전부 살아 있는지 확인한다.
-- 숫자 주장은 **세어서** 쓴다.
+- Every README is five files: `README.md` (English, **the source**), `README.ko.md`, `README.ja.md`, `README.zh-CN.md`, `README.zh-TW.md`.
+  Translations follow the English source.
+- A README change edits **all five in the same commit**. A new plugin has all five from its first commit.
+- When a concept or behavior users must understand changes, update that plugin's five READMEs; when a plugin's one-line summary
+  changes, update the five root READMEs too. Internal refactors and typos don't count.
+- Links: relative paths in a plugin README are relative to the plugin folder; root README links to a plugin point at `plugins/<name>`
+  (the folder tree). In-page anchors in a translation are **the GitHub slug of the translated heading**. After editing READMEs,
+  confirm every relative link and anchor resolves.
+- Count numbers before writing them.
 
-**근거:** 2026-09-23 사용자 결정(루트 README "Language policy"에 공개). 원본 레포 시절 README가 실물과
-어긋난 사례가 있다 — ux-ui-builder 루트 README는 1.1.0의 모바일 기능을 빠뜨린 채 1.0.0 배지를 달고 있었다.
+**Why:** maintainer decision, 2026-09-23 (published in the root README "Language policy"). READMEs drifted from reality in the
+original repositories — the ux-ui-builder root README carried a 1.0.0 badge while omitting 1.1.0's mobile features.
 
-## 제4조 — 파일별 언어
+## Rule 4 — READMEs are the only localized files; everything else is English
 
-- 사용자 세션에서 Claude가 읽는 파일 — `SKILL.md`, `references/*.md`, `agents/*.md`, 훅이 내보내는 메시지 — 은 **영어**.
-- `CLAUDE.md`(이 파일과 플러그인별 파일)는 **한국어 단일**. README가 아니므로 5개 언어 대상이 아니다.
-- `plugins/plan-smith/CHANGELOG.md` 는 영어 단일(기존 항목 전부 영어).
+- **Localized:** the READMEs, and only the READMEs (five languages, Rule 3).
+- **English:** every other file — `CLAUDE.md` (this file and each plugin's), `SKILL.md`, `references/*.md`, `agents/*.md`,
+  messages emitted by hooks and scripts, script comments, manifests, `CHANGELOG.md`.
+- **Exception — literals that must match what a user types** stay in the user's language: trigger keywords in a skill
+  `description` (`"harness 만들어"`), bypass phrases (`"harness 빼고"`). Add an English gloss where the meaning is not obvious.
+- This rule governs files in the repository, not the language of a conversation with the maintainer.
 
-## 제5조 — 매니페스트는 검증기로 확인한다
+**Why:** maintainer decision, 2026-09-28. Until then the CLAUDE.md files were Korean while everything they govern was English.
+Writing the rule down makes every future edit — a new rule, skill, or changelog entry — start in English, with no translation
+step between a rule and the files it describes.
 
-- `.claude-plugin/marketplace.json` 이나 `plugin.json` 을 고치면:
-  `claude plugin validate .` 와 `claude plugin validate plugins/<이름>` 이 통과해야 한다.
-  플러그인 검증의 경고 `CLAUDE.md at the plugin root is not loaded as project context` 는 **예상된 것**이다 —
-  그 파일은 메인테이너용이라 로드되지 않는 게 맞다(제1조). 그 외의 경고는 원인을 확인한다.
-- 새 플러그인 추가 = `plugins/<이름>/`(매니페스트·README 5개·CLAUDE.md) + `marketplace.json` 엔트리 + 루트 README 5개의 소개 섹션.
+## Rule 5 — Validate manifests with the validator
 
-## 제6조 — 커밋 규약
+- After editing `.claude-plugin/marketplace.json` or a `plugin.json`,
+  `claude plugin validate .` and `claude plugin validate plugins/<name>` must pass.
+  The plugin warning `CLAUDE.md at the plugin root is not loaded as project context` is **expected** —
+  that file is for maintainers and is correctly not loaded (Rule 1). Investigate any other warning.
+- Adding a plugin = `plugins/<name>/` (manifest, five READMEs, CLAUDE.md) + a `marketplace.json` entry + an intro section in the five root READMEs.
+  Name it by Rule 8.
 
-- Conventional Commits. 헤더 ≤ 50자, 본문 줄 ≤ 72자, 본문은 *무엇*이 아니라 *왜*.
-- author/committer는 항상 `zeriong <jaeryong95@gmail.com>`.
-  **Claude 속성 금지** — `Co-Authored-By`, "Generated with", 로봇 이모지 전부.
-- `--no-verify` 금지, amend 금지, force-push 금지.
+## Rule 6 — Commits
 
-**근거:** plan-smith 릴리스 법령 제5조와 zeriong-commit 스킬의 절대 규칙을 저장소 전체로 넓힌 것.
+- Conventional Commits. Header ≤ 50 characters, body lines ≤ 72 characters, and the body says *why*, not *what*.
+- Author and committer are always `zeriong <jaeryong95@gmail.com>`.
+  **No Claude attribution** — no `Co-Authored-By`, no "Generated with", no robot emoji.
+- No `--no-verify`, no amend, no force-push.
 
-## 제7조 — 이력은 두 곳에 있다
+**Why:** Article 5 of the plan-smith release statute and the zeriong-commit skill's absolute rules, widened to the whole repository.
 
-이 저장소의 이력은 `3714dd5`(2026-09-23, 세 플러그인을 들여온 커밋)부터다. 그 이전 이력 —
-plan-smith ≤ 1.4.2, harness-builder 1.0.0, ux-ui-builder ≤ 1.1.0 — 은 원본 레포
-`zeriong/plan-smith`, `zeriong/harness-builder`, `zeriong/ux-ui-builder` 에 있다.
-버전 경계를 git으로 확인할 때 이 저장소만 보면 그 이전이 비어 보인다.
+## Rule 7 — History lives in two places
+
+This repository's history starts at `3714dd5` (2026-09-23, the commit that brought in the three plugins). Earlier history —
+plan-smith ≤ 1.4.2, harness-builder 1.0.0, ux-ui-builder ≤ 1.1.0 — lives in the original repositories
+`zeriong/plan-smith`, `zeriong/harness-builder`, `zeriong/ux-ui-builder`.
+Checking a version boundary in git from this repository alone makes everything before that look empty.
+In the naming release (plan-smith 1.5.0, harness 1.1.0, ux-ui 1.2.0), `plugins/harness-builder` moved to `plugins/harness` and
+`plugins/ux-ui-builder` to `plugins/ux-ui`, and the skill folders moved to `build`, `build-mobile`, and `forge`. Read earlier file history with `git log --follow -- <current path>`.
+
+## Rule 8 — Naming: `/<plugin>:<skill>` reads "subject : action"
+
+Plugin skills are always invoked as `/<plugin>:<skill>`, and the plugin is the unit of installation. Name both halves this way.
+
+- **Plugin = subject** — what it works on (`harness`, `ux-ui`). An established brand name may stay (`plan-smith`).
+- **Skill = verb** — what it does, chosen only from the shared vocabulary below. A verb means the same thing in every plugin.
+- **No repetition** — the same word never appears on both sides of the colon.
+- **One word per side** where possible. A variant goes after the verb (`build-mobile`).
+- **Group by verb, not by container.** Plugins stay separate so users install only what they need and one plugin's hooks or
+  MCP servers never ride along with another. The shared verbs are what make plugins of the same nature recognizable.
+
+| Verb | Meaning |
+|---|---|
+| `build` | Create an artifact in the project (a harness, a UI) |
+| `forge` | Distill conversation context into a document (a plan) |
+| `run` | Execute a task |
+| `mode` | Switch a behavior on or off |
+| `audit` | Inspect, read-only |
+| `review` | Evaluate a result |
+
+- Add a verb to this table before using it. Agent names are outside this rule.
+- The invocation name comes from the skill's **folder name**; the frontmatter `name` did not change it (checked on Claude Code 2.1.283).
+  Keep the two identical.
+- Never rename what a plugin has already written into users' projects (harness's generated `project-rules`, `review-gate.sh`,
+  `harness-engineering`; ux-ui's `.ux-ui/`). If one must change, add a fallback that still reads the old name.
+- The plugin name is an ingredient of other identifiers — MCP tool names `mcp__plugin_<plugin>_<server-key>` (ux-ui Rule 1),
+  the install cache path, `enabledPlugins` keys. Renaming a plugin means fixing those references in the same commit.
+
+**Why:** before the naming release each plugin and its skill shared one name, so commands repeated themselves across the colon
+(`/harness-builder:harness-builder`); the maintainer decided the rename on 2026-09-28. A rename breaks existing installs — after a
+marketplace update the client keeps the old registration name, and a renamed plugin shows `failed to load` (2.1.283, checked with a
+directory source). So name things right the first time. The naming release shipped as MINOR only because the marketplace had no
+users yet; once it does, a rename is MAJOR (Rule 2).

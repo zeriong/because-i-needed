@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.4.2-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.5.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -66,7 +66,7 @@ Long sessions produce bad plans for a structural reason: the agent that knows yo
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git   # or a local path
-claude plugin install plan-smith@because-i-needed
+claude plugin install plan-smith@bin
 ```
 
 ### Or wire it directly in `~/.claude/settings.json`
@@ -74,27 +74,27 @@ claude plugin install plan-smith@because-i-needed
 ```json
 {
   "extraKnownMarketplaces": {
-    "because-i-needed": {
+    "bin": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "plan-smith@because-i-needed": true }
+  "enabledPlugins": { "plan-smith@bin": true }
 }
 ```
 
 ## Usage
 
 ```
-/plan-smith:plan-smith migrate the session store from Redis to Postgres
-/plan-smith:plan-smith frame=premortem style=relay launch plan for the paid newsletter
-/plan-smith:plan-smith style=fable review and harden the deploy runbook
+/plan-smith:forge migrate the session store from Redis to Postgres
+/plan-smith:forge frame=premortem style=relay launch plan for the paid newsletter
+/plan-smith:forge style=fable review and harden the deploy runbook
 ```
 
 Or just ask naturally — *"write a plan for X"* triggers the skill. Arguments:
 
 | Argument | Values | Default |
 |---|---|---|
-| `frame` | any frame in [frames.md](skills/plan-smith/references/frames.md) | auto-routed by 4 predicates, rationale recorded |
+| `frame` | any frame in [frames.md](skills/forge/references/frames.md) | auto-routed by 4 predicates, rationale recorded |
 | `style` | `opus` \| `fable` \| `relay` \| `auto` | `auto` — routed by task signals, rationale recorded |
 
 Artifacts land in `plans/<slug>/`: `packet.md`, `plan.md` (+ `draft.md`, `audit.md` in relay mode).
@@ -122,16 +122,16 @@ Why the split works: *wanting the right plan* requires session context (Stage 1'
 
 | Component | Path | Role |
 |---|---|---|
-| Skill `plan-smith` | [`skills/plan-smith/SKILL.md`](skills/plan-smith/SKILL.md) | Pipeline orchestration for the **main agent**: Stage 1 intent distillation → packet + user confirmation gate, Stage 2 delegation, **Stage 2c wiring audit** (build-outs, fresh writer instance), Stage 3 verbatim relay + retrospective record. |
-| Frame library | [`skills/plan-smith/references/frames.md`](skills/plan-smith/references/frames.md) | 26 reasoning frames in 6 families — each with starting point, **required components**, failure mode, watch-outs — plus Gate 0 + 4-predicate routing, the common plan template, and the three specification rules every build-out owes: **load-bearing path** (a ≤5-hop chain whose guards each say where they first become true, plus a cold-start table), **verb sentences outside the ledger**, and the **implementer contract** (revival triggers, pinned versions, and the command whose exit status proves any guarantee the stack was bought for) — plus **Gate 0's implementer axis and the machinery budget** (1.3): a weak or unknown implementer gets the plan demanding the least machinery, with the highest-risk glue as **verbatim copyable blocks** (1.4, gate-validated pre-release). |
-| Style directives | [`skills/plan-smith/references/styles.md`](skills/plan-smith/references/styles.md) | `opus`-style (coverage-first disciplined draft + confession log), `fable`-style (structure-auditing revision + rule-encoded judgment), and the `relay` two-pass protocol with T1–T6 contamination audit. |
-| Packet template | [`skills/plan-smith/references/packet-template.md`](skills/plan-smith/references/packet-template.md) | The context packet contract — the only channel from session to writer. |
+| Skill `forge` | [`skills/forge/SKILL.md`](skills/forge/SKILL.md) | Pipeline orchestration for the **main agent**: Stage 1 intent distillation → packet + user confirmation gate, Stage 2 delegation, **Stage 2c wiring audit** (build-outs, fresh writer instance), Stage 3 verbatim relay + retrospective record. |
+| Frame library | [`skills/forge/references/frames.md`](skills/forge/references/frames.md) | 26 reasoning frames in 6 families — each with starting point, **required components**, failure mode, watch-outs — plus Gate 0 + 4-predicate routing, the common plan template, and the three specification rules every build-out owes: **load-bearing path** (a ≤5-hop chain whose guards each say where they first become true, plus a cold-start table), **verb sentences outside the ledger**, and the **implementer contract** (revival triggers, pinned versions, and the command whose exit status proves any guarantee the stack was bought for) — plus **Gate 0's implementer axis and the machinery budget** (1.3): a weak or unknown implementer gets the plan demanding the least machinery, with the highest-risk glue as **verbatim copyable blocks** (1.4, gate-validated pre-release). |
+| Style directives | [`skills/forge/references/styles.md`](skills/forge/references/styles.md) | `opus`-style (coverage-first disciplined draft + confession log), `fable`-style (structure-auditing revision + rule-encoded judgment), and the `relay` two-pass protocol with T1–T6 contamination audit. |
+| Packet template | [`skills/forge/references/packet-template.md`](skills/forge/references/packet-template.md) | The context packet contract — the only channel from session to writer. |
 | Agent `plan-writer` | [`agents/plan-writer.md`](agents/plan-writer.md) | Clean-context author. Self-contained input contract, read-only toward the codebase, writes only its designated output file(s) (plan, plus audit.md in relay pass 2), returns paths — never the plan text. |
 
 ## Frames & styles
 
-- **[frames.md](skills/plan-smith/references/frames.md)** — 26 frames in 6 families (backward, negative/failure, quantitative/constraint, diagnostic, multi-perspective, form), each with starting point, required components, failure mode, and corpus-derived watch-outs. Routing runs **Gate 0 first** — *decision document or build-out?* (a complete spec whose risk is omission goes to `spec-coverage`, because narrowing frames license omission) — then four predicates: *where is the uncertainty / how rigid are resources / how much cognitive slack does the executor have / can a scale be agreed*.
-- **[styles.md](skills/plan-smith/references/styles.md)** — the two writing disciplines and the relay protocol. A style is a prompt-level discipline, **not** a model choice — designed to run on any model (cross-model portability is still being validated through retrospectives).
+- **[frames.md](skills/forge/references/frames.md)** — 26 frames in 6 families (backward, negative/failure, quantitative/constraint, diagnostic, multi-perspective, form), each with starting point, required components, failure mode, and corpus-derived watch-outs. Routing runs **Gate 0 first** — *decision document or build-out?* (a complete spec whose risk is omission goes to `spec-coverage`, because narrowing frames license omission) — then four predicates: *where is the uncertainty / how rigid are resources / how much cognitive slack does the executor have / can a scale be agreed*.
+- **[styles.md](skills/forge/references/styles.md)** — the two writing disciplines and the relay protocol. A style is a prompt-level discipline, **not** a model choice — designed to run on any model (cross-model portability is still being validated through retrospectives).
 
 ## Measured results
 
