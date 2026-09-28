@@ -21,7 +21,7 @@
 
 ---
 
-이 레포는 독립된 플러그인 3개를 담은 Claude Code **플러그인 마켓플레이스**입니다. 필요한 것만 골라 설치하면 됩니다.
+이 레포는 독립된 플러그인 4개를 담은 Claude Code **플러그인 마켓플레이스**입니다. 필요한 것만 골라 설치하면 됩니다.
 
 ## 플러그인
 
@@ -53,15 +53,34 @@
 
 [ux-ui 한국어 README 보기 →](plugins/ux-ui/README.ko.md)
 
+### [claude-x-codex](plugins/claude-x-codex) · `v0.1.0`
+
+**Claude × Codex 동료 오케스트레이션.** 메인 에이전트가 계획하고 모든 관문을 판단하며, 작업을 빠른 Claude 워커나 대량 처리용 Codex 워커에 보내고, 두 벤더가 서로의 작업을 리뷰합니다 — 메인 에이전트 자신의 계획도 포함됩니다. 반론은 한 번이고, 판정은 역할이 아니라 증거가 합니다. 감사 기능이 두 벤더가 같은 프로젝트 지침에서 출발하는지 확인합니다. 비공식 커뮤니티 플러그인입니다.
+
+- **이럴 때** Claude Code와 Codex를 모두 쓰고, 기능의 모든 단계에서 다른 벤더의 리뷰를 받고 싶을 때.
+- **진입점:** `/claude-x-codex:run`, 또는 `/claude-x-codex:mode on` 으로 켜 두면 구현 요청이 이 흐름을 거칩니다
+- **참고:** 설치하면 `UserPromptSubmit` 훅이 등록됩니다(모든 프롬프트마다 실행되며, 모드가 꺼져 있으면 아무것도 출력하지 않음).
+
+[claude-x-codex 한국어 README 보기 →](plugins/claude-x-codex/README.ko.md)
+
 ## 설치
 
-마켓플레이스를 한 번 추가하고, 원하는 플러그인을 설치합니다:
+설치 스크립트가 플러그인 목록을 보여 주고, 고른 것만 설치합니다:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash
+```
+
+↑/↓(또는 j/k)로 이동, space로 선택 전환, `a` 로 전체, enter로 설치, `q` 로 종료 — 처음에는 전부 선택되어 있습니다. 옵션: `--all`, `--only a,b`, `--list`, `--dry-run`, `--scope user|project|local`. 파이프로 실행할 때는 `bash -s --` 뒤에 붙입니다(예: `… | bash -s -- --only harness`). 내부적으로 아래와 같은 `claude plugin` 명령을 실행합니다.
+
+또는 마켓플레이스를 직접 추가하고, 원하는 플러그인을 설치합니다:
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
 claude plugin install plan-smith@bin
 claude plugin install harness@bin
 claude plugin install ux-ui@bin
+claude plugin install claude-x-codex@bin
 ```
 
 또는 Claude Code에서: `/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git` 입력 후 목록에서 설치.
@@ -78,7 +97,8 @@ claude plugin install ux-ui@bin
   "enabledPlugins": {
     "plan-smith@bin": true,
     "harness@bin": true,
-    "ux-ui@bin": true
+    "ux-ui@bin": true,
+    "claude-x-codex@bin": true
   }
 }
 ```
@@ -100,17 +120,19 @@ claude plugin install ux-ui@bin
 | `audit` | 읽기 전용으로 점검한다 |
 | `review` | 결과물을 검토한다 |
 
-`run`, `mode`, `audit`, `review` 는 앞으로 나올 플러그인을 위해 예약해 둔 동사입니다.
+`review` 는 앞으로 나올 플러그인을 위해 예약해 둔 동사입니다.
 
 ## 레포 구조
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # 플러그인 3개 등록
+├── .claude-plugin/marketplace.json   # 플러그인 4개 등록
+├── install.sh                        # 대화형 설치 스크립트 (claude plugin install 실행)
 └── plugins/
     ├── plan-smith/                   # 스킬 + plan-writer 에이전트 (+ CHANGELOG.md)
     ├── harness/                      # 스킬
-    └── ux-ui/                        # 스킬 2 + 에이전트 2 + 커밋 게이트 훅 + MCP 4
+    ├── ux-ui/                        # 스킬 2 + 에이전트 2 + 커밋 게이트 훅 + MCP 4
+    └── claude-x-codex/               # 스킬 3 + 프롬프트 훅 + 스크립트 3
 ```
 
 각 플러그인 폴더는 자기완결적입니다: README, 매니페스트, 배포되는 모든 파일이 `plugins/<이름>/` 아래에 있습니다.
