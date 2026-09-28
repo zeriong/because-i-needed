@@ -4,7 +4,7 @@ Every shared rule in the root `CLAUDE.md` (install boundary, version bumps, five
 It originates in the release statute at `.claude/CLAUDE.md` in `zeriong/plan-smith`. There it was a gitignored, local-only file;
 moving it here, the paths were adjusted. The original statute's Article 6 ("this file is never committed") is repealed — here it is committed.
 
-Contents: the skill `skills/forge/SKILL.md`, three references (`frames.md`, `styles.md`, `packet-template.md`), the agent `agents/plan-writer.md`, and `CHANGELOG.md`.
+Contents: the skill `skills/forge/SKILL.md`, four references (`frames.md`, `styles.md`, `packet-template.md`, `split.md`), the script `scripts/split-check.py`, the agent `agents/plan-writer.md`, and `CHANGELOG.md`.
 
 ---
 
@@ -54,6 +54,7 @@ A docs-only change never gets MINOR. An added frame never gets PATCH.
 
 Every empirical claim in a README or the CHANGELOG ("won the A/B", "validated on N plans") carries **where the observation came from**
 (which series of z-lab `plan-smith-lab/`). If it was observed once, say once, and state the limits in the same paragraph.
+Behavior changes are measured there before release — root Rule 9.
 
 **Why:** 1.1.0 came out of a controlled A/B in which **its own output lost to the frameless baseline**. The README recorded that,
 so the next person can avoid the same trap. Record only the wins and the library becomes an advertisement; record the failures and it becomes a tool.
@@ -64,5 +65,10 @@ so the next person can avoid the same trap. Record only the wins and the library
   `/plan-smith:forge`; the skill folder name `forge` is also embedded in the `agents/plan-writer.md` description and in
   `references/packet-template.md`. A rename changes all of them together (root Rule 8). Before 1.5.0 the skill was named `plan-smith`.
 - When editing `SKILL.md` or `agents/plan-writer.md`, keep the five README "Design invariants" intact (the main agent never writes the plan /
-  no drafting without a confirmed packet / the writer's input is self-contained / verbatim relay / a style is not a model choice).
+  no drafting without a confirmed packet / the writer's input is self-contained / verbatim relay — a split plan as its index and every
+  part in order / a style is not a model choice). The Stage 2d split moves text and must never rewrite it; `scripts/split-check.py`
+  is what proves that, so keep its rules and `references/split.md` in step (`--self-test` after any change to either). Evidence for
+  the 1.6.0 split: z-lab `plan-smith-lab/split-1.6.0/` (S1: 6/6 lossless on the first attempt; its effect on implementers is
+  unmeasured). Keep the checker command in SKILL.md: `${CLAUDE_PLUGIN_ROOT}` is replaced only in SKILL.md text, not in a
+  reference file or the shell, and `split.md` pointing to it ran the script 3/3 (z-lab `plugin-platform-lab/`, V01–V05).
   Breaking one is a design change: agree on it with the maintainer first, and update the README invariant list with it.

@@ -65,3 +65,12 @@ If you changed the extensions, run it once more with a file of that extension.
 - The block message (`ui-commit-gate.sh` hook mode) points only to the web skill `/ux-ui:build` and chrome-devtools.
   When a mobile file (`.swift` `.kt` `.dart` `.storyboard` `.xib`, `res/layout`) is blocked it does not mention `/ux-ui:build-mobile`.
   Changing the message is a behavior change visible to installed users, so bump the version (root Rule 2).
+- `skills/build-mobile/references/backend-detection.md` lines 28, 85 and 86 call `"${CLAUDE_PLUGIN_ROOT}/scripts/mobile-snapshot.sh"`.
+  That variable is replaced only in SKILL.md text at skill load and is not set in the Bash environment (z-lab
+  `plugin-platform-lab/skill-plugin-root-2.1.283/`, V01–V02), so a reference read later keeps it literal and the path
+  resolves to `/scripts/…` — measured: a reference with that line ran `bash: /scripts/hello.sh: No such file or directory`
+  3/3, and haiku never recovered (V03–V04, `reference-plugin-root-2.1.283/`). `doctor` is also in SKILL.md (fine); the two
+  `capture` commands exist only here.
+  Fix by pointing to the SKILL.md path — the pattern ran 3/3 in a minimal skill (V05–V06, `reference-pointer-2.1.283/`);
+  it changes behavior, so measure it on this skill in z-lab and bump the version (root Rule 9, Rule 2).
+  (Confirmed 2026-09-28, unfixed.)

@@ -99,17 +99,27 @@ If the user is optimizing for speed on a decision document, skip it — that is 
 - Writer returned a conflict **without writing** (unsatisfiable hard constraint, missing input): fix the packet — or ask the user — then re-invoke. Do not push it to write anyway.
 - Writer **wrote the plan but flagged soft conflicts** (stale path, wrong takeaway): do not relay it as final. Resolve the conflict with the user, update the packet, and rerun Stage 2 — in relay mode, from pass 1 if the conflict predates the draft, otherwise pass 2 only.
 
+### Stage 2d — Split a large plan (only over 20,000 characters)
+
+Once the plan is final — Stage 2 done and, for build-outs, the Stage 2c additions made — measure it: `wc -m < plans/<slug>/plan.md`. At 20,000 characters or fewer, skip this stage. Over it, read [references/split.md](references/split.md) and follow its procedure: move `plan.md` to `plan.unsplit.md`, invoke a **fresh** `plan-writer` in split mode with the protocol section copied verbatim, then run the checker `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/split-check.py" plans/<slug>`. The result is an index `plans/<slug>/plan.md` that holds pointers only and ordered parts `plans/<slug>/parts/<category>_<A0–Z99>.md` that hold the whole plan, text unchanged.
+
+- The split moves text; it never rewrites it. The gates and the wiring audit already judged the whole plan, which is why the split comes after them, and the checker proves every line survived in order.
+- Split only the final `plan.md` — never `draft.md`, never divergence variants.
+- If the checker fails twice, restore the unsplit plan (split.md says how), relay it, and tell the user why the split failed.
+- Rerunning Stage 2 on a split plan (an intent-level change): delete `parts/` first; this stage then runs again on the new plan.
+
 ## Stage 3 — Lossless relay (your job)
 
-1. Read `plans/<slug>/plan.md` and present **the full text verbatim** to the user. No summarizing, no restructuring, no excerpting. Include the file path.
+1. Read `plans/<slug>/plan.md` and present **the full text verbatim** to the user. No summarizing, no restructuring, no excerpting. Include the file path. **If Stage 2d split the plan**, present the index verbatim, then every part verbatim in index order, each preceded by its path — the index alone is not the plan.
 2. If relay mode: append audit.md's "changed decisions / kept decisions" list after the plan text, and **delegate the final merge judgment to the user** wherever draft-vs-revision choice points exist. Include the draft.md path.
-3. Handle approval/edit requests as usual. If a change is at the intent level, fix the packet and rerun Stage 2; if it is wording-level, you may edit directly.
-4. **Retrospective record:** once the user's verdict lands (adopted / edited / rejected), append one line to the packet's `## Retrospective` section: `outcome: <adopted|edited|rejected> — frame <name>, style <name>, model <the model that ran plan-writer>, one-line note`. This accumulation is the raw material for tuning the frame×domain routing rules — and the model field is the only data that can ever separate style effects from model effects (style×model has been fully confounded in every experiment so far).
+3. Handle approval/edit requests as usual. If a change is at the intent level, fix the packet and rerun Stage 2; if it is wording-level, you may edit directly — in a split plan, edit the part that holds the text.
+4. **Retrospective record:** once the user's verdict lands (adopted / edited / rejected), append one line to the packet's `## Retrospective` section: `outcome: <adopted|edited|rejected> — frame <name>, style <name>, model <the model that ran plan-writer>, <split N parts | unsplit> (<characters> chars), one-line note`. This accumulation is the raw material for tuning the frame×domain routing rules — and the model field is the only data that can ever separate style effects from model effects (style×model has been fully confounded in every experiment so far).
 
 ## Divergence experiments (optional)
 
 If the user asks to "compare across frames/styles": invoke plan-writer **in parallel with only the frame (or style) changed**, same packet. Rules:
 - Output naming: `plans/<slug>/plan-<variant>.md`, where `<variant>` is the frame name (frame comparison) or style name (style comparison).
 - Variants are **single-pass only** (`opus` / `fable`). `relay` is excluded from divergence experiments — it is itself a two-pass comparison; if the user wants relay quality, run relay afterward on the winning variant.
+- Variants are **never split** — they are compared as full texts. If the adopted variant is over the Stage 2d threshold, copy it to `plan.md` and run Stage 2d on it.
 - Style-comparison variants run on the **same model** — a style is a prompt discipline; comparing styles across different models measures the model, not the style.
 - In Stage 3 present each full text first; a short comparison table comes last (full texts first, comparison is auxiliary). Record in the retrospective which variant the user adopted.

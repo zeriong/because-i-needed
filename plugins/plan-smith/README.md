@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.5.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.6.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -43,7 +43,7 @@ Long sessions produce bad plans for a structural reason: the agent that knows yo
 
 - **Intent distillation, not main-agent writing** — the skill extracts goals, hard constraints, **rejected alternatives**, settled decisions, and relevant files from the whole conversation into a packet. Extraction is far more robust to context noise than composition is.
 - **One confirmation gate** — before any writing happens, the packet is shown to you: *"here is the intent and constraints I distilled — correct?"* Every inferred field is marked `⚠guess` and confirmed. A pipeline that can correct intent always beats a clean draft of the wrong intent.
-- **Clean-context forging** — `plan-writer` runs with no session noise: packet + frame spec + style directive only. Read-only toward your codebase; writes only its designated output file(s) — the plan, plus audit.md in relay pass 2 — and returns paths, not text.
+- **Clean-context forging** — `plan-writer` runs with no session noise: packet + frame spec + style directive only. Read-only toward your codebase; writes only its designated output file(s) — the plan, plus audit.md in relay pass 2, or the index and parts when splitting — and returns paths, not text.
 - **A reasoning-frame library that earns its keep** — 26 frames (backward-chaining, premortem, back-of-envelope, constraint-first, incentive accounting, …) distilled from a 26-plan empirical experiment, stress-tested by a 100-plan validation corpus, and **corrected by a controlled A/B in which a framed plan lost to an unframed baseline** on a spec-complete build — the fix is `spec-coverage` plus the Gate 0 routing rule below. Each frame ships with its **required components** (the parts whose absence turns it into decoration) and routing predicates for auto-selection.
 - **Two validated writing styles + relay** — `opus`-style (coverage-first disciplined draft, honest confession log) and `fable`-style (structure-auditing revision, judgment encoded as rules). **Relay mode** chains them: draft → confession → adversarial revision with a T1–T6 contamination audit — the strongest pipeline observed in the source experiment.
 - **Gate 0: it knows when a frame would hurt** *(new in 1.1)* — before any frame is chosen the pipeline asks *"followed literally, is the danger that we chose wrong, or that we left things out?"* A complete spec whose risk is omission is a **build-out** and routes to `spec-coverage` (a requirement × surface completeness matrix), because narrowing frames license the omission of whatever they did not select. This rule exists because a framed plan lost to an unframed one — see the FAQ.
@@ -51,7 +51,8 @@ Long sessions produce bad plans for a structural reason: the agent that knows yo
 - **A wiring audit before you ever see the plan** *(new in 1.2)* — for build-outs, a **second, fresh** plan-writer instance audits the finished plan against five document-level questions (unfilled hops, blank cold-start cells, hops naming symbols the plan never creates, ledger rows lacking verb sentences, guarantees claimed in prose instead of a command in "done"). An author cannot audit their own omissions. Costs ~20–35% more tokens on the writing stage and buys the one defect class reading cannot see.
 - **It budgets the machinery to the implementer** *(new in 1.3)* — Gate 0 now also records **who implements this plan**, because every part a plan demands (a build chain, a pinned dependency, a config referencing another config) is one more surface a weak implementer can fail to reproduce. In a 9-cell transfer test, a strong model's plans handed to the weakest model killed it *at the build step* in five of six cells, earlier than its own modest plan did. A weak or unknown implementer therefore gets the plan demanding the least machinery — no build chain, dependencies as complete copyable strings, no command-form completion criteria it cannot run.
 - **Copyable glue — validated before release** *(new in 1.4)* — for weak or unknown implementers the plan now carries **verbatim copyable blocks** for the highest-risk connective code: the dependency alias line, a symbol table with exact signatures, and initial state declarations. What is copyable does not get hallucinated — making the CDN URL copyable had already taken phantom versions from five incidents to zero, and the residual deaths were glue recalled instead of copied. Unlike earlier releases, this clause passed a pre-registered gate *before* shipping: against an informed baseline (n=4 each), glue deaths 1 vs 2 and ladder median L5 vs split — including the test family's **first stage CLEAR**.
-- **Lossless delivery + retrospective data** — the plan file is presented in full, and every outcome (adopted / edited / rejected) is appended to the packet, accumulating data to tune frame routing over time.
+- **Large plans arrive as an index and ordered parts** *(new in 1.6)* — a finished plan over 20,000 characters is split: `plan.md` becomes an index of pointers only, and the whole plan moves into `parts/<category>_<A0–Z99>.md` (letter = phase, number = order within it), each part ending with a pointer to the next. The split runs after every gate and the wiring audit have judged the whole plan, a fresh plan-writer moves the text without changing a word, and a checker script confirms that no line was lost, duplicated or reordered. Why: two hypotheses, not yet measured — a long plan read in ordered pieces is less likely to have parts skipped, and pointers are easier for an agent to follow. The 20,000-character threshold is declared arbitrary until retrospectives replace it. Measured with the real writer on three corpus plans of 20–37k characters (z-lab `plan-smith-lab/split-1.6.0/`, n=6): lossless on the first attempt in 6/6 runs, 6–11 parts, none over the 10,000-character target, about $0.8 and 2.5 minutes per split on opus. Whether splitting helps an implementer was not measured.
+- **Lossless delivery + retrospective data** — the plan is presented in full (for a split plan, the index and then every part in order), and every outcome (adopted / edited / rejected) is appended to the packet, accumulating data to tune frame routing over time.
 
 ## Installation
 
@@ -112,8 +113,11 @@ Stage 2 — Isolated writing (plan-writer agent, fresh context)
 Stage 2c — Wiring audit (fresh plan-writer instance; build-outs only)
   plan.md ──▶ 5 document-level questions ──▶ wiring-audit.md ──▶ minimal additions
 
+Stage 2d — Split (fresh plan-writer instance; only over 20,000 characters)
+  plan.md ──▶ index plan.md + parts/<category>_<A0–Z99>.md ──▶ split-check.py (lossless, in order)
+
 Stage 3 — Lossless relay (main agent)
-  plan file presented verbatim ──▶ user verdict ──▶ retrospective line appended to packet
+  plan presented verbatim (split: index + every part in order) ──▶ user verdict ──▶ retrospective line appended to packet
 ```
 
 Why the split works: *wanting the right plan* requires session context (Stage 1's resource); *uncontaminated writing* requires isolation (Stage 2's resource); *undamaged delivery* requires a file contract (Stage 3's rule). One agent can't hold all three — a pipeline can.
@@ -122,11 +126,13 @@ Why the split works: *wanting the right plan* requires session context (Stage 1'
 
 | Component | Path | Role |
 |---|---|---|
-| Skill `forge` | [`skills/forge/SKILL.md`](skills/forge/SKILL.md) | Pipeline orchestration for the **main agent**: Stage 1 intent distillation → packet + user confirmation gate, Stage 2 delegation, **Stage 2c wiring audit** (build-outs, fresh writer instance), Stage 3 verbatim relay + retrospective record. |
+| Skill `forge` | [`skills/forge/SKILL.md`](skills/forge/SKILL.md) | Pipeline orchestration for the **main agent**: Stage 1 intent distillation → packet + user confirmation gate, Stage 2 delegation, **Stage 2c wiring audit** (build-outs, fresh writer instance), **Stage 2d split** (over 20,000 characters), Stage 3 verbatim relay + retrospective record. |
 | Frame library | [`skills/forge/references/frames.md`](skills/forge/references/frames.md) | 26 reasoning frames in 6 families — each with starting point, **required components**, failure mode, watch-outs — plus Gate 0 + 4-predicate routing, the common plan template, and the three specification rules every build-out owes: **load-bearing path** (a ≤5-hop chain whose guards each say where they first become true, plus a cold-start table), **verb sentences outside the ledger**, and the **implementer contract** (revival triggers, pinned versions, and the command whose exit status proves any guarantee the stack was bought for) — plus **Gate 0's implementer axis and the machinery budget** (1.3): a weak or unknown implementer gets the plan demanding the least machinery, with the highest-risk glue as **verbatim copyable blocks** (1.4, gate-validated pre-release). |
 | Style directives | [`skills/forge/references/styles.md`](skills/forge/references/styles.md) | `opus`-style (coverage-first disciplined draft + confession log), `fable`-style (structure-auditing revision + rule-encoded judgment), and the `relay` two-pass protocol with T1–T6 contamination audit. |
 | Packet template | [`skills/forge/references/packet-template.md`](skills/forge/references/packet-template.md) | The context packet contract — the only channel from session to writer. |
-| Agent `plan-writer` | [`agents/plan-writer.md`](agents/plan-writer.md) | Clean-context author. Self-contained input contract, read-only toward the codebase, writes only its designated output file(s) (plan, plus audit.md in relay pass 2), returns paths — never the plan text. |
+| Split protocol | [`skills/forge/references/split.md`](skills/forge/references/split.md) | When a plan is split (over 20,000 characters), the main agent's procedure, and the protocol the writer receives verbatim: move every line unchanged and in order, cut only at boundaries, write an index plus `<category>_<A0–Z99>` parts that each point to the next. |
+| Split checker | [`scripts/split-check.py`](scripts/split-check.py) | Confirms a split is lossless and well-formed — every non-empty line of the unsplit plan reappears once, in order, the names, order and next-pointers are valid, and no cut falls inside a paragraph, table or code block. `--self-test` runs its own fixtures. |
+| Agent `plan-writer` | [`agents/plan-writer.md`](agents/plan-writer.md) | Clean-context author. Self-contained input contract, read-only toward the codebase, writes only its designated output file(s) (plan, plus audit.md in relay pass 2, or the index and parts in split mode), returns paths — never the plan text. |
 
 ## Frames & styles
 
@@ -157,7 +163,7 @@ In round numbers: baseline 100 + repairs 116 = 216; plan-smith 66, done. The mec
 1. The main agent **never writes the plan** — it distills intent; extraction survives context noise, composition doesn't.
 2. **No writing without a confirmed packet** — every inferred field is `⚠guess`-marked and resolved with the user first. When a decision is ambiguous, ask immediately.
 3. The writer's inputs are **self-contained** (packet + inline frame/style specs) — no session access, no path guessing.
-4. **Verbatim relay** — the plan file is presented in full; summaries are a contract violation.
+4. **Verbatim relay** — the plan is presented in full (a split plan: the index and every part, in order); summaries are a contract violation.
 5. Styles are **prompt disciplines, not model choices** — distilled from a 26-plan controlled experiment and stress-tested in a 100-plan validation corpus; relay chaining and cross-model portability remain promising-but-unverified, with retrospectives accumulating the evidence.
 
 ## Changelog

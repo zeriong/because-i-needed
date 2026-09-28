@@ -12,6 +12,67 @@ version has to move. Release 1.1.1 exists for that reason alone.
 
 ---
 
+## [1.6.0] — 2026-09-28
+
+A plan over 20,000 characters now arrives as an index plus ordered parts. No change to frames,
+styles, the packet contract, the quality gates, or the wiring audit.
+
+### Added
+
+- **Stage 2d — split.** After the plan is final (and, for build-outs, after the Stage 2c additions),
+  the main agent measures it with `wc -m`. Over 20,000 characters, a fresh `plan-writer` in split
+  mode moves it into `plans/<slug>/plan.md` — an index that holds pointers only — and
+  `plans/<slug>/parts/<category>_<A0–Z99>.md`, where the letter is the phase and the number the order
+  within it, and every part ends with a pointer to the next.
+- `references/split.md` — when to split, the main agent's procedure, and the protocol the writer
+  receives verbatim: every non-empty line moves unchanged and in order, cuts fall only at headings or
+  between steps, and the only new lines are the index block and two navigation lines per part.
+- `scripts/split-check.py` — confirms a split is lossless and well-formed (every line reappears once and
+  in order; names, order and next-pointers valid; every part starts at a heading or list item and leaves
+  no code fence open). `--self-test` runs its own fixtures. On two failed
+  checks the main agent restores the unsplit plan and relays it instead.
+
+### Changed
+
+- Stage 3 relays a split plan as the index followed by every part, in order, each with its path —
+  design invariant 4 (verbatim relay) is unchanged in substance; its wording now covers split plans.
+- `plan-writer` gains a split mode: it writes the index and the parts and nothing else, and reports
+  defects instead of fixing them.
+- The retrospective line records `split N parts` or `unsplit` and the plan's character count. The
+  packet template's comment also gains the `model` field Stage 3 already required.
+- Divergence variants and relay drafts are never split; an adopted variant over the threshold is copied
+  to `plan.md` and split there.
+
+### Why
+
+- Requested by the maintainer for two reasons, both **hypotheses that have not been measured**: a long
+  plan read in ordered pieces is less likely to have parts skipped, and pointer-ordered files are easier
+  for an agent to work through. Nothing here claims either effect; the retrospective field exists so that
+  outcomes can be compared between split and unsplit plans.
+- The split comes **after** the gates because every gate and the wiring audit judge the whole plan —
+  cross-references such as the load-bearing path's hops span sections, so checking parts one at a time
+  would miss exactly what those checks exist for. Moving text instead of rewriting it keeps that judgment
+  valid, and a line-by-line check can prove the move, which a rewrite could not offer.
+- Characters, not words or lines, because plans are written in the user's language. The 20,000 threshold
+  and the 10,000-character part target are (c) declared arbitrary; the first retrospectives that record
+  split outcomes replace them.
+
+### Measured before release
+
+z-lab `plan-smith-lab/split-1.6.0/` (repository rule 9): the real `plan-writer` definition, given only the
+split protocol, split three corpus plans of 20,344 / 32,073 / 36,970 characters twice each. The checker
+passed **6/6 on the first attempt** (S1); parts ranged 6–11 with none over the 10,000-character target
+(S2); the plan with 26 code fences was never cut inside a block (S3); each split cost $0.66–1.08 (median
+$0.79) and 142–252 s on opus (S6). Splits are not deterministic — the same plan gave 8 and 11 parts (S5).
+Not measured: any effect on implementers, the retry path in a real run, the full pipeline with Stage 3
+relay, other models.
+
+The checker command lives in SKILL.md, not in `references/split.md`: `${CLAUDE_PLUGIN_ROOT}` is replaced in
+SKILL.md text when the skill loads, but a reference file read later keeps it literal and the command
+fails with exit 127 (z-lab `plugin-platform-lab/skill-plugin-root-2.1.283/` V01–V02,
+`reference-plugin-root-2.1.283/` V03, 3/3 each). A reference that points to the SKILL.md command ran
+the script 3/3 (`reference-pointer-2.1.283/` V05).
+
 ## [1.5.0] — 2026-09-28
 
 Rename. No change to skill behaviour, frames, styles, the packet contract, or the

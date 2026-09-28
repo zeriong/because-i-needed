@@ -25,7 +25,7 @@
 
 ## プラグイン
 
-### [plan-smith](plugins/plan-smith) · `v1.5.0`
+### [plan-smith](plugins/plan-smith) · `v1.6.0`
 
 **2 段構成のパイプラインでプランを鍛え上げます**。メインエージェントが会話全体をコンテキストパケット（目標、ハード制約、却下された代替案）に蒸留してあなたに確認し、続いてクリーンなコンテキストの `plan-writer` エージェントが推論フレームライブラリと検証済みの執筆スタイルでプランを書きます。完成したプランは原文のまま届けられます — 要約による欠落も、コンテキスト汚染もありません。
 
@@ -129,7 +129,7 @@ because-i-needed/
 ├── .claude-plugin/marketplace.json   # 4 つのプラグインを登録
 ├── install.sh                        # 対話式インストーラー（claude plugin install を実行）
 └── plugins/
-    ├── plan-smith/                   # スキル + plan-writer エージェント (+ CHANGELOG.md)
+    ├── plan-smith/                   # スキル + plan-writer エージェント + 分割チェッカー (+ CHANGELOG.md)
     ├── harness/                      # スキル
     ├── ux-ui/                        # スキル 2 + エージェント 2 + コミットゲートフック + MCP 4
     └── claude-x-codex/               # スキル 3 + プロンプトフック + スクリプト 3

@@ -15,6 +15,11 @@ Every rule carries its reason. A rule whose reason is forgotten decays into ritu
 - `plugins/<name>/CLAUDE.md` ships in the package but is **not loaded into user sessions**
   (Claude Code reads only the working-directory hierarchy and the user's global CLAUDE.md). These files are for maintainers.
   Instructions meant for installed users go into skills, agents, or hooks.
+- A skill finds its plugin's scripts only through `"${CLAUDE_PLUGIN_ROOT}/…"` written in **SKILL.md** (braced): that text is
+  replaced with the install path when the skill loads. A reference file the skill reads later keeps the variable literal,
+  and the shell does not set it, so a command there runs as `/scripts/…` and fails. Put script commands in SKILL.md; a
+  reference points to them or uses a name SKILL.md defines — both ran the script 3/3 (z-lab `plugin-platform-lab/`,
+  V01–V06).
 
 **Why:** in the plan-smith 1.1.3 check the cache held zero copies of the root CHANGELOG. On 2026-09-23 the installed copy of the
 enabled humanize-korean plugin contained a CLAUDE.md that was not loaded into the session context, and `claude plugin validate`
@@ -77,8 +82,8 @@ step between a rule and the files it describes.
   `claude plugin validate .` and `claude plugin validate plugins/<name>` must pass.
   The plugin warning `CLAUDE.md at the plugin root is not loaded as project context` is **expected** —
   that file is for maintainers and is correctly not loaded (Rule 1). Investigate any other warning.
-- Adding a plugin = `plugins/<name>/` (manifest, five READMEs, CLAUDE.md) + a `marketplace.json` entry + an intro section in the five root READMEs.
-  Name it by Rule 8. The root `install.sh` reads the plugin list from `marketplace.json`, so it needs no change.
+- Adding a plugin = `plugins/<name>/` (manifest, five READMEs, CLAUDE.md) + a `marketplace.json` entry + an intro section in the five root READMEs
+  + its series in z-lab (Rule 9). Name it by Rule 8. The root `install.sh` reads the plugin list from `marketplace.json`, so it needs no change.
 
 ## Rule 6 — Commits
 
@@ -131,3 +136,33 @@ Plugin skills are always invoked as `/<plugin>:<skill>`, and the plugin is the u
 marketplace update the client keeps the old registration name, and a renamed plugin shows `failed to load` (2.1.283, checked with a
 directory source). So name things right the first time. The naming release shipped as MINOR only because the marketplace had no
 users yet; once it does, a rename is MAJOR (Rule 2).
+
+## Rule 9 — Skills are built and released from measurements in z-lab
+
+Creating a skill, or changing what a skill, agent, hook or script does, starts and ends in the lab repository `z-lab`
+(`github.com/zeriong/z-lab`). A change ships only with the experiment record that measured it.
+
+- **Find the lab first.** It is normally this repository's sibling, `../z-lab`. If it isn't there, look for a local
+  directory named `z-lab` whose root holds a `CLAUDE.md` and whose `origin` is `zeriong/z-lab`; if none exists, ask the
+  maintainer before going further — don't build the change without it, and don't release it.
+- **Follow the lab's own rules.** `z-lab/CLAUDE.md` governs the experiment work and wins over this file inside the lab:
+  one series per plugin (`<plugin>-lab/`, e.g. `plan-smith-lab/`, `claude-x-codex-lab/`), a `SPEC.md` frozen before
+  the run, untouched specimens, a generated `METRICS.md`, a `FINDINGS.md` that separates what was measured from what was
+  not, state-aware runners, and an `analyze/` backlog that links every change to its evidence. The lab is public, so
+  keep host details out of what it stores.
+- **What to measure before building or releasing:**
+  - every CLI, platform or tool behavior the skill relies on — run it, don't recall it;
+  - the new or changed mechanism itself, run with the real agent, skill or script definitions (e.g. `--plugin-dir`,
+    `--agent`), against inputs from the lab's corpora where they exist;
+  - any claim that the change *improves* an outcome — measured, or labelled a hypothesis in the README and CHANGELOG.
+- **Release from the numbers.** The version bump (Rule 2) comes after the experiment. The CHANGELOG entry and the
+  plugin's `CLAUDE.md` name the experiment path and the finding IDs they rest on. If the measurement contradicts the
+  change, fix or drop the change — and re-measure in a new sibling experiment, never by editing the frozen one.
+- **Decisions are recorded too.** A maintainer decision that isn't a measurement (a model choice, a threshold) goes into
+  the series' `analyze/` backlog with its reason, marked as a decision.
+- Documentation-only changes (PATCH) need no new experiment, but every fact they state must already have evidence.
+
+**Why:** in the claude-x-codex 0.1.0 work (2026-09-28) several CLI assumptions in the first draft were wrong and were
+found only by running the CLIs, and the first fix for its reviewer made it about nine times more expensive — caught only
+because the lab measured it. A skill written from recall ships what the author believed, not what the tools do.
+

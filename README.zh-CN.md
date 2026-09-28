@@ -25,7 +25,7 @@
 
 ## 插件
 
-### [plan-smith](plugins/plan-smith) · `v1.5.0`
+### [plan-smith](plugins/plan-smith) · `v1.6.0`
 
 **通过两阶段流水线锻造计划。** 主智能体把整段对话提炼成一份上下文包（目标、硬约束、被否决的备选方案），并与你确认；随后由一个上下文干净的 `plan-writer` 智能体借助推理框架库和经过验证的写作风格撰写计划，再把计划原样转交给你——没有摘要损失，也没有上下文污染。
 
@@ -129,7 +129,7 @@ because-i-needed/
 ├── .claude-plugin/marketplace.json   # 登记四个插件
 ├── install.sh                        # 交互式安装脚本（执行 claude plugin install）
 └── plugins/
-    ├── plan-smith/                   # 技能 + plan-writer 智能体 (+ CHANGELOG.md)
+    ├── plan-smith/                   # 技能 + plan-writer 智能体 + 拆分检查器 (+ CHANGELOG.md)
     ├── harness/                      # 技能
     ├── ux-ui/                        # 2 个技能 + 2 个智能体 + 提交门禁钩子 + 4 个 MCP
     └── claude-x-codex/               # 3 个技能 + 提示钩子 + 3 个脚本
