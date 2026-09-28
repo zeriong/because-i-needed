@@ -76,5 +76,5 @@ Marking rule: any field inferred rather than confirmed from the conversation car
 - (relay) Draft: `plans/<slug>/draft.md`, Audit: `plans/<slug>/audit.md`
 
 ## Retrospective
-<!-- appended after user verdict: outcome: <adopted|edited|rejected> — frame <name>, style <name>, one-line note -->
+<!-- appended after user verdict: outcome: <adopted|edited|rejected> — frame <name>, style <name>, model <id>, <split N parts | unsplit> (<characters> chars), one-line note -->
 ```

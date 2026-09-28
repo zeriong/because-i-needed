@@ -25,7 +25,7 @@ This repository is a Claude Code **plugin marketplace** with four independent pl
 
 ## Plugins
 
-### [plan-smith](plugins/plan-smith) · `v1.5.0`
+### [plan-smith](plugins/plan-smith) · `v1.6.0`
 
 **Forge plans through a two-stage pipeline.** The main agent distills the whole conversation into a context packet (goals, hard constraints, rejected alternatives) and confirms it with you; a clean-context `plan-writer` agent then writes the plan with a reasoning-frame library and validated writing styles, and the plan is relayed to you verbatim — no summarization loss, no context contamination.
 
@@ -129,7 +129,7 @@ because-i-needed/
 ├── .claude-plugin/marketplace.json   # lists the four plugins
 ├── install.sh                        # interactive installer (runs claude plugin install)
 └── plugins/
-    ├── plan-smith/                   # skill + plan-writer agent (+ CHANGELOG.md)
+    ├── plan-smith/                   # skill + plan-writer agent + split checker (+ CHANGELOG.md)
     ├── harness/                      # skill
     ├── ux-ui/                        # 2 skills + 2 agents + commit-gate hook + 4 MCPs
     └── claude-x-codex/               # 3 skills + prompt hook + 3 scripts
