@@ -21,7 +21,7 @@
 
 ---
 
-本仓库是一个 Claude Code **插件市场**，包含三个相互独立的插件。按需安装即可。
+本仓库是一个 Claude Code **插件市场**，包含四个相互独立的插件。按需安装即可。
 
 ## 插件
 
@@ -53,15 +53,34 @@
 
 [查看 ux-ui 简体中文 README →](plugins/ux-ui/README.zh-CN.md)
 
+### [claude-x-codex](plugins/claude-x-codex) · `v0.1.0`
+
+**Claude × Codex 同伴编排。** 主智能体负责规划并做出每个关卡的决定，把工作分派给快速的 Claude 工作者或批量处理的 Codex 工作者，两个厂商互相评审对方的工作——包括主智能体自己的计划。反驳只有一轮，裁定依据的是证据而不是角色。审计功能确保两个厂商从同样的项目指令出发。非官方社区插件。
+
+- **适用场景：** 同时使用 Claude Code 和 Codex，并希望功能的每个阶段都经过另一个厂商的评审时。
+- **入口：** `/claude-x-codex:run`，或用 `/claude-x-codex:mode on` 开启后，实现类请求都会走这个流程
+- **注意：** 安装后会注册一个 `UserPromptSubmit` 钩子（在每条提示时运行，模式关闭时不输出任何内容）。
+
+[查看 claude-x-codex 简体中文 README →](plugins/claude-x-codex/README.zh-CN.md)
+
 ## 安装
 
-先添加一次插件市场，再安装需要的插件：
+安装脚本会列出插件，并只安装你选中的：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash
+```
+
+↑/↓（或 j/k）移动，空格切换选择，`a` 全选，回车安装，`q` 退出——初始为全部选中。选项：`--all`、`--only a,b`、`--list`、`--dry-run`、`--scope user|project|local`；通过管道运行时，把它们放在 `bash -s --` 之后（例如 `… | bash -s -- --only harness`）。它执行的就是下面这些 `claude plugin` 命令。
+
+或者自己添加插件市场，再安装需要的插件：
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
 claude plugin install plan-smith@bin
 claude plugin install harness@bin
 claude plugin install ux-ui@bin
+claude plugin install claude-x-codex@bin
 ```
 
 或者在 Claude Code 中：`/plugin` → Marketplaces → Add Marketplace → 输入 `https://github.com/zeriong/because-i-needed.git`，然后从列表中安装。
@@ -78,7 +97,8 @@ claude plugin install ux-ui@bin
   "enabledPlugins": {
     "plan-smith@bin": true,
     "harness@bin": true,
-    "ux-ui@bin": true
+    "ux-ui@bin": true,
+    "claude-x-codex@bin": true
   }
 }
 ```
@@ -100,17 +120,19 @@ claude plugin install ux-ui@bin
 | `audit` | 只读检查 |
 | `review` | 评审结果 |
 
-`run`、`mode`、`audit`、`review` 为后续插件预留。
+`review` 为后续插件预留。
 
 ## 仓库结构
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # 登记三个插件
+├── .claude-plugin/marketplace.json   # 登记四个插件
+├── install.sh                        # 交互式安装脚本（执行 claude plugin install）
 └── plugins/
     ├── plan-smith/                   # 技能 + plan-writer 智能体 (+ CHANGELOG.md)
     ├── harness/                      # 技能
-    └── ux-ui/                        # 2 个技能 + 2 个智能体 + 提交门禁钩子 + 4 个 MCP
+    ├── ux-ui/                        # 2 个技能 + 2 个智能体 + 提交门禁钩子 + 4 个 MCP
+    └── claude-x-codex/               # 3 个技能 + 提示钩子 + 3 个脚本
 ```
 
 每个插件目录都是自包含的：它的 README、清单文件以及随插件发布的所有内容都位于 `plugins/<名称>/` 下。

@@ -21,7 +21,7 @@
 
 ---
 
-このリポジトリは、独立した 3 つのプラグインを収めた Claude Code の**プラグインマーケットプレイス**です。必要なものだけをインストールしてください。
+このリポジトリは、独立した 4 つのプラグインを収めた Claude Code の**プラグインマーケットプレイス**です。必要なものだけをインストールしてください。
 
 ## プラグイン
 
@@ -53,15 +53,34 @@
 
 [ux-ui の日本語 README を読む →](plugins/ux-ui/README.ja.md)
 
+### [claude-x-codex](plugins/claude-x-codex) · `v0.1.0`
+
+**Claude × Codex のピアオーケストレーション**。メインエージェントが計画してすべてのゲートを判断し、作業を高速な Claude ワーカーか大量処理向けの Codex ワーカーに振り分け、2 つのベンダーが互いの作業をレビューします — メインエージェント自身の計画も含みます。反論は 1 回で、判定するのは役割ではなく証拠です。監査機能が、両ベンダーが同じプロジェクトの指示から始められるかを確認します。非公式のコミュニティプラグインです。
+
+- **使いどころ:** Claude Code と Codex の両方を使っていて、機能のすべての段階で別ベンダーのレビューを受けたいとき。
+- **エントリーポイント:** `/claude-x-codex:run`、または `/claude-x-codex:mode on` でオンにすると実装の依頼がこの流れを通ります
+- **注意:** インストールすると `UserPromptSubmit` フックが登録されます（すべてのプロンプトで実行され、モードがオフの間は何も出力しません）。
+
+[claude-x-codex の日本語 README を読む →](plugins/claude-x-codex/README.ja.md)
+
 ## インストール
 
-マーケットプレイスを一度追加してから、使いたいプラグインをインストールします。
+インストーラーがプラグインの一覧を表示し、選んだものだけをインストールします。
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash
+```
+
+↑/↓（または j/k）で移動、space で選択の切り替え、`a` で全選択、enter でインストール、`q` で終了 — 最初はすべて選択されています。オプション: `--all`、`--only a,b`、`--list`、`--dry-run`、`--scope user|project|local`。パイプ経由で実行するときは `bash -s --` の後ろに付けます（例: `… | bash -s -- --only harness`）。内部では下と同じ `claude plugin` コマンドを実行します。
+
+または、マーケットプレイスを自分で追加してから、使いたいプラグインをインストールします。
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
 claude plugin install plan-smith@bin
 claude plugin install harness@bin
 claude plugin install ux-ui@bin
+claude plugin install claude-x-codex@bin
 ```
 
 または Claude Code 内で `/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git` と進み、一覧からインストールします。
@@ -78,7 +97,8 @@ claude plugin install ux-ui@bin
   "enabledPlugins": {
     "plan-smith@bin": true,
     "harness@bin": true,
-    "ux-ui@bin": true
+    "ux-ui@bin": true,
+    "claude-x-codex@bin": true
   }
 }
 ```
@@ -100,17 +120,19 @@ claude plugin install ux-ui@bin
 | `audit` | 読み取り専用で点検する |
 | `review` | 結果物をレビューする |
 
-`run`、`mode`、`audit`、`review` は今後のプラグインのために予約されています。
+`review` は今後のプラグインのために予約されています。
 
 ## リポジトリ構成
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # 3 つのプラグインを登録
+├── .claude-plugin/marketplace.json   # 4 つのプラグインを登録
+├── install.sh                        # 対話式インストーラー（claude plugin install を実行）
 └── plugins/
     ├── plan-smith/                   # スキル + plan-writer エージェント (+ CHANGELOG.md)
     ├── harness/                      # スキル
-    └── ux-ui/                        # スキル 2 + エージェント 2 + コミットゲートフック + MCP 4
+    ├── ux-ui/                        # スキル 2 + エージェント 2 + コミットゲートフック + MCP 4
+    └── claude-x-codex/               # スキル 3 + プロンプトフック + スクリプト 3
 ```
 
 各プラグインフォルダは自己完結しています。README、マニフェスト、配布されるすべてのファイルが `plugins/<名前>/` の下にあります。

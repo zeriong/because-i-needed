@@ -21,7 +21,7 @@
 
 ---
 
-本儲存庫是一個 Claude Code **外掛市集**，收錄三個彼此獨立的外掛。只要安裝你需要的即可。
+本儲存庫是一個 Claude Code **外掛市集**，收錄四個彼此獨立的外掛。只要安裝你需要的即可。
 
 ## 外掛
 
@@ -53,15 +53,34 @@
 
 [閱讀 ux-ui 繁體中文 README →](plugins/ux-ui/README.zh-TW.md)
 
+### [claude-x-codex](plugins/claude-x-codex) · `v0.1.0`
+
+**Claude × Codex 同儕編排。** 主代理負責規劃並做出每個關卡的決定，把工作分派給快速的 Claude 工作者或批次處理的 Codex 工作者，兩個廠商互相審查對方的工作——包括主代理自己的計畫。反駁只有一輪，裁定依據的是證據而不是角色。稽核功能確保兩個廠商從相同的專案指示出發。非官方社群外掛。
+
+- **適用時機：** 同時使用 Claude Code 與 Codex，並希望功能的每個階段都經過另一個廠商審查時。
+- **進入點：** `/claude-x-codex:run`，或以 `/claude-x-codex:mode on` 開啟後，實作類請求都會走這個流程
+- **注意：** 安裝後會註冊一個 `UserPromptSubmit` hook（在每則提示時執行，模式關閉時不輸出任何內容）。
+
+[閱讀 claude-x-codex 繁體中文 README →](plugins/claude-x-codex/README.zh-TW.md)
+
 ## 安裝
 
-先新增一次市集，再安裝你想要的外掛：
+安裝腳本會列出外掛，並只安裝你選取的：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash
+```
+
+↑/↓（或 j/k）移動，空白鍵切換選取，`a` 全選，Enter 安裝，`q` 離開——一開始全部都是選取狀態。選項：`--all`、`--only a,b`、`--list`、`--dry-run`、`--scope user|project|local`；透過管線執行時，把它們放在 `bash -s --` 之後（例如 `… | bash -s -- --only harness`）。它執行的就是下面這些 `claude plugin` 命令。
+
+或者自行新增市集，再安裝你想要的外掛：
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
 claude plugin install plan-smith@bin
 claude plugin install harness@bin
 claude plugin install ux-ui@bin
+claude plugin install claude-x-codex@bin
 ```
 
 或在 Claude Code 中：`/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git`，然後從清單中安裝。
@@ -78,7 +97,8 @@ claude plugin install ux-ui@bin
   "enabledPlugins": {
     "plan-smith@bin": true,
     "harness@bin": true,
-    "ux-ui@bin": true
+    "ux-ui@bin": true,
+    "claude-x-codex@bin": true
   }
 }
 ```
@@ -100,17 +120,19 @@ claude plugin install ux-ui@bin
 | `audit` | 唯讀檢查 |
 | `review` | 審查結果 |
 
-`run`、`mode`、`audit`、`review` 保留給後續的外掛。
+`review` 保留給後續的外掛。
 
 ## 儲存庫結構
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # 列出三個外掛
+├── .claude-plugin/marketplace.json   # 列出四個外掛
+├── install.sh                        # 互動式安裝腳本（執行 claude plugin install）
 └── plugins/
     ├── plan-smith/                   # 技能 + plan-writer 代理（+ CHANGELOG.md）
     ├── harness/                      # 技能
-    └── ux-ui/                        # 2 個技能 + 2 個代理 + 提交閘門 hook + 4 個 MCP
+    ├── ux-ui/                        # 2 個技能 + 2 個代理 + 提交閘門 hook + 4 個 MCP
+    └── claude-x-codex/               # 3 個技能 + 提示 hook + 3 個腳本
 ```
 
 每個外掛資料夾都是自給自足的：它的 README、manifest，以及所有隨附的內容，都放在 `plugins/<name>/` 之下。

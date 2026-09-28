@@ -1,0 +1,5 @@
+# Keep shell scripts LF on every OS. Windows checkouts with core.autocrlf=true
+# would otherwise convert them to CRLF, and bash fails on the first line.
+*.sh   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf

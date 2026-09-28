@@ -21,7 +21,7 @@
 
 ---
 
-This repository is a Claude Code **plugin marketplace** with three independent plugins. Install only the ones you need.
+This repository is a Claude Code **plugin marketplace** with four independent plugins. Install only the ones you need.
 
 ## Plugins
 
@@ -53,15 +53,34 @@ This repository is a Claude Code **plugin marketplace** with three independent p
 
 [Read the ux-ui README →](plugins/ux-ui)
 
+### [claude-x-codex](plugins/claude-x-codex) · `v0.1.0`
+
+**Claude × Codex peer orchestration.** The main agent plans and owns every gate, routes work to fast Claude or bulk Codex workers, and the two vendors review each other's work — the main agent's own plan included — with one rebuttal round and evidence, not role, deciding. An audit makes sure both vendors start from the same project instructions. Unofficial community plugin.
+
+- **Use it when** you have both Claude Code and Codex and want a second vendor's review on every phase of a feature.
+- **Entry:** `/claude-x-codex:run`, or turn on `/claude-x-codex:mode on` so implementation requests go through it
+- **Heads-up:** installing it registers a `UserPromptSubmit` hook (runs on every prompt, prints nothing while the mode is off).
+
+[Read the claude-x-codex README →](plugins/claude-x-codex)
+
 ## Installation
 
-Add the marketplace once, then install the plugins you want:
+The installer lists the plugins and installs the ones you pick:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash
+```
+
+↑/↓ (or j/k) to move, space to toggle, `a` for all, enter to install, `q` to quit — everything starts selected. Options: `--all`, `--only a,b`, `--list`, `--dry-run`, `--scope user|project|local`; through a pipe, pass them after `bash -s --` (e.g. `… | bash -s -- --only harness`). It runs the same `claude plugin` commands shown below.
+
+Or add the marketplace yourself, then install the plugins you want:
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
 claude plugin install plan-smith@bin
 claude plugin install harness@bin
 claude plugin install ux-ui@bin
+claude plugin install claude-x-codex@bin
 ```
 
 Or in Claude Code: `/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git`, then install from the list.
@@ -78,7 +97,8 @@ Or wire it directly in `~/.claude/settings.json`:
   "enabledPlugins": {
     "plan-smith@bin": true,
     "harness@bin": true,
-    "ux-ui@bin": true
+    "ux-ui@bin": true,
+    "claude-x-codex@bin": true
   }
 }
 ```
@@ -100,17 +120,19 @@ Every command reads **subject : action** — `/<plugin>:<skill>`.
 | `audit` | Inspect, read-only |
 | `review` | Evaluate a result |
 
-`run`, `mode`, `audit`, and `review` are reserved for upcoming plugins.
+`review` is reserved for an upcoming plugin.
 
 ## Repository layout
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # lists the three plugins
+├── .claude-plugin/marketplace.json   # lists the four plugins
+├── install.sh                        # interactive installer (runs claude plugin install)
 └── plugins/
     ├── plan-smith/                   # skill + plan-writer agent (+ CHANGELOG.md)
     ├── harness/                      # skill
-    └── ux-ui/                        # 2 skills + 2 agents + commit-gate hook + 4 MCPs
+    ├── ux-ui/                        # 2 skills + 2 agents + commit-gate hook + 4 MCPs
+    └── claude-x-codex/               # 3 skills + prompt hook + 3 scripts
 ```
 
 Each plugin folder is self-contained: its README, manifest, and everything it ships live under `plugins/<name>/`.

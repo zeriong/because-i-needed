@@ -1,6 +1,6 @@
 # because-i-needed — repository rules
 
-This repository is a Claude Code marketplace holding three plugins (plan-smith, harness, ux-ui).
+This repository is a Claude Code marketplace holding four plugins (plan-smith, harness, ux-ui, claude-x-codex).
 **Shared rules live in this file**; **per-plugin rules live in `plugins/<name>/CLAUDE.md`** (loaded automatically when you read that plugin's files).
 A plugin file does not repeat this file — it holds only what applies to that plugin. If the two conflict, fix both.
 
@@ -78,7 +78,7 @@ step between a rule and the files it describes.
   The plugin warning `CLAUDE.md at the plugin root is not loaded as project context` is **expected** —
   that file is for maintainers and is correctly not loaded (Rule 1). Investigate any other warning.
 - Adding a plugin = `plugins/<name>/` (manifest, five READMEs, CLAUDE.md) + a `marketplace.json` entry + an intro section in the five root READMEs.
-  Name it by Rule 8.
+  Name it by Rule 8. The root `install.sh` reads the plugin list from `marketplace.json`, so it needs no change.
 
 ## Rule 6 — Commits
 
