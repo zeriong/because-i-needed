@@ -167,10 +167,15 @@ Creating a skill, or changing what a skill, agent, hook or script does, starts a
 - **Decisions are recorded too.** A maintainer decision that isn't a measurement (a model choice, a threshold) goes into
   the series' `analyze/` backlog with its reason, marked as a decision.
 - Documentation-only changes (PATCH) need no new experiment, but every fact they state must already have evidence.
+- **Packaging changes are never measured.** Renaming the marketplace or an install id, version bumps, manifest
+  metadata, install commands and README wording need no experiment and no z-lab record. When existing installs
+  must move, the documented answer is to uninstall and reinstall.
 
 **Why:** in the claude-x-codex 0.1.0 work (2026-09-28) several CLI assumptions in the first draft were wrong and were
 found only by running the CLIs, and the first fix for its reviewer made it about nine times more expensive — caught only
 because the lab measured it. A skill written from recall ships what the author believed, not what the tools do.
+The packaging exception is a maintainer decision (2026-09-30): the marketplace rename `bin` → `because-i-needed` grew
+into three experiments whose answer was "uninstall and reinstall", which the maintainer already knew.
 
 
 ## Rule 10 — Shared workflows, explicit host wiring
