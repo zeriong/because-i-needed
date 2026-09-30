@@ -58,7 +58,7 @@ codex plugin add claude-x-codex@bin
 
 [plan-smith 한국어 README 보기 →](plugins/plan-smith/README.ko.md)
 
-### [harness](plugins/harness) · `v1.2.0`
+### [harness](plugins/harness) · `v1.3.0`
 
 **템플릿이 아니라 사실 기반 분석으로 프로젝트 맞춤 Claude Code·Codex 하네스를 만듭니다.** 레포의 실제 계층·관심사 분리를 직접 읽고, 모든 룰이 내 코드의 `file:line`을 인용하도록 도출한 뒤, `project-rules`, 결정론적 `review-gate.sh`, `UserPromptSubmit` 훅, `harness-engineering` 스킬을 생성합니다.
 

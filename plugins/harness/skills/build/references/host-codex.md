@@ -11,6 +11,7 @@ prompts, generated skill bodies, test commands and the final file list:
 | `.claude/settings.json` | `.codex/hooks.json` (hook declarations only) |
 | `.claude/hooks/inject-context.sh` | `.codex/hooks/inject-context.sh` |
 | `.claude/scripts/review-gate.sh` | `.codex/scripts/review-gate.sh` |
+| `.claude/scripts/latest-model.py` | `.codex/scripts/latest-model.py` |
 | `.claude/skills/project-rules/` | `.agents/skills/project-rules/` |
 | `.claude/skills/harness-engineering/` | `.agents/skills/harness-engineering/` |
 | `docs/conventions/` | `docs/conventions/` |
@@ -46,12 +47,32 @@ sandbox settings or call a staged draft an installed harness.
 
 | Role | Model variable | Effort variable | Default |
 |---|---|---|---|
-| Architecture / derivation | `HARNESS_CODEX_ARCH_MODEL` | `HARNESS_CODEX_ARCH_EFFORT` | main model / effort |
-| Gate / implementation | `HARNESS_CODEX_GATE_MODEL` | `HARNESS_CODEX_GATE_EFFORT` | main model / effort |
+| Architecture / derivation | `HARNESS_CODEX_ARCH_MODEL` | `HARNESS_CODEX_ARCH_EFFORT` | newest model of the main session's family / main effort |
+| Gate / implementation | `HARNESS_CODEX_GATE_MODEL` | `HARNESS_CODEX_GATE_EFFORT` | newest model of the main session's family / main effort |
 
-Resolve and record both pairs before dispatch; check effort support for any overridden
-model. Explicit settings may also be passed through a native fresh read-only subagent
-API. Never claim different model families when both inherit the same model. Include
+A model variable names a family (such as `sol` or `luna`) or a model id, and either
+is resolved to the newest listed model of that family. Resolve each role right before its
+dispatch, every review iteration included:
+
+```bash
+python3 "<plugin>/scripts/latest-model.py" codex "<the role's model variable, else the main session's model id>" --effort "<the role's resolved effort>"
+```
+
+Order: when the role's model variable is set, resolve it. Otherwise resolve your own model id; a Codex
+main agent may not see it (probes could not), and then your own family if you know it. If you
+know neither, do not dispatch: ask the user to set the role's model variable (a family such as `sol`),
+because guessing would change the role's family.
+
+Pass stdout to `-m` (or to a native fresh read-only subagent's model field). Exit 2 (the
+newest cannot be determined) and exit 3 (effort not supported) mean: do not dispatch, do
+not substitute another model, and do not do the review yourself. Tell the user the
+resolver's `latest-model:` message and stop that step. One exception: when the message says `catalog not refreshed` and your shell
+runs sandboxed without network, first rerun that one resolver command outside the sandbox
+through the host's escalation route — a sandboxed shell cannot refresh Codex's catalog —
+and stop only if that is declined or fails too. Record both pairs, each with the
+id that actually ran, taken from the run (the Codex run header `model:`, or a native
+reviewer's receipt), never from the reviewer's own report. Never claim different model
+families when both resolve to the same model. Include
 relevant project instructions and mark each prompt `You are reviewing a generated
 harness`; it is a delegated review, not a new orchestration task. Set `CXC_MODE=off`
 for each CLI child so installing CXC alongside harness does not start a nested run.
@@ -60,7 +81,14 @@ Copy the concrete reviewer recipe, JSON shape, model/effort resolution and actua
 path into the generated harness-engineering skill. References to this build skill's
 Phase 6.2 are insufficient after installation.
 The generated skill resolves defaults from its current main session on every run;
-never freeze the builder's model or effort into a reusable shell default.
+never freeze the builder's model or effort into a reusable shell default. It resolves
+through the project-local resolver copy, never through `<plugin>` or an installed cache path:
+
+```bash
+python3 "$(git rev-parse --show-toplevel)/.codex/scripts/latest-model.py" codex "${HARNESS_CODEX_ARCH_MODEL:-<main session model id>}" --effort "<effort>"
+```
+
+Use `HARNESS_CODEX_GATE_MODEL` and its effort for the gate reviewer.
 
 ## Hook wiring
 
@@ -79,8 +107,8 @@ Merge this event into `.codex/hooks.json` (no Claude settings schema):
 }
 ```
 
-Use the SKILL.md `install-hooks.py` commands to copy the bundled hook and merge
-this declaration. For both targets, validate both configurations before writing either.
+Use the SKILL.md `install-hooks.py` commands to copy the bundled hook and resolver
+(`.codex/scripts/latest-model.py`) and merge this declaration. For both targets, validate both configurations before writing either.
 It resolves the project and skill directories from its own installed location, so it
 also works from a subdirectory and from another worktree.
 

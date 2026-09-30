@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.3.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -47,19 +47,19 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add harness@bin
 ```
 
-使用 `$harness:build`。Codex 預設產生 `.codex/hooks.json`、`.codex/hooks/inject-context.sh`、`.codex/scripts/review-gate.sh` 和 `.agents/skills/{project-rules,harness-engineering}/`。保留已有 Claude 檔案和無關掛鉤設定。工作流程與注入腳本已隨附，需要 Python 3。Codex 使用繼承主代理模型與推理設定的兩名獨立唯讀評審，Claude 保留 Opus + Sonnet。事實引用、3.5 平均品質門檻和三輪上限均保持一致。下方檔案列表描述 Claude 配置，Codex 使用上述路徑。啟用掛鉤需信任專案和掛鉤。
+使用 `$harness:build`。Codex 預設產生 `.codex/hooks.json`、`.codex/hooks/inject-context.sh`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py` 和 `.agents/skills/{project-rules,harness-engineering}/`。保留已有 Claude 檔案和無關掛鉤設定。工作流程與注入腳本已隨附，需要 Python 3。Codex 使用主工作階段所屬系列的最新模型與主工作階段推理設定的兩名獨立唯讀評審，Claude 保留 Opus + Sonnet。事實引用、3.5 平均品質門檻和三輪上限均保持一致。下方檔案列表描述 Claude 配置，Codex 使用上述路徑。啟用掛鉤需信任專案和掛鉤。
 
 寫入受保護的 `.codex/` 和 `.agents/` 目錄可能需要 Codex 批准。無法取得批准時，技能會另行準備檔案並回報安裝待完成，不會放寬沙箱。
 
 ### Codex 設定
 
-兩端共用流程、產物與審查標準。Codex 審查模型可以設定，但不代表其輸出或品質與 Claude 相同。啟動 Codex 前設定以下環境變數，省略的值繼承目前工作階段。委派的 CLI 使用 `CXC_MODE=off`，主工作階段模式保持不變。
+兩端共用流程、產物與審查標準。Codex 審查模型可以設定，但不代表其輸出或品質與 Claude 相同。啟動 Codex 前設定以下環境變數。省略模型時使用目前工作階段所屬系列的最新模型；已設定的值可以是系列名稱或模型 ID，並會提升至該系列的最新模型。委派的 CLI 使用 `CXC_MODE=off`，主工作階段模式保持不變。若無法判定最新模型（例如沙箱無法重新整理目錄時，技能會先要求在沙箱外重新執行檢查），該步驟會說明原因並停止，不會改用其他模型。Codex 工作階段無法查看自身模型或所屬系列時，會要求你設定該變數。在 Claude Code 中，若 `ANTHROPIC_DEFAULT_<FAMILY>_MODEL` 別名被重新導向至其他模型，該步驟也會停止。
 
 | 設定 | 行為 |
 |---|---|
-| `HARNESS_CODEX_ARCH_MODEL` | 架構評審者 模型；預設：目前工作階段模型 |
+| `HARNESS_CODEX_ARCH_MODEL` | 架構評審者 模型；預設：目前工作階段所屬系列的最新模型 |
 | `HARNESS_CODEX_ARCH_EFFORT` | 架構評審者 推理強度；預設：目前工作階段推理強度 |
-| `HARNESS_CODEX_GATE_MODEL` | 閘門評審者 模型；預設：目前工作階段模型 |
+| `HARNESS_CODEX_GATE_MODEL` | 閘門評審者 模型；預設：目前工作階段所屬系列的最新模型 |
 | `HARNESS_CODEX_GATE_EFFORT` | 閘門評審者 推理強度；預設：目前工作階段推理強度 |
 
 請求中可指定 `host=claude`、`host=codex` 或 `host=both`。執行主機決定審查者，輸出目標決定路徑。內建掛鉤安裝器保留其他設定與掛鉤，支援預覽、合併與檢查；現有掛鉤內容不同時須先審查再替換。產生的工作流程包含可獨立執行的審查說明。
@@ -144,6 +144,7 @@ cd your-project
 .claude/
 ├── settings.json                    # UserPromptSubmit hook 接線
 ├── hooks/inject-context.sh          # 每次提示時注入 project-rules + harness-engineering
+├── scripts/latest-model.py          # 每次執行產生的技能時解析評審模型
 ├── scripts/review-gate.sh           # 確定性閘門——exit 0 / 1 / 2
 └── skills/
     ├── project-rules/SKILL.md       # 在 Phase 1–2 從你的程式碼推導出的規則

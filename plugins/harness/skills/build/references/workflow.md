@@ -49,10 +49,23 @@ plugin or its SKILL.md. Name the actual project-local gate and rule paths.
   Claude uses its Opus and Sonnet panel. Codex uses architecture and gate reviewers;
   embed the `HARNESS_CODEX_ARCH_MODEL`, `HARNESS_CODEX_ARCH_EFFORT`,
   `HARNESS_CODEX_GATE_MODEL` and `HARNESS_CODEX_GATE_EFFORT`
-  resolution rules from the adapter, defaulting to the main session's actual values.
+  resolution rules from the adapter. The effort defaults to the main session's actual
+  value; the model is resolved to the newest model of its family.
   Resolve defaults at each invocation of the generated skill, not at generation time.
   Do not hardcode the builder session's model or effort as a future default. If the
   current values are unavailable, require explicit role settings before dispatch.
+- Resolve every reviewer's model right before its dispatch through the project-local
+  resolver copy that `install-hooks.py` installed, never through the build plugin's
+  install path. Embed the selected host's command with real paths, for example on Codex
+  `python3 "$(git rev-parse --show-toplevel)/.codex/scripts/latest-model.py" codex "${HARNESS_CODEX_ARCH_MODEL:-<main session model id>}" --effort "<effort>"`
+  (the gate reviewer uses `HARNESS_CODEX_GATE_MODEL`), passing stdout to `-m` or the native
+  subagent's model field. On Claude, before each spawn run
+  `python3 "$(git rev-parse --show-toplevel)/.claude/scripts/latest-model.py" claude <opus|sonnet> --project "$(git rev-parse --show-toplevel)"`.
+  On exit 2 (the newest cannot be determined, or an `ANTHROPIC_DEFAULT_<FAMILY>_MODEL`
+  override would run an older model) or exit 3 (effort not supported), do not dispatch, do
+  not substitute another model, and do not review yourself: report the resolver's
+  `latest-model:` message and stop the review. Record each reviewer's effort and the id
+  that actually ran, taken from the run, never from the reviewer's own report.
   Embed the available native dispatch route or the separate `CXC_MODE=off codex exec
   --ephemeral -s read-only` recipe with explicit model, effort, cwd and prompt-file stdin.
 - Give both the same complete diff, rule bodies, convention evidence, generated file

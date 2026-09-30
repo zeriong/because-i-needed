@@ -17,7 +17,7 @@ The five READMEs restate these facts from SKILL.md. A change to one in SKILL.md 
 | Fact | Source in SKILL.md |
 |---|---|
 | Intake plus eight build phases and the per-phase responsibility table | `## Phase 0` through `## Phase 8` |
-| The generated file tree (`.claude/settings.json`, `hooks/inject-context.sh`, `scripts/review-gate.sh`, `skills/project-rules`, `skills/harness-engineering`, `docs/conventions/<rule>.md`) | the output list at the top, `## harness:build complete` |
+| The generated file tree (`.claude/settings.json`, `hooks/inject-context.sh`, `scripts/review-gate.sh`, `scripts/latest-model.py`, `skills/project-rules`, `skills/harness-engineering`, `docs/conventions/<rule>.md`) | the output list at the top, `## harness:build complete` |
 | The 6 trigger keywords | frontmatter `description` |
 | The 6 quality axes and rejection below a 3.5 average | `## Absolute laws` item 4, `## Phase 8` |
 | Regression cap = 3 | `## Phase 6` (6.2), `## Phase 8`, `## Notes for Claude` |
@@ -47,6 +47,29 @@ without a shell heredoc temporary file, including in read-only reviewer processe
 
 The plugin name `harness` and the skill folder name `build` are embedded in the ten READMEs' `/harness:build` and in SKILL.md's
 report headings (`## harness:build …`). A rename changes all of them together (root Rule 8). Before 1.1.0 the name was `harness-builder`.
+
+## Rule 4 — Every reviewer runs the newest model of its family
+
+The architecture and gate reviewers (Codex) and the Opus and Sonnet panel (Claude) run the newest model of their family
+that the installed CLI and account offer, resolved right before each dispatch with `scripts/latest-model.py`
+(byte-identical in every plugin). The maintainer upgrades the CLIs; the plugin only chooses the newest available model.
+
+- Codex: `HARNESS_CODEX_ARCH_MODEL` and `HARNESS_CODEX_GATE_MODEL` name a family or an id and are resolved to its family's
+  newest; unset, the main session's model id is used. The commands live in `references/host-codex.md`.
+- Claude Code: the panel keeps the `opus` / `sonnet` aliases; SKILL.md's Host setup runs the resolver's `claude` mode
+  first, because an `ANTHROPIC_DEFAULT_<FAMILY>_MODEL` override would silently run an older model.
+- The generated harness-engineering skill resolves through a project-local copy, `.<host>/scripts/latest-model.py`, which
+  `skills/build/scripts/install-hooks.py` installs beside the hook (same dry-run / check / idempotent behavior; a differing
+  existing copy needs `--replace-hook`). It never references the plugin's install path, which does not exist for the project's other users.
+- Exit 2 or 3 stops the review: no fallback model, and the main agent never reviews itself.
+- Write no versioned model id in a skill, reference or script — use placeholders (`<resolved id>`); a pin-scan test fails on one.
+- Record each reviewer's id from the run (Codex run header `model:`, a native reviewer's receipt), never from the reviewer's report.
+
+**Why:** measured in z-lab `plugin-platform-lab/latest-model-0.159.0/` (L01–L07) and
+`latest-model-r2-0.159.0/`, `-r3-`, `-r4-` (L04r–L09, L02x; L08/L08i: a sandboxed shell cannot refresh the catalog,
+so a sandboxed main reruns the resolver outside the sandbox before stopping): the live Codex catalog listed a newer model than the
+bundled one, `-m <resolved id>` ran it, an `ANTHROPIC_DEFAULT_SONNET_MODEL` override made the `sonnet` alias run Haiku, and a Codex agent's
+statement of its own model was wrong (plan-smith-lab N03). Wired skill: z-lab `harness-lab/latest-model-1.3.0/` (M01, M02; a full build was not measured). The generated skill outlives the builder session, so it needs its own resolver.
 
 ## Codex compatibility evidence — 1.2.0
 

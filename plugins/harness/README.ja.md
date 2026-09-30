@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.3.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -47,19 +47,19 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add harness@bin
 ```
 
-`$harness:build` を使います。Codex の既定出力は `.codex/hooks.json`、`.codex/hooks/inject-context.sh`、`.codex/scripts/review-gate.sh`、`.agents/skills/{project-rules,harness-engineering}/` です。既存の Claude ファイルと無関係なフック設定を保持します。ワークフローと注入スクリプトを同梱し、Python 3 が必要です。Codex はメインのモデル・推論設定を継承した独立した読み取り専用レビュアー2名、Claude は Opus + Sonnet を使います。事実の引用、平均品質3.5、反復上限3回は共通です。以下のファイル一覧は Claude の配置です。Codex は上記のパスを使い、プロジェクトとフックの信頼設定が必要です。
+`$harness:build` を使います。Codex の既定出力は `.codex/hooks.json`、`.codex/hooks/inject-context.sh`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py`、`.agents/skills/{project-rules,harness-engineering}/` です。既存の Claude ファイルと無関係なフック設定を保持します。ワークフローと注入スクリプトを同梱し、Python 3 が必要です。Codex はメインセッションのファミリーの最新モデルと推論設定を使う独立した読み取り専用レビュアー2名、Claude は Opus + Sonnet を使います。事実の引用、平均品質3.5、反復上限3回は共通です。以下のファイル一覧は Claude の配置です。Codex は上記のパスを使い、プロジェクトとフックの信頼設定が必要です。
 
 保護された `.codex/` と `.agents/` への書き込みには Codex の承認が必要な場合があります。承認できないセッションではファイルを別途準備してインストール待ちと報告し、サンドボックスを緩和しません。
 
 ### Codex 設定
 
-手順・成果物・レビュー基準を共有します。Codex のレビューモデルは設定できますが、Claude と同一の出力や品質を保証するものではありません。Codex 起動前に環境変数を設定し、省略した値は現在のセッションを継承します。委任された CLI は `CXC_MODE=off` で実行され、メインのモードは変わりません。
+手順・成果物・レビュー基準を共有します。Codex のレビューモデルは設定できますが、Claude と同一の出力や品質を保証するものではありません。Codex 起動前に環境変数を設定してください。モデルを省略すると現在のセッションのファミリーの最新モデルを使います。設定値にはファミリー名またはモデル ID を指定でき、そのファミリーの最新モデルに引き上げられます。委任された CLI は `CXC_MODE=off` で実行され、メインのモードは変わりません。最新モデルを特定できない場合（例: サンドボックス内でカタログを更新できないときは、スキルが先にサンドボックス外で確認を再実行するよう求めます）、フォールバックせず理由を説明してステップを停止します。Codex セッションが自身のモデルまたはファミリーを確認できない場合は、変数の設定を求めます。Claude Code では、`ANTHROPIC_DEFAULT_<FAMILY>_MODEL` エイリアスが別モデルにリダイレクトされている場合もステップを停止します。
 
 | 設定 | 動作 |
 |---|---|
-| `HARNESS_CODEX_ARCH_MODEL` | 設計レビュアー モデル。既定: 現在のセッションのモデル |
+| `HARNESS_CODEX_ARCH_MODEL` | 設計レビュアー モデル。既定: 現在のセッションのファミリーの最新モデル |
 | `HARNESS_CODEX_ARCH_EFFORT` | 設計レビュアー 推論強度。既定: 現在のセッションの推論強度 |
-| `HARNESS_CODEX_GATE_MODEL` | ゲートレビュアー モデル。既定: 現在のセッションのモデル |
+| `HARNESS_CODEX_GATE_MODEL` | ゲートレビュアー モデル。既定: 現在のセッションのファミリーの最新モデル |
 | `HARNESS_CODEX_GATE_EFFORT` | ゲートレビュアー 推論強度。既定: 現在のセッションの推論強度 |
 
 依頼で `host=claude`、`host=codex`、`host=both` を指定できます。実行ホストがレビュアーを、出力先がパスを決めます。同梱のフックインストーラーは他の設定やフックを保持してプレビュー・マージ・検査します。既存フックが異なる場合は置換前に確認します。生成ワークフローには独立したレビュー手順が含まれます。
@@ -144,6 +144,7 @@ cd your-project
 .claude/
 ├── settings.json                    # UserPromptSubmit フックの配線
 ├── hooks/inject-context.sh          # プロンプトごとに project-rules + harness-engineering を注入
+├── scripts/latest-model.py          # 各スキル実行時にレビューモデルを解決
 ├── scripts/review-gate.sh           # 決定論的ゲート — exit 0 / 1 / 2
 └── skills/
     ├── project-rules/SKILL.md       # Phase 1–2 であなたのコードから導出したルール

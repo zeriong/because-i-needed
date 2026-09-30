@@ -58,7 +58,7 @@ codex plugin add claude-x-codex@bin
 
 [閱讀 plan-smith 繁體中文 README →](plugins/plan-smith/README.zh-TW.md)
 
-### [harness](plugins/harness) · `v1.2.0`
+### [harness](plugins/harness) · `v1.3.0`
 
 **以事實分析而非範本，打造專屬於專案的 Claude Code 或 Codex harness。** 它會讀取儲存庫實際的分層與關注點分離，推導出每條都引用你程式碼中 `file:line` 的規則，並產生 `project-rules`、具確定性的 `review-gate.sh`、`UserPromptSubmit` hook，以及 `harness-engineering` 技能。
 

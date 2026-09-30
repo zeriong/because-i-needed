@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.3.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -47,19 +47,19 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add harness@bin
 ```
 
-使用 `$harness:build`。Codex 默认生成 `.codex/hooks.json`、`.codex/hooks/inject-context.sh`、`.codex/scripts/review-gate.sh` 和 `.agents/skills/{project-rules,harness-engineering}/`。保留已有 Claude 文件和无关钩子设置。工作流程与注入脚本已随附，需要 Python 3。Codex 使用继承主代理模型与推理设置的两名独立只读评审，Claude 保留 Opus + Sonnet。事实引用、3.5 平均质量门槛和三轮上限均保持一致。下方文件列表描述 Claude 布局，Codex 使用上述路径。激活钩子需信任项目和钩子。
+使用 `$harness:build`。Codex 默认生成 `.codex/hooks.json`、`.codex/hooks/inject-context.sh`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py` 和 `.agents/skills/{project-rules,harness-engineering}/`。保留已有 Claude 文件和无关钩子设置。工作流程与注入脚本已随附，需要 Python 3。Codex 使用主会话所属系列的最新模型与主会话推理设置的两名独立只读评审，Claude 保留 Opus + Sonnet。事实引用、3.5 平均质量门槛和三轮上限均保持一致。下方文件列表描述 Claude 布局，Codex 使用上述路径。激活钩子需信任项目和钩子。
 
 写入受保护的 `.codex/` 和 `.agents/` 目录可能需要 Codex 批准。无法获得批准时，技能会另行准备文件并报告安装待完成，不会放宽沙箱。
 
 ### Codex 设置
 
-两端共享流程、产物和评审标准。Codex 评审模型可配置，但不代表其输出或质量与 Claude 相同。启动 Codex 前设置以下环境变量，省略的值继承当前会话。委派的 CLI 使用 `CXC_MODE=off`，主会话模式保持不变。
+两端共享流程、产物和评审标准。Codex 评审模型可配置，但不代表其输出或质量与 Claude 相同。启动 Codex 前设置以下环境变量。省略模型时使用当前会话所属系列的最新模型；已设置的值可以是系列名或模型 ID，并会提升到该系列的最新模型。委派的 CLI 使用 `CXC_MODE=off`，主会话模式保持不变。如果无法确定最新模型（例如沙箱无法刷新目录时，技能会先请求在沙箱外重新运行检查），该步骤会说明原因并停止，不会回退到其他模型。Codex 会话无法查看自身模型或所属系列时，会请求你设置该变量。在 Claude Code 中，若 `ANTHROPIC_DEFAULT_<FAMILY>_MODEL` 别名被重定向到其他模型，该步骤也会停止。
 
 | 设置 | 行为 |
 |---|---|
-| `HARNESS_CODEX_ARCH_MODEL` | 架构评审者 模型；默认：当前会话模型 |
+| `HARNESS_CODEX_ARCH_MODEL` | 架构评审者 模型；默认：当前会话所属系列的最新模型 |
 | `HARNESS_CODEX_ARCH_EFFORT` | 架构评审者 推理强度；默认：当前会话推理强度 |
-| `HARNESS_CODEX_GATE_MODEL` | 门控评审者 模型；默认：当前会话模型 |
+| `HARNESS_CODEX_GATE_MODEL` | 门控评审者 模型；默认：当前会话所属系列的最新模型 |
 | `HARNESS_CODEX_GATE_EFFORT` | 门控评审者 推理强度；默认：当前会话推理强度 |
 
 请求中可指定 `host=claude`、`host=codex` 或 `host=both`。执行宿主决定评审者，输出目标决定路径。内置钩子安装器保留其他设置和钩子，支持预览、合并和检查；现有钩子内容不同时须先审查再替换。生成的工作流包含可独立执行的评审说明。
@@ -144,6 +144,7 @@ cd your-project
 .claude/
 ├── settings.json                    # UserPromptSubmit 钩子接线
 ├── hooks/inject-context.sh          # 每次提示时注入 project-rules + harness-engineering
+├── scripts/latest-model.py          # 每次运行生成的技能时解析评审模型
 ├── scripts/review-gate.sh           # 确定性门禁 — exit 0 / 1 / 2
 └── skills/
     ├── project-rules/SKILL.md       # 在 Phase 1–2 中从你的代码推导出的规则

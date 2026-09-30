@@ -15,12 +15,25 @@ The execution host determines the reviewer tools; the target determines output p
 For `both`, derive rules once and generate both layouts without overwriting personal
 settings. That adapter maps every output path, question, review and hook to Codex. The shared phases,
 fact citations, quality thresholds and regression limits remain the same.
+`<plugin>` is `${CLAUDE_PLUGIN_ROOT}` when expanded by Claude Code, or the absolute
+path two directories above this skill's directory on Codex. Resolve it from the
+loaded SKILL.md path, never from the target project's working directory.
+
+Every reviewer this skill dispatches runs the newest model of its family, resolved right
+before each dispatch. Codex: the resolver command in the adapter. Claude Code: the `opus`
+and `sonnet` aliases are the newest, so before each spawn run
+`python3 "<plugin>/scripts/latest-model.py" claude <opus|sonnet> --project "<project root>"`;
+exit 2 means an `ANTHROPIC_DEFAULT_<FAMILY>_MODEL` override would silently run an older
+model. On exit 2 or 3, do not dispatch, do not substitute another model, and do not do the
+review yourself: tell the user the resolver's `latest-model:` message and stop that step.
 
 The bundled [references/workflow.md](references/workflow.md) defines the generated
 workflow. The hook source is [assets/inject-context.sh](assets/inject-context.sh);
 copy it to the target project, preserving its executable bit. It needs Python 3.
 Use [scripts/install-hooks.py](scripts/install-hooks.py) to copy the asset and merge
-hook settings; it preserves unrelated keys/hooks and avoids duplicate registration.
+hook settings; it preserves unrelated keys/hooks and avoids duplicate registration. It also
+copies the plugin's `scripts/latest-model.py` to `.claude/scripts/` or `.codex/scripts/`, so the
+generated review resolves the newest model without the plugin installed.
 Resolve bundled resources from this skill's directory. Run from the target project:
 
 ```bash
@@ -35,7 +48,7 @@ before changes. `--check` checks wiring, not runtime activation or generated rul
 
 When invoked from within a target project, this skill **builds a harness-engineering structure from-scratch for that project**. It does not merely stamp out the skeleton from a setup-guide — it **investigates that project's layering / concerns directly to derive rules**, and completes the structure that enforces those rules as gates, all in one breath.
 
-The outputs of this skill are the following 7:
+The outputs of this skill are the following 8:
 
 1. `.claude/settings.json` — wires up the `UserPromptSubmit` hook
 2. `.claude/hooks/inject-context.sh` — context injection script
@@ -44,6 +57,7 @@ The outputs of this skill are the following 7:
 5. `.claude/skills/project-rules/references/<rule>.md` — details for each rule
 6. `.claude/skills/harness-engineering/SKILL.md` — 11-phase workflow (separate from this skill)
 7. `docs/conventions/<rule>.md` — worse/better case + keyword index (requirement #7)
+8. `.claude/scripts/latest-model.py` — newest-model resolver, copied by `install-hooks.py`; the generated review calls it
 
 ---
 
@@ -331,7 +345,7 @@ Don't forget `chmod +x .claude/scripts/review-gate.sh`.
 }
 ```
 
-Copy [assets/inject-context.sh](assets/inject-context.sh) to `.claude/hooks/inject-context.sh` (or the Codex mapped path). It injects both generated skill bodies and supports the documented bypass phrases. Apply `chmod +x`.
+Copy [assets/inject-context.sh](assets/inject-context.sh) to `.claude/hooks/inject-context.sh` (or the Codex mapped path). It injects both generated skill bodies and supports the documented bypass phrases. Apply `chmod +x`. `install-hooks.py` copies both this hook and the resolver `latest-model.py` (to `.claude/scripts/latest-model.py`, or the Codex mapped path).
 
 ---
 
@@ -363,7 +377,7 @@ Each § maps 1:1 to `docs/conventions/<rule>.md`. Placing per-rule detail in a r
 
 ### 6.2 `.claude/skills/harness-engineering/SKILL.md`
 
-Generate the eleven phases and the self-contained review section in [references/workflow.md](references/workflow.md), with this project's rules, commands and selected host paths. Resolve every path and reviewer setting in the generated document; it must not require this installer skill or an installed plugin cache path. **The Phase 8 panel remains Opus 1 + Sonnet 1 on Claude Code; on Codex use the two independent reviewers specified by the Codex adapter. Each is a one-shot fresh spawn; main synthesizes.**
+Generate the eleven phases and the self-contained review section in [references/workflow.md](references/workflow.md), with this project's rules, commands and selected host paths. Resolve every path and reviewer setting in the generated document; it must not require this installer skill or an installed plugin cache path. The generated review resolves each reviewer's newest model at every invocation through the project-local `.<host>/scripts/latest-model.py`, never through `<plugin>`. **The Phase 8 panel remains Opus 1 + Sonnet 1 on Claude Code; on Codex use the two independent reviewers specified by the Codex adapter. Each is a one-shot fresh spawn; main synthesizes.**
 
 Phase 8 step machine:
 
@@ -417,6 +431,7 @@ Even after the Phase 7 above passes once, **fire one more time before declaring 
    - subagent_type: `general-purpose`
    - model: `opus` / `sonnet`
    - description: "one-shot harness review (Opus|Sonnet)"
+   - before each spawn: the Claude newest-model check from Host setup
    - prompt: the input bundle below
 
 2. **Input bundle (identical for both agents)**:
@@ -428,6 +443,7 @@ Even after the Phase 7 above passes once, **fire one more time before declaring 
    - .claude/settings.json
    - .claude/hooks/inject-context.sh
    - .claude/scripts/review-gate.sh
+   - .claude/scripts/latest-model.py
    - .claude/skills/project-rules/SKILL.md
    - .claude/skills/harness-engineering/SKILL.md
    - docs/conventions/*.md
@@ -493,6 +509,7 @@ On done declaration, output to the user:
 - .claude/settings.json
 - .claude/hooks/inject-context.sh
 - .claude/scripts/review-gate.sh
+- .claude/scripts/latest-model.py
 - .claude/skills/project-rules/SKILL.md (+ references/)
 - .claude/skills/harness-engineering/SKILL.md
 - docs/conventions/<rule-1>.md ~ <rule-n>.md

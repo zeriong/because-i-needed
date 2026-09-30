@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.3.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -47,19 +47,19 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add harness@bin
 ```
 
-`$harness:build`를 사용합니다. Codex의 기본 생성 대상은 `.codex/hooks.json`, `.codex/hooks/inject-context.sh`, `.codex/scripts/review-gate.sh`, `.agents/skills/{project-rules,harness-engineering}/`입니다. 기존 Claude 파일과 다른 훅 설정을 보존합니다. 워크플로와 주입 스크립트가 포함되며 Python 3이 필요합니다. Codex에서는 메인의 모델·추론 수준을 쓰는 독립 읽기 전용 리뷰어 2명을 사용하고, Claude는 Opus + Sonnet 구성을 유지합니다. 사실 인용, 품질 평균 3.5 기준, 반복 상한 3회는 공통입니다. 아래 파일 목록은 Claude 경로이며 Codex에서는 위 경로를 사용합니다. 훅 활성화에는 프로젝트 및 훅 신뢰 설정이 필요합니다.
+`$harness:build`를 사용합니다. Codex의 기본 생성 대상은 `.codex/hooks.json`, `.codex/hooks/inject-context.sh`, `.codex/scripts/review-gate.sh`, `.codex/scripts/latest-model.py`, `.agents/skills/{project-rules,harness-engineering}/`입니다. 기존 Claude 파일과 다른 훅 설정을 보존합니다. 워크플로와 주입 스크립트가 포함되며 Python 3이 필요합니다. Codex에서는 메인 세션 제품군의 최신 모델과 메인의 추론 수준을 사용하는 독립 읽기 전용 리뷰어 2명을 사용하고, Claude는 Opus + Sonnet 구성을 유지합니다. 사실 인용, 품질 평균 3.5 기준, 반복 상한 3회는 공통입니다. 아래 파일 목록은 Claude 경로이며 Codex에서는 위 경로를 사용합니다. 훅 활성화에는 프로젝트 및 훅 신뢰 설정이 필요합니다.
 
 Codex에서 보호된 `.codex/`와 `.agents/`에 쓰려면 승인이 필요할 수 있습니다. 승인할 수 없는 세션에서는 파일을 별도로 준비하고 설치 대기로 보고하며, 샌드박스를 완화하지 않습니다.
 
 ### Codex 설정
 
-작업 단계·산출물·검토 기준을 공유합니다. Codex 검토 모델은 설정할 수 있으며, Claude 모델과 결과나 품질이 같다는 뜻은 아닙니다. Codex를 시작하기 전에 아래 환경변수를 지정하세요. 생략한 값은 현재 세션을 따릅니다. 위임된 CLI 프로세스는 `CXC_MODE=off`로 실행하고 메인 모드는 유지합니다.
+작업 단계·산출물·검토 기준을 공유합니다. Codex 검토 모델은 설정할 수 있으며, Claude 모델과 결과나 품질이 같다는 뜻은 아닙니다. Codex를 시작하기 전에 아래 환경변수를 지정하세요. 모델을 생략하면 현재 세션 제품군의 최신 모델을 사용합니다. 설정한 모델 값은 제품군명이나 모델 ID를 지정할 수 있으며 해당 제품군의 최신 모델로 올려집니다. 위임된 CLI 프로세스는 `CXC_MODE=off`로 실행하고 메인 모드는 유지합니다. 최신 모델을 확인할 수 없으면(예: 샌드박스에서 카탈로그를 새로 고칠 수 없는 경우, 스킬이 먼저 샌드박스 밖에서 확인을 다시 실행하라고 요청합니다) 대체 모델로 넘어가지 않고 단계가 이유를 알리며 멈춥니다. Codex 세션이 자신의 모델이나 제품군을 확인할 수 없으면 변수 설정을 요청합니다. Claude Code에서는 `ANTHROPIC_DEFAULT_<FAMILY>_MODEL` 별칭이 다른 모델로 리디렉션된 경우에도 단계가 멈춥니다.
 
 | 설정 | 동작 |
 |---|---|
-| `HARNESS_CODEX_ARCH_MODEL` | 설계 검토자 모델. 기본값: 현재 세션 모델 |
+| `HARNESS_CODEX_ARCH_MODEL` | 설계 검토자 모델. 기본값: 현재 세션 제품군의 최신 모델 |
 | `HARNESS_CODEX_ARCH_EFFORT` | 설계 검토자 추론 강도. 기본값: 현재 세션 추론 강도 |
-| `HARNESS_CODEX_GATE_MODEL` | 게이트 검토자 모델. 기본값: 현재 세션 모델 |
+| `HARNESS_CODEX_GATE_MODEL` | 게이트 검토자 모델. 기본값: 현재 세션 제품군의 최신 모델 |
 | `HARNESS_CODEX_GATE_EFFORT` | 게이트 검토자 추론 강도. 기본값: 현재 세션 추론 강도 |
 
 요청에 `host=claude`, `host=codex`, `host=both`를 지정할 수 있습니다. 실행 중인 호스트가 검토자를, 출력 대상이 파일 경로를 결정합니다. 번들 훅 설치기는 기존 훅과 다른 설정을 보존하면서 변경을 미리 보고 병합·검사합니다. 기존 훅 내용이 다르면 교체 전에 검토해야 합니다. 생성된 워크플로에는 독립적으로 실행할 수 있는 리뷰 지침이 포함됩니다.
@@ -144,6 +144,7 @@ cd your-project
 .claude/
 ├── settings.json                    # UserPromptSubmit hook 배선
 ├── hooks/inject-context.sh          # 매 프롬프트마다 project-rules + harness-engineering 주입
+├── scripts/latest-model.py          # 생성된 스킬을 호출할 때마다 리뷰어 모델을 결정
 ├── scripts/review-gate.sh           # 결정론적 게이트 — exit 0 / 1 / 2
 └── skills/
     ├── project-rules/SKILL.md       # 내 코드에서 도출된 룰 (Phase 1–2 결과)

@@ -58,7 +58,7 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the plan-smith README →](plugins/plan-smith)
 
-### [harness](plugins/harness) · `v1.2.0`
+### [harness](plugins/harness) · `v1.3.0`
 
 **Build a project-tailored Claude Code or Codex harness from fact-based analysis, not a template.** It reads your repo's actual layering and separation of concerns, derives rules that each cite a `file:line` in your code, and generates `project-rules`, a deterministic `review-gate.sh`, a `UserPromptSubmit` hook, and a `harness-engineering` skill.
 

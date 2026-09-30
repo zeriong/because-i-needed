@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install the bundled prompt hook without replacing unrelated host settings."""
+"""Install the bundled prompt hook and model resolver without replacing unrelated host settings."""
 import argparse
 import copy
 import json
@@ -9,10 +9,11 @@ import sys
 import tempfile
 
 
-def prepare(root, host, source, replace):
+def prepare(root, host, source, resolver, replace):
     agent = root / ("." + host)
     config = agent / ("settings.json" if host == "claude" else "hooks.json")
     hook = agent / "hooks/inject-context.sh"
+    script = agent / "scripts/latest-model.py"
     data = json.loads(config.read_text()) if config.exists() else {}
     if not isinstance(data, dict):
         raise ValueError(f"{config}: expected a JSON object")
@@ -49,11 +50,14 @@ def prepare(root, host, source, replace):
     hooks["UserPromptSubmit"] = merged
     if hook.exists() and hook.read_bytes() != source and not replace:
         raise ValueError(f"{hook}: existing hook differs; review it before --replace-hook")
+    if script.exists() and script.read_bytes() != resolver and not replace:
+        raise ValueError(f"{script}: existing resolver differs; review it before --replace-hook")
     # Preserve original formatting when the semantic configuration is unchanged.
     original = config.read_bytes() if config.exists() else None
     config_bytes = original if original and json.loads(original) == data else (
         json.dumps(data, ensure_ascii=False, indent=2) + "\n").encode()
     return [(hook, source, 0o755),
+            (script, resolver, 0o755),
             (config, config_bytes, config.stat().st_mode & 0o777 if config.exists() else 0o644)]
 
 
@@ -78,15 +82,17 @@ def main():
     action.add_argument("--dry-run", action="store_true")
     action.add_argument("--check", action="store_true")
     parser.add_argument("--replace-hook", action="store_true",
-                        help="replace an existing hook only after reviewing its customizations")
+                        help="replace an existing hook or resolver copy only after reviewing its customizations")
     args = parser.parse_args()
     root = args.project.resolve(strict=True)
     source = (Path(__file__).resolve().parent.parent / "assets/inject-context.sh").read_bytes()
+    # This file sits three directories below the plugin root (skills/build/scripts/).
+    resolver = (Path(__file__).resolve().parents[3] / "scripts/latest-model.py").read_bytes()
     hosts = ("claude", "codex") if args.host == "both" else (args.host,)
     plan = []
     # Validate every target before making the first change.
     for host in hosts:
-        plan.extend(prepare(root, host, source, args.replace_hook))
+        plan.extend(prepare(root, host, source, resolver, args.replace_hook))
     changed = [(p, b, mode) for p, b, mode in plan
                if not p.exists() or p.read_bytes() != b or p.stat().st_mode & 0o777 != mode]
     if args.check or args.dry_run:
