@@ -192,7 +192,7 @@ if [ $failed -gt 0 ]; then
 fi
 if [ "$host" = codex ]; then
   echo "Done. Start a new Codex session to load: ${chosen[*]}"
-  echo 'Use $plugin:skill (for example $plan-smith:forge). Review plugin hooks with /hooks before use.'
+  echo 'Use $plugin:skill (for example $harness:build). Review plugin hooks with /hooks before use.'
 else
   echo "Done. Start a new Claude Code session (or run /reload-plugins) to load: ${chosen[*]}"
 fi

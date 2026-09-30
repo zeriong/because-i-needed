@@ -64,7 +64,10 @@ class CompatibilityTests(unittest.TestCase):
         installer = ["bash", str(ROOT / "install.sh")]
         result = run(installer + ["--host=codex", "--all", "--dry-run"], self.repo)
         self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.stdout.count("+ codex plugin add "), 4)
+        self.assertEqual(result.stdout.count("+ codex plugin add "), 3)
+        for name in ("harness", "ux-ui", "claude-x-codex"):
+            self.assertIn(f"+ codex plugin add {name}@", result.stdout)
+        self.assertNotIn("plan-smith", result.stdout)
         self.assertNotIn("+ claude", result.stdout)
         self.assertEqual(run(installer + ["--host", "codex", "--list"], self.repo).returncode, 0)
         self.assertNotEqual(run(installer + ["--host", "unknown", "--all"], self.repo).returncode, 0)
@@ -575,7 +578,7 @@ class LatestModelTests(unittest.TestCase):
 
     def test_latest_model_copies_are_byte_identical_and_executable(self):
         paths = [ROOT / f"plugins/{name}/scripts/latest-model.py" for name in
-                 ("claude-x-codex", "plan-smith", "harness", "ux-ui")]
+                 ("claude-x-codex", "harness", "ux-ui")]
         for path in paths:
             self.assertTrue(path.is_file(), str(path))
             self.assertTrue(path.stat().st_mode & 0o111, str(path))

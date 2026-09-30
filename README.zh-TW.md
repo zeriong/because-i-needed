@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>因為需要才自己做的 Claude Code 與 Codex 外掛——規劃、專案 harness，以及實測驅動的 UI。</strong>
+  <strong>因為需要才自己做的 Claude Code 與 Codex 外掛——專案 harness、實測驅動的 UI，以及 Claude × Codex 協作編排。</strong>
 </p>
 
 <p align="center">
@@ -21,42 +21,32 @@
 
 ---
 
-本儲存庫是一個 Claude Code 與 Codex **外掛市集**，收錄四個彼此獨立的外掛。只要安裝你需要的即可。
+本儲存庫是一個 Claude Code 與 Codex **外掛市集**，收錄三個彼此獨立的外掛。只要安裝你需要的即可。
 
 ## Codex
 
-這4個外掛也支援 Codex CLI 0.158.0 及以上版本。選擇需要的外掛安裝：
+這3個外掛也支援 Codex CLI 0.158.0 及以上版本。選擇需要的外掛安裝：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only plan-smith,harness,ux-ui,claude-x-codex
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,claude-x-codex
 ```
 
 也可以直接使用 CLI：
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add plan-smith@bin
 codex plugin add harness@bin
 codex plugin add ux-ui@bin
 codex plugin add claude-x-codex@bin
 ```
 
-在新的 Codex 工作階段中呼叫 `$plan-smith:forge`、`$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile` 或 `$claude-x-codex:run`。使用 `$claude-x-codex:mode on` 開啟自動協作，使用 `$claude-x-codex:audit` 檢查上下文。在依賴自動路由和 UI 提交閘門之前，請透過 `/hooks` 審核並信任已安裝的掛鉤。
+在新的 Codex 工作階段中呼叫 `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile` 或 `$claude-x-codex:run`。使用 `$claude-x-codex:mode on` 開啟自動協作，使用 `$claude-x-codex:audit` 檢查上下文。在依賴自動路由和 UI 提交閘門之前，請透過 `/hooks` 審核並信任已安裝的掛鉤。
 
 安裝器預設使用 Claude Code；`--host codex` 選擇 Codex。Codex 僅支援使用者範圍：省略 `--scope` 或使用 `--scope user`，project/local 範圍會被拒絕。兩個宿主共用技能、腳本和工作流程，每個外掛另附 Codex 清單。Codex 使用自己的提問工具和獨立代理。產生的 harness 使用 `.codex/hooks.json`、`.codex/hooks/`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py` 和 `.agents/skills/`，保留現有 Claude 檔案。UI 實測仍需要對應的瀏覽器或行動工具。詳情參閱各外掛的 Codex 章節。
 
 各外掛的 Codex 章節提供設定方式。可分別指定撰寫者與審查者的模型及推理強度；未設定的角色會執行目前工作階段所屬系列的最新模型。harness 可產生 Claude、Codex 或雙方設定。CXC 保留原有跨供應商路由。仍需滿足瀏覽器、裝置條件及掛鉤信任要求。
 
 ## 外掛
-
-### [plan-smith](plugins/plan-smith) · `v1.8.0`
-
-**用兩階段管線鍛造計畫。** 主代理會把整段對話提煉成上下文封包（目標、硬性限制、已否決的替代方案），並先向你確認；接著由乾淨上下文的 `plan-writer` 代理，運用推理框架庫與經過驗證的寫作風格撰寫計畫，再把計畫原封不動地轉交給你——沒有摘要造成的資訊流失，也沒有上下文汙染。
-
-- **適用時機：** 需要為遷移、上線、build-out 擬定計畫時——凡是冗長又充滿雜訊的工作階段容易讓計畫變得混亂的任務都適用。
-- **進入點：** `/plan-smith:forge <任務>`，或直接說 *「幫我寫一份……的計畫」*
-
-[閱讀 plan-smith 繁體中文 README →](plugins/plan-smith/README.zh-TW.md)
 
 ### [harness](plugins/harness) · `v1.3.0`
 
@@ -87,6 +77,17 @@ codex plugin add claude-x-codex@bin
 
 [閱讀 claude-x-codex 繁體中文 README →](plugins/claude-x-codex/README.zh-TW.md)
 
+## 已退役的外掛
+
+### plan-smith — 於 2026-09-30 退役（最後版本 1.8.0）
+
+在 z-lab 中，plan-smith 1.6.0 的管線（Claude Code，一項任務）在同一模型負責規劃與實作時整體上增加了成本。僅規劃階段就使用完整基礎規劃與實作鏈 token 數的約 1.65 倍（Fable 5.1，已完成）和至少 2.41 倍（Opus 5.5，中止）；基礎計畫已在首次嘗試時完成。每個數值都是對應模型的一次執行結果。節省只在近似管線中測量過；真實管線中的較弱實作者影響與計畫品質均未測量。[測量結果](https://github.com/zeriong/z-lab/tree/main/plan-smith-lab/real-skill-tco-1.6.0)與[退役決定](https://github.com/zeriong/z-lab/tree/main/plan-smith-lab/analyze)請見連結。最後的原始碼（1.8.0）仍保留在本儲存庫的 git 歷史中；截至 1.4.2 的版本位於[zeriong/plan-smith](https://github.com/zeriong/plan-smith)。
+
+移除已安裝副本：
+
+- Claude Code：`claude plugin uninstall plan-smith@bin`（若安裝於 project 或 local 範圍，請加上 `--scope project` 或 `--scope local`。）
+- Codex：`codex plugin remove plan-smith@bin`
+
 ## 安裝
 
 安裝腳本會列出外掛，並只安裝你選取的：
@@ -101,7 +102,6 @@ curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/insta
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
-claude plugin install plan-smith@bin
 claude plugin install harness@bin
 claude plugin install ux-ui@bin
 claude plugin install claude-x-codex@bin
@@ -119,7 +119,6 @@ claude plugin install claude-x-codex@bin
     }
   },
   "enabledPlugins": {
-    "plan-smith@bin": true,
     "harness@bin": true,
     "ux-ui@bin": true,
     "claude-x-codex@bin": true
@@ -131,7 +130,7 @@ claude plugin install claude-x-codex@bin
 
 每個命令都讀作 **對象 : 動作** —— `/<外掛>:<技能>`。
 
-- **外掛 = 對象** —— 它處理什麼（`harness`、`ux-ui`）。`plan-smith` 保留既有的名稱。
+- **外掛 = 對象** —— 它處理什麼（`harness`、`ux-ui`）。
 - **技能 = 動詞** —— 從同一套共用詞彙中選取，同一個動詞在所有外掛中含義相同。
 - 外掛維持獨立：你只安裝需要的外掛，一個外掛的 hook 或 MCP 伺服器不會跟著另一個外掛一起裝上。
 
@@ -144,16 +143,15 @@ claude plugin install claude-x-codex@bin
 | `audit` | 唯讀檢查 |
 | `review` | 審查結果 |
 
-`review` 保留給後續的外掛。
+目前沒有使用 `forge` 或 `review` 的外掛。
 
 ## 儲存庫結構
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # 列出四個外掛
+├── .claude-plugin/marketplace.json   # 列出三個外掛
 ├── install.sh                        # 互動式安裝腳本（--host claude|codex）
 └── plugins/
-    ├── plan-smith/                   # 技能 + plan-writer 代理 + 拆分檢查器（+ CHANGELOG.md）
     ├── harness/                      # 技能
     ├── ux-ui/                        # 2 個技能 + 2 個代理 + 提交閘門 hook + 4 個 MCP
     └── claude-x-codex/               # 3 個技能 + 提示 hook + 3 個腳本

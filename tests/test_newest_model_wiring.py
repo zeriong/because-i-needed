@@ -12,7 +12,6 @@ ROOT = Path(__file__).resolve().parents[1]
 INSTALLER = ROOT / "plugins/harness/skills/build/scripts/install-hooks.py"
 RESOLVER = ROOT / "plugins/harness/scripts/latest-model.py"
 ADAPTERS = {
-    "plan-smith": ROOT / "plugins/plan-smith/skills/forge/references/host-codex.md",
     "ux-ui": ROOT / "plugins/ux-ui/skills/build/references/host-codex.md",
     "harness": ROOT / "plugins/harness/skills/build/references/host-codex.md",
 }
@@ -96,7 +95,7 @@ class HarnessResolverInstallTests(unittest.TestCase):
 class CodexAdapterWiringTests(unittest.TestCase):
     def test_each_plugin_ships_the_same_resolver(self):
         expected = RESOLVER.read_bytes()
-        for name in ("plan-smith", "ux-ui", "harness", "claude-x-codex"):
+        for name in ("ux-ui", "harness", "claude-x-codex"):
             self.assertEqual((ROOT / "plugins" / name / "scripts/latest-model.py").read_bytes(), expected, name)
 
     def test_adapters_resolve_the_newest_model_before_dispatch(self):
@@ -121,7 +120,6 @@ class CodexAdapterWiringTests(unittest.TestCase):
 
     def test_claude_hosts_check_the_alias_before_dispatch(self):
         skills = (
-            ROOT / "plugins/plan-smith/skills/forge/SKILL.md",
             ROOT / "plugins/ux-ui/skills/build/SKILL.md",
             ROOT / "plugins/ux-ui/skills/build-mobile/SKILL.md",
             ROOT / "plugins/harness/skills/build/SKILL.md",
@@ -136,11 +134,6 @@ class CodexAdapterWiringTests(unittest.TestCase):
         text = (ROOT / "plugins/harness/skills/build/SKILL.md").read_text()
         self.assertIn("`<plugin>` is `${CLAUDE_PLUGIN_ROOT}`", text)
         self.assertGreaterEqual(text.count(".claude/scripts/latest-model.py"), 3)
-
-    def test_plan_smith_run_stamp_names_no_versioned_id(self):
-        text = (ROOT / "plugins/plan-smith/skills/forge/references/packet-template.md").read_text()
-        self.assertNotIn("claude-opus-", text)
-        self.assertIn("never the writer's self-report", text)
 
 
 if __name__ == "__main__":

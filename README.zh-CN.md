@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>因为自己需要而做的 Claude Code 和 Codex 插件——规划、项目 harness、基于实测的 UI。</strong>
+  <strong>因为自己需要而做的 Claude Code 和 Codex 插件——项目 harness、基于实测的 UI、Claude × Codex 编排。</strong>
 </p>
 
 <p align="center">
@@ -21,42 +21,32 @@
 
 ---
 
-本仓库是一个 Claude Code 和 Codex **插件市场**，包含四个相互独立的插件。按需安装即可。
+本仓库是一个 Claude Code 和 Codex **插件市场**，包含三个相互独立的插件。按需安装即可。
 
 ## Codex
 
-这4个插件也支持 Codex CLI 0.158.0 及以上版本。选择需要的插件安装：
+这3个插件也支持 Codex CLI 0.158.0 及以上版本。选择需要的插件安装：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only plan-smith,harness,ux-ui,claude-x-codex
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,claude-x-codex
 ```
 
 也可以直接使用 CLI：
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add plan-smith@bin
 codex plugin add harness@bin
 codex plugin add ux-ui@bin
 codex plugin add claude-x-codex@bin
 ```
 
-在新的 Codex 会话中调用 `$plan-smith:forge`、`$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile` 或 `$claude-x-codex:run`。使用 `$claude-x-codex:mode on` 开启自动编排，使用 `$claude-x-codex:audit` 检查上下文。在依赖自动路由和 UI 提交门禁之前，请通过 `/hooks` 审核并信任已安装的钩子。
+在新的 Codex 会话中调用 `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile` 或 `$claude-x-codex:run`。使用 `$claude-x-codex:mode on` 开启自动编排，使用 `$claude-x-codex:audit` 检查上下文。在依赖自动路由和 UI 提交门禁之前，请通过 `/hooks` 审核并信任已安装的钩子。
 
 安装器默认使用 Claude Code；`--host codex` 选择 Codex。Codex 仅支持用户范围：省略 `--scope` 或使用 `--scope user`，project/local 范围会被拒绝。两个宿主共享技能、脚本和工作流程，每个插件另附 Codex 清单。Codex 使用自己的提问工具和独立代理。生成的 harness 使用 `.codex/hooks.json`、`.codex/hooks/`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py` 和 `.agents/skills/`，保留现有 Claude 文件。UI 实测仍需要对应的浏览器或移动工具。详情参阅各插件的 Codex 章节。
 
 各插件的 Codex 章节提供配置方法。可分别指定编写者和评审者的模型及推理强度；未配置的角色将运行当前会话所属系列的最新模型。harness 可生成 Claude、Codex 或双方配置。CXC 保留原有跨供应商路由。仍需满足浏览器、设备条件及钩子信任要求。
 
 ## 插件
-
-### [plan-smith](plugins/plan-smith) · `v1.8.0`
-
-**通过两阶段流水线锻造计划。** 主智能体把整段对话提炼成一份上下文包（目标、硬约束、被否决的备选方案），并与你确认；随后由一个上下文干净的 `plan-writer` 智能体借助推理框架库和经过验证的写作风格撰写计划，再把计划原样转交给你——没有摘要损失，也没有上下文污染。
-
-- **适用场景：** 需要为迁移、发布、build-out 制定计划时——凡是冗长嘈杂的会话容易把计划写得一团糟的任务都适用。
-- **入口：** `/plan-smith:forge <任务>` 或直接说 *“帮我写一份……的计划”*
-
-[查看 plan-smith 简体中文 README →](plugins/plan-smith/README.zh-CN.md)
 
 ### [harness](plugins/harness) · `v1.3.0`
 
@@ -87,6 +77,17 @@ codex plugin add claude-x-codex@bin
 
 [查看 claude-x-codex 简体中文 README →](plugins/claude-x-codex/README.zh-CN.md)
 
+## 已退役的插件
+
+### plan-smith — 于 2026-09-30 退役（最后版本 1.8.0）
+
+在 z-lab 中，plan-smith 1.6.0 的流水线（Claude Code，一个任务）在同一模型负责规划和实现时总体上增加了成本。仅规划阶段就使用了完整基础规划与实现链 token 数的约 1.65 倍（Fable 5.1，已完成）和至少 2.41 倍（Opus 5.5，中止）；基础计划已在首次尝试时完成。每个数值都是对应模型的一次运行结果。节省只在近似流水线中测量过；真实流水线中的较弱实现者影响和计划质量都没有测量。[测量结果](https://github.com/zeriong/z-lab/tree/main/plan-smith-lab/real-skill-tco-1.6.0)和[退役决定](https://github.com/zeriong/z-lab/tree/main/plan-smith-lab/analyze)详见链接。最后的源代码（1.8.0）仍保留在本仓库的 git 历史中；截至 1.4.2 的版本位于[zeriong/plan-smith](https://github.com/zeriong/plan-smith)。
+
+移除已安装副本：
+
+- Claude Code：`claude plugin uninstall plan-smith@bin`（如果安装在 project 或 local 范围，请添加 `--scope project` 或 `--scope local`。）
+- Codex：`codex plugin remove plan-smith@bin`
+
 ## 安装
 
 安装脚本会列出插件，并只安装你选中的：
@@ -101,7 +102,6 @@ curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/insta
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
-claude plugin install plan-smith@bin
 claude plugin install harness@bin
 claude plugin install ux-ui@bin
 claude plugin install claude-x-codex@bin
@@ -119,7 +119,6 @@ claude plugin install claude-x-codex@bin
     }
   },
   "enabledPlugins": {
-    "plan-smith@bin": true,
     "harness@bin": true,
     "ux-ui@bin": true,
     "claude-x-codex@bin": true
@@ -131,7 +130,7 @@ claude plugin install claude-x-codex@bin
 
 每条命令都读作 **对象 : 动作** —— `/<插件>:<技能>`。
 
-- **插件 = 对象** —— 它处理什么（`harness`、`ux-ui`）。`plan-smith` 保留已有的名称。
+- **插件 = 对象** —— 它处理什么（`harness`、`ux-ui`）。
 - **技能 = 动词** —— 从同一套共享词汇中选取，同一个动词在所有插件中含义相同。
 - 插件保持独立：你只安装需要的插件，一个插件的钩子或 MCP 服务器不会随另一个插件一起装上。
 
@@ -144,16 +143,15 @@ claude plugin install claude-x-codex@bin
 | `audit` | 只读检查 |
 | `review` | 评审结果 |
 
-`review` 为后续插件预留。
+目前没有使用 `forge` 或 `review` 的插件。
 
 ## 仓库结构
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # 登记四个插件
+├── .claude-plugin/marketplace.json   # 登记三个插件
 ├── install.sh                        # 交互式安装脚本（--host claude|codex）
 └── plugins/
-    ├── plan-smith/                   # 技能 + plan-writer 智能体 + 拆分检查器 (+ CHANGELOG.md)
     ├── harness/                      # 技能
     ├── ux-ui/                        # 2 个技能 + 2 个智能体 + 提交门禁钩子 + 4 个 MCP
     └── claude-x-codex/               # 3 个技能 + 提示钩子 + 3 个脚本

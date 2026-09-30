@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>必要だから作った Claude Code と Codex プラグイン集 — プランニング、プロジェクトハーネス、実測ベースの UI。</strong>
+  <strong>必要だから作った Claude Code と Codex プラグイン集 — プロジェクトハーネス、実測ベースの UI、Claude × Codex のオーケストレーション。</strong>
 </p>
 
 <p align="center">
@@ -21,42 +21,32 @@
 
 ---
 
-このリポジトリは、独立した 4 つのプラグインを収めた Claude Code と Codex の**プラグインマーケットプレイス**です。必要なものだけをインストールしてください。
+このリポジトリは、独立した 3 つのプラグインを収めた Claude Code と Codex の**プラグインマーケットプレイス**です。必要なものだけをインストールしてください。
 
 ## Codex
 
-同じ4つのプラグインを Codex CLI 0.158.0 以降でも使用できます。必要なものを選んでインストールします。
+同じ3つのプラグインを Codex CLI 0.158.0 以降でも使用できます。必要なものを選んでインストールします。
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only plan-smith,harness,ux-ui,claude-x-codex
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,claude-x-codex
 ```
 
 CLI から直接インストールすることもできます。
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add plan-smith@bin
 codex plugin add harness@bin
 codex plugin add ux-ui@bin
 codex plugin add claude-x-codex@bin
 ```
 
-新しい Codex セッションで `$plan-smith:forge`、`$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$claude-x-codex:run` を呼び出します。自動オーケストレーションは `$claude-x-codex:mode on`、コンテキスト点検は `$claude-x-codex:audit` です。自動ルーティングと UI コミットゲートを使う前に、`/hooks` でフックを確認して信頼してください。
+新しい Codex セッションで `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$claude-x-codex:run` を呼び出します。自動オーケストレーションは `$claude-x-codex:mode on`、コンテキスト点検は `$claude-x-codex:audit` です。自動ルーティングと UI コミットゲートを使う前に、`/hooks` でフックを確認して信頼してください。
 
 インストーラーの既定は Claude Code です。`--host codex` で Codex を選択します。Codex はユーザースコープのみで、`--scope` を省略するか `--scope user` を指定します。project/local は拒否されます。スキル、スクリプト、作業手順は共有し、各プラグインに Codex マニフェストを同梱します。Codex では独自の質問ツールと独立したエージェントを使用します。ハーネスは `.codex/hooks.json`、`.codex/hooks/`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py`、`.agents/skills/` を生成し、既存の Claude ファイルを保持します。UI の実測には対応するブラウザー・モバイルツールが必要です。詳細は各プラグインの Codex 節を参照してください。
 
 各プラグインの Codex 節に設定方法があります。執筆者・レビュアーごとにモデルと推論強度を指定でき、未設定の役割はアクティブなセッションのファミリーの最新モデルで実行します。ハーネスは Claude・Codex・両方の構成を生成できます。CXC のクロスベンダールーティングは維持されます。ブラウザー・デバイス要件とフック信頼は引き続き必要です。
 
 ## プラグイン
-
-### [plan-smith](plugins/plan-smith) · `v1.8.0`
-
-**2 段構成のパイプラインでプランを鍛え上げます**。メインエージェントが会話全体をコンテキストパケット（目標、ハード制約、却下された代替案）に蒸留してあなたに確認し、続いてクリーンなコンテキストの `plan-writer` エージェントが推論フレームライブラリと検証済みの執筆スタイルでプランを書きます。完成したプランは原文のまま届けられます — 要約による欠落も、コンテキスト汚染もありません。
-
-- **使いどころ:** マイグレーション、ローンチ、build-out など、長くノイズの多いセッションではプランがぼやけてしまいがちな作業の計画が必要なとき。
-- **エントリーポイント:** `/plan-smith:forge <タスク>`、または単に *「… のプランを書いて」*
-
-[plan-smith の日本語 README を読む →](plugins/plan-smith/README.ja.md)
 
 ### [harness](plugins/harness) · `v1.3.0`
 
@@ -87,6 +77,17 @@ codex plugin add claude-x-codex@bin
 
 [claude-x-codex の日本語 README を読む →](plugins/claude-x-codex/README.ja.md)
 
+## 退役したプラグイン
+
+### plan-smith — 2026-09-30 退役（最終バージョン 1.8.0）
+
+z-lab では、plan-smith 1.6.0 のパイプライン（Claude Code、1タスク）は、同じモデルが計画と実装を行う場合に純コストでした。計画だけで、計画・実装のベースチェーン全体の約1.65倍（Fable 5.1、完了）と少なくとも2.41倍（Opus 5.5、中断）のトークンを使い、ベース計画は最初の試行で完成していました。各数値はモデルごとに1回だけ実行した結果です。節約は近似パイプラインでのみ測定され、実際のパイプラインでの弱い実装者の影響と計画の品質は測定されていません。[測定結果](https://github.com/zeriong/z-lab/tree/main/plan-smith-lab/real-skill-tco-1.6.0)と[退役の決定](https://github.com/zeriong/z-lab/tree/main/plan-smith-lab/analyze)を参照してください。最後のソース（1.8.0）はこのリポジトリの git 履歴に残り、1.4.2 までのバージョンは[zeriong/plan-smith](https://github.com/zeriong/plan-smith)にあります。
+
+インストール済みのコピーを削除するには:
+
+- Claude Code: `claude plugin uninstall plan-smith@bin`（project または local スコープでインストールした場合は `--scope project` または `--scope local` を追加してください。）
+- Codex: `codex plugin remove plan-smith@bin`
+
 ## インストール
 
 インストーラーがプラグインの一覧を表示し、選んだものだけをインストールします。
@@ -101,7 +102,6 @@ curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/insta
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
-claude plugin install plan-smith@bin
 claude plugin install harness@bin
 claude plugin install ux-ui@bin
 claude plugin install claude-x-codex@bin
@@ -119,7 +119,6 @@ claude plugin install claude-x-codex@bin
     }
   },
   "enabledPlugins": {
-    "plan-smith@bin": true,
     "harness@bin": true,
     "ux-ui@bin": true,
     "claude-x-codex@bin": true
@@ -131,7 +130,7 @@ claude plugin install claude-x-codex@bin
 
 すべてのコマンドは **対象 : 動作** と読めます — `/<プラグイン>:<スキル>`。
 
-- **プラグイン = 対象** — 何を扱うか（`harness`、`ux-ui`）。`plan-smith` はすでに知られた名前を維持します。
+- **プラグイン = 対象** — 何を扱うか（`harness`、`ux-ui`）。
 - **スキル = 動詞** — 1 つの共通語彙から選び、同じ動詞はどのプラグインでも同じ意味です。
 - プラグインは分けたままにします。必要なものだけをインストールでき、あるプラグインのフックや MCP サーバーが別のプラグインに付いてくることはありません。
 
@@ -144,16 +143,15 @@ claude plugin install claude-x-codex@bin
 | `audit` | 読み取り専用で点検する |
 | `review` | 結果物をレビューする |
 
-`review` は今後のプラグインのために予約されています。
+現時点で `forge` と `review` を使うプラグインはありません。
 
 ## リポジトリ構成
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # 4 つのプラグインを登録
+├── .claude-plugin/marketplace.json   # 3 つのプラグインを登録
 ├── install.sh                        # 対話式インストーラー（--host claude|codex）
 └── plugins/
-    ├── plan-smith/                   # スキル + plan-writer エージェント + 分割チェッカー (+ CHANGELOG.md)
     ├── harness/                      # スキル
     ├── ux-ui/                        # スキル 2 + エージェント 2 + コミットゲートフック + MCP 4
     └── claude-x-codex/               # スキル 3 + プロンプトフック + スクリプト 3

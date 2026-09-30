@@ -4,27 +4,10 @@
     "name": "zeriong"
   },
   "metadata": {
-    "description": "Claude Code plugins built because I needed them — plan-smith, harness, ux-ui, claude-x-codex",
-    "version": "1.0.0"
+    "description": "Claude Code plugins built because I needed them — harness, ux-ui, claude-x-codex",
+    "version": "2.0.0"
   },
   "plugins": [
-    {
-      "name": "plan-smith",
-      "source": "./plugins/plan-smith",
-      "description": "Forge plans through a two-stage pipeline: the main agent distills session intent into a context packet, a clean-context plan-writer drafts with a proven reasoning-frame library and Opus/Fable-derived writing styles, and the result is relayed verbatim. Includes a relay mode (disciplined draft + auditing revision) validated by a 26-plan experiment.",
-      "version": "1.8.0",
-      "author": {
-        "name": "zeriong"
-      },
-      "keywords": [
-        "planning",
-        "reasoning-frames",
-        "pipeline",
-        "context-engineering",
-        "plan-review"
-      ],
-      "category": "productivity"
-    },
     {
       "name": "harness",
       "source": "./plugins/harness",

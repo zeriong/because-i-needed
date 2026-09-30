@@ -1,6 +1,6 @@
 # because-i-needed — repository rules
 
-This repository is a Claude Code and Codex marketplace holding four plugins (plan-smith, harness, ux-ui, claude-x-codex).
+This repository is a Claude Code and Codex marketplace holding three plugins (harness, ux-ui, claude-x-codex).
 **Shared rules live in this file**; **per-plugin rules live in `plugins/<name>/CLAUDE.md`** (loaded automatically when you read that plugin's files).
 A plugin file does not repeat this file — it holds only what applies to that plugin. If the two conflict, fix both.
 
@@ -104,12 +104,15 @@ plan-smith ≤ 1.4.2, harness-builder 1.0.0, ux-ui-builder ≤ 1.1.0 — lives i
 Checking a version boundary in git from this repository alone makes everything before that look empty.
 In the naming release (plan-smith 1.5.0, harness 1.1.0, ux-ui 1.2.0), `plugins/harness-builder` moved to `plugins/harness` and
 `plugins/ux-ui-builder` to `plugins/ux-ui`, and the skill folders moved to `build`, `build-mobile`, and `forge`. Read earlier file history with `git log --follow -- <current path>`.
+plan-smith was retired on 2026-09-30 (marketplace 2.0.0): z-lab `plan-smith-lab/real-skill-tco-1.6.0/` measured the shipped
+pipeline as a net cost where the same model plans and implements, and `plan-smith-lab/analyze/` records the decision. Its
+last source is `plugins/plan-smith/` at `82d8018` and the original repository `zeriong/plan-smith`.
 
 ## Rule 8 — Naming: `/<plugin>:<skill>` reads "subject : action"
 
 Plugin skills are invoked as `/<plugin>:<skill>` in Claude Code and `$<plugin>:<skill>` in Codex, and the plugin is the unit of installation. Name both halves this way.
 
-- **Plugin = subject** — what it works on (`harness`, `ux-ui`). An established brand name may stay (`plan-smith`).
+- **Plugin = subject** — what it works on (`harness`, `ux-ui`). An established brand name may stay (as `plan-smith` did until it was retired).
 - **Skill = verb** — what it does, chosen only from the shared vocabulary below. A verb means the same thing in every plugin.
 - **No repetition** — the same word never appears on both sides of the colon.
 - **One word per side** where possible. A variant goes after the verb (`build-mobile`).
