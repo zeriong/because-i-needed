@@ -34,11 +34,11 @@ This repository is a Claude Code **plugin marketplace** with four independent pl
 
 [Read the plan-smith README →](plugins/plan-smith)
 
-### [harness](plugins/harness) · `v1.1.0`
+### [harness](plugins/harness) · `v1.2.0`
 
-**Build a project-tailored Claude Code harness from fact-based analysis, not a template.** It reads your repo's actual layering and separation of concerns, derives rules that each cite a `file:line` in your code, and generates `project-rules`, a deterministic `review-gate.sh`, a `UserPromptSubmit` hook, and a `harness-engineering` skill.
+**Build a project-tailored Claude Code or Codex harness from fact-based analysis, not a template.** It reads your repo's actual layering and separation of concerns, derives rules that each cite a `file:line` in your code, and generates `project-rules`, a deterministic `review-gate.sh`, a `UserPromptSubmit` hook, and a `harness-engineering` skill.
 
-- **Use it when** you start Claude Code work on a project with no `.claude/` setup, or the structure changed enough that the old one no longer fits.
+- **Use it when** you start Claude Code or Codex work on a project without a harness, or the structure changed enough that the old one no longer fits.
 - **Entry:** `/harness:build` or *"build harness"*
 
 [Read the harness README →](plugins/harness)

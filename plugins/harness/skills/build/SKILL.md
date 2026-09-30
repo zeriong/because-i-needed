@@ -1,9 +1,37 @@
 ---
 name: build
-description: Directly investigates the target project's layering / separation-of-concerns on a fact-based basis, then uses those results to build the project-rules, review-gate.sh, UserPromptSubmit hook, and harness-engineering skill from-scratch. Does NOT copy-paste an already-written harness template. Trigger keywords (Korean / English) — "harness 만들어", "build harness", "harness 셋업", "프로젝트 룰 추출", "review gate 깔아줘", "harness:build". Runs as an 8-phase workflow; failure at any phase forces a return to Phase 1 (absolute law). Every claim in Phase 1 must include a `file:line` citation (any claim that does not pass the fact-check loop is discarded immediately).
+description: "Directly investigates the target project's layering / separation-of-concerns on a fact-based basis, then uses those results to build the project-rules, review-gate.sh, UserPromptSubmit hook, and harness-engineering skill from-scratch. Does NOT copy-paste an already-written harness template. Trigger keywords (Korean / English) — \"harness 만들어\", \"build harness\", \"harness 셋업\", \"프로젝트 룰 추출\", \"review gate 깔아줘\", \"harness:build\". Runs through intake plus eight build phases; failure at any phase forces a return to Phase 1 (absolute law). Every claim in Phase 1 must include a `file:line` citation (any claim that does not pass the fact-check loop is discarded immediately)."
 ---
 
 # harness:build
+
+## Host setup
+
+Claude Code uses `/harness:build` and generates the Claude layout below by default.
+Codex uses `$harness:build`; first read [references/host-codex.md](references/host-codex.md).
+Set `host=claude|codex|both` from the user's request; default to the current host.
+Read the adapter whenever Codex is a target, including when Claude generates it.
+The execution host determines the reviewer tools; the target determines output paths.
+For `both`, derive rules once and generate both layouts without overwriting personal
+settings. That adapter maps every output path, question, review and hook to Codex. The shared phases,
+fact citations, quality thresholds and regression limits remain the same.
+
+The bundled [references/workflow.md](references/workflow.md) defines the generated
+workflow. The hook source is [assets/inject-context.sh](assets/inject-context.sh);
+copy it to the target project, preserving its executable bit. It needs Python 3.
+Use [scripts/install-hooks.py](scripts/install-hooks.py) to copy the asset and merge
+hook settings; it preserves unrelated keys/hooks and avoids duplicate registration.
+Resolve bundled resources from this skill's directory. Run from the target project:
+
+```bash
+python3 "<skill>/scripts/install-hooks.py" --project "<project>" --host <claude|codex|both> --dry-run
+python3 "<skill>/scripts/install-hooks.py" --project "<project>" --host <claude|codex|both>
+python3 "<skill>/scripts/install-hooks.py" --project "<project>" --host <claude|codex|both> --check
+```
+
+`<skill>` is this loaded skill directory. Review a differing existing hook before
+using `--replace-hook`, retaining its custom behavior. Malformed settings stop setup
+before changes. `--check` checks wiring, not runtime activation or generated rules.
 
 When invoked from within a target project, this skill **builds a harness-engineering structure from-scratch for that project**. It does not merely stamp out the skeleton from a setup-guide — it **investigates that project's layering / concerns directly to derive rules**, and completes the structure that enforces those rules as gates, all in one breath.
 
@@ -26,7 +54,7 @@ The outputs of this skill are the following 7:
 3. **Phase fail → brainstorm between main + Opus agent + Sonnet agent** — each agent is a one-shot fresh spawn that only proposes patches; main synthesizes all three to author the final patch.
 4. **Definition of "high quality"** — separation of responsibilities / clear concise comments / KISS / DRY / YAGNI / ease of human cognition. Every patch is self-graded against these 6 before being applied.
 5. **Patch applied → return to Phase 1** — an absolute law assuming the possibility of side-effects. Even one changed line requires re-verification from the beginning.
-6. **All phases complete = task complete** — the moment Phase 7 passes is done. No earlier point is done.
+6. **All phases complete = task complete** — Phases 0–7 and the final Phase 8 review must pass. No earlier point is done.
 7. **docs indexing required** — items the user mentioned only as recommendations must still be indexed in `docs/conventions/<rule>.md` as worse/better cases. Extract keywords and organize them so they can be grepped.
 8. **Every claim must pass the fact-check loop** (most important) — any claim that does not pass the following protocol is discarded:
 
@@ -54,14 +82,15 @@ The outputs of this skill are the following 7:
 
 ## Phase 0 — Intake
 
-Collect the following 4 items in a **single `AskUserQuestion` call** at once:
+Collect the following four items together with the host's question tool or in
+conversation. Reuse answers already supplied; split questions to fit tool limits:
 
 1. **Package manager** — pnpm / npm / yarn / bun / other
 2. **Monorepo or not** — turborepo / nx / pnpm workspace / single / other
 3. **Already-installed lint/typecheck commands** — first read `package.json` scripts, enumerate them, then confirm with the user
 4. **User-recommended rules** (free-text) — "things you think absolutely must be followed" — the indexing target for docs per requirement #7
 
-After answers, lock in TodoWrite as `harness:build intake locked`. No re-asking in later phases.
+After answers, record with the host's plan tool or a local intake note as `harness:build intake locked`. No re-asking in later phases.
 
 ---
 
@@ -194,7 +223,7 @@ Reason: <1–2 lines on why it is good>
 
 ## Phase 4 — Generate gate script (`.claude/scripts/review-gate.sh`)
 
-Use the skeleton from setup-guide §7 as the base, but **only include rules classified as gate=true in Phase 2**. Add one inspection block per rule.
+Use the skeleton below as the base, but **only include rules classified as gate=true in Phase 2**. Add one inspection block per rule.
 
 Skeleton:
 
@@ -222,7 +251,7 @@ REPO="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo 'not a git tree' >
 cd "$REPO"
 errors=(); warnings=()
 
-# Changed files (diff-scoped per setup-guide §7)
+# Changed files (diff-scoped; use the intake base ref)
 git fetch --quiet origin 2>/dev/null || warnings+=("git fetch origin failed")
 changed=""
 if git rev-parse --verify --quiet "$BASE_REF" >/dev/null; then
@@ -302,7 +331,7 @@ Don't forget `chmod +x .claude/scripts/review-gate.sh`.
 }
 ```
 
-`.claude/hooks/inject-context.sh` — use setup-guide §4 as-is (inject project-rules + harness-engineering body, support `!` or Korean/English bypass regex). Apply `chmod +x`.
+Copy [assets/inject-context.sh](assets/inject-context.sh) to `.claude/hooks/inject-context.sh` (or the Codex mapped path). It injects both generated skill bodies and supports the documented bypass phrases. Apply `chmod +x`.
 
 ---
 
@@ -334,13 +363,13 @@ Each § maps 1:1 to `docs/conventions/<rule>.md`. Placing per-rule detail in a r
 
 ### 6.2 `.claude/skills/harness-engineering/SKILL.md`
 
-Keep the 11-phase workflow from setup-guide §5 as-is. However, **the Phase 8 Review Gate model ratio is reduced per user requirement #3 to "Opus 1 + Sonnet 1, one-shot fresh spawn, main synthesizes"** (the setup-guide's 2 Opus + 3 Sonnet 5-agent panel is judged over-engineering and not adopted).
+Generate the eleven phases and the self-contained review section in [references/workflow.md](references/workflow.md), with this project's rules, commands and selected host paths. Resolve every path and reviewer setting in the generated document; it must not require this installer skill or an installed plugin cache path. **The Phase 8 panel remains Opus 1 + Sonnet 1 on Claude Code; on Codex use the two independent reviewers specified by the Codex adapter. Each is a one-shot fresh spawn; main synthesizes.**
 
 Phase 8 step machine:
 
 ```
 1. review-gate.sh --mode=full  → if exit 0, go to Step 2
-2. Fresh-spawn 1 Opus + 1 Sonnet (2 parallel Agent tool_use calls in a single message)
+2. Fresh-spawn both reviewers from Host setup (Claude: Opus + Sonnet; Codex: architecture + gate reviewers)
    - input: git diff + project-rules body + detected violations (if any)
    - output (strict JSON): { findings: [{severity, file, line, issue, suggested_fix}] }
 3. Main synthesizes both results + review-gate.sh output and authors the final patch
@@ -376,7 +405,7 @@ bash .claude/hooks/inject-context.sh <<< '{"prompt":"!skip"}' \
 #    (Pick one of the rules derived in Phase 2, author a violating case → run the gate)
 ```
 
-All 3 verifications must pass for the task to be done. If any one fails, **return to Phase 1**.
+All 4 verifications must pass for the task to be done. If any one fails, **return to Phase 1**.
 
 ---
 
@@ -384,7 +413,7 @@ All 3 verifications must pass for the task to be done. If any one fails, **retur
 
 Even after the Phase 7 above passes once, **fire one more time before declaring final done**.
 
-1. **Fresh-spawn 1 Opus + 1 Sonnet** (2 parallel Agent tool_use calls in a single message)
+1. **Fresh-spawn the two reviewers selected by the execution host.** On Claude Code:
    - subagent_type: `general-purpose`
    - model: `opus` / `sonnet`
    - description: "one-shot harness review (Opus|Sonnet)"
@@ -393,7 +422,7 @@ Even after the Phase 7 above passes once, **fire one more time before declaring 
 2. **Input bundle (identical for both agents)**:
 
    ```
-   You are reviewing a generated Claude Code harness for repo <name>.
+   You are reviewing a generated <target-host> harness for repo <name>.
 
    ARTIFACT:
    - .claude/settings.json
@@ -432,7 +461,7 @@ Even after the Phase 7 above passes once, **fire one more time before declaring 
    - `patches_suggested` is self-graded by main against the 6 criteria, then accept / reject
    - Any patch applied (even one line) → **return to Phase 1**
 
-4. **Regression cap = 3**. If all conditions are not passed within 3 iterations, emit a truthful failure report to the user (same format as setup-guide §8 hard-stop). Form:
+4. **Regression cap = 3**. If all conditions are not passed within 3 iterations, emit a truthful failure report to the user (the hard-stop format below). Form:
 
    ```
    ## harness:build — Phase 8 hard stop
@@ -453,7 +482,7 @@ Even after the Phase 7 above passes once, **fire one more time before declaring 
 Declare done only when **all** of the following are satisfied:
 
 - [ ] Phases 0~7 passed sequentially
-- [ ] Phase 8's one-shot Opus + Sonnet review: fact_check_misses 0 / gate_evasions 0 / quality average ≥ 3.5
+- [ ] Phase 8's two independent host-selected reviews: fact_check_misses 0 / gate_evasions 0 / quality average ≥ 3.5
 - [ ] Regression cap not exhausted
 
 On done declaration, output to the user:
@@ -478,18 +507,18 @@ On done declaration, output to the user:
 - quality avg: <n.n>
 
 ### Next steps
-- Entering the first prompt auto-fires the hook
+- Hook files: <generated/verified>; runtime activation: <active/pending with reason>
 - Run the gate manually: `.claude/scripts/review-gate.sh --mode=full`
 - To bypass the harness, prefix the prompt with `!` or "harness 빼고" (Korean: skip the harness)
 ```
 
 ---
 
-## Notes for Claude when this skill loads
+## Notes for the host when this skill loads
 
 - **This skill does not finish in one turn.** Honestly running Phases 1~8 will take multiple turns. If cross-turn progress is needed, wrapping with `/loop` is fine, but **it must also be possible to progress phase-by-phase within a single conversation without `/loop`**.
 - **The Phase 1 fact-check loop must never be done in shorthand.** No `cat | head` inference; view the actual file with the Read tool and specify `file:line`.
 - **YAGNI absolutely observed.** Rules with 0 violations in Phase 1 + 0 user mention are not introduced. If 5 rules are enough, stop at 5.
-- **The regression cap of 3 is never broken.** Prevents infinite oscillation (research-foundation §2 principle 5). If convergence is not achieved within 3 iterations, report failure to the user.
+- **The regression cap of 3 is never broken.** Prevents infinite oscillation (a bounded loop prevents repeated unsuccessful patches). If convergence is not achieved within 3 iterations, report failure to the user.
 - **The one-shot Opus + Sonnet review is a fresh spawn.** No `agentId` / `sessionId` capture. No `SendMessage`. No round 2 (user requirement #3 is "one-shot").
 - **All artifacts are written to the target project root.** This skill itself (harness:build) is used as read-only.

@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.1.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -37,6 +37,34 @@
 大多數「Claude Code harness」外掛，只是套印出一個固定的 `.claude/` 骨架就收工。它們強制執行的規則，是*外掛作者*想到的規則——而不是*你的專案真正需要*的規則。
 
 **harness 把這個順序反過來。** 它先閱讀你的專案，從實際存在的內容推導出規則，之後才建立強制執行*這些*規則的 harness。成果是一個為你的儲存庫量身打造的 `.claude/` 目錄，其中每條規則都能追溯到你自己程式碼中的 `file:line` 引用。
+
+## Codex
+
+需要 Codex CLI 0.158.0 或更高版本。安裝後請啟動新工作階段。Claude 使用 `/plugin:skill`，Codex 使用 `$plugin:skill`。共用技能和資源均包含在此外掛內。依賴自動行為前，請在 `/hooks` 中審核並信任隨附的掛鉤。
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add harness@bin
+```
+
+使用 `$harness:build`。Codex 預設產生 `.codex/hooks.json`、`.codex/hooks/inject-context.sh`、`.codex/scripts/review-gate.sh` 和 `.agents/skills/{project-rules,harness-engineering}/`。保留已有 Claude 檔案和無關掛鉤設定。工作流程與注入腳本已隨附，需要 Python 3。Codex 使用繼承主代理模型與推理設定的兩名獨立唯讀評審，Claude 保留 Opus + Sonnet。事實引用、3.5 平均品質門檻和三輪上限均保持一致。下方檔案列表描述 Claude 配置，Codex 使用上述路徑。啟用掛鉤需信任專案和掛鉤。
+
+寫入受保護的 `.codex/` 和 `.agents/` 目錄可能需要 Codex 批准。無法取得批准時，技能會另行準備檔案並回報安裝待完成，不會放寬沙箱。
+
+### Codex 設定
+
+兩端共用流程、產物與審查標準。Codex 審查模型可以設定，但不代表其輸出或品質與 Claude 相同。啟動 Codex 前設定以下環境變數，省略的值繼承目前工作階段。委派的 CLI 使用 `CXC_MODE=off`，主工作階段模式保持不變。
+
+| 設定 | 行為 |
+|---|---|
+| `HARNESS_CODEX_ARCH_MODEL` | 架構評審者 模型；預設：目前工作階段模型 |
+| `HARNESS_CODEX_ARCH_EFFORT` | 架構評審者 推理強度；預設：目前工作階段推理強度 |
+| `HARNESS_CODEX_GATE_MODEL` | 閘門評審者 模型；預設：目前工作階段模型 |
+| `HARNESS_CODEX_GATE_EFFORT` | 閘門評審者 推理強度；預設：目前工作階段推理強度 |
+
+請求中可指定 `host=claude`、`host=codex` 或 `host=both`。執行主機決定審查者，輸出目標決定路徑。內建掛鉤安裝器保留其他設定與掛鉤，支援預覽、合併與檢查；現有掛鉤內容不同時須先審查再替換。產生的工作流程包含可獨立執行的審查說明。
+
+產生的 harness 每次執行都從目前工作階段解析模型和推理強度預設值，不固定產生時的設定。評審分數維持數值，依據放在獨立欄位。
 
 ## 功能特色
 
@@ -218,7 +246,7 @@ Phase 1 的分層訊號是針對前端儲存庫（`*.tsx`、`use-*.ts`、`api/*`
 
 ## 需求
 
-- `git`、`jq`、`bash 4+`
+- `git`、`jq`、`bash 3.2+`, `python3`
 - 目標專案必須是 git 工作樹
 - 支援外掛的 Claude Code
 

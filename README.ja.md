@@ -34,11 +34,11 @@
 
 [plan-smith の日本語 README を読む →](plugins/plan-smith/README.ja.md)
 
-### [harness](plugins/harness) · `v1.1.0`
+### [harness](plugins/harness) · `v1.2.0`
 
-**テンプレートではなく、事実に基づく分析からプロジェクト専用の Claude Code ハーネスを構築します**。リポジトリの実際のレイヤー構成と関心の分離を読み取り、すべてのルールがあなたのコードの `file:line` を引用する形で導出したうえで、`project-rules`、決定論的な `review-gate.sh`、`UserPromptSubmit` フック、`harness-engineering` スキルを生成します。
+**テンプレートではなく、事実に基づく分析からプロジェクト専用の Claude Code・Codex ハーネスを構築します**。リポジトリの実際のレイヤー構成と関心の分離を読み取り、すべてのルールがあなたのコードの `file:line` を引用する形で導出したうえで、`project-rules`、決定論的な `review-gate.sh`、`UserPromptSubmit` フック、`harness-engineering` スキルを生成します。
 
-- **使いどころ:** `.claude/` のセットアップがないプロジェクトで Claude Code の作業を始めるとき、または構成が大きく変わり、既存のセットアップが合わなくなったとき。
+- **使いどころ:** ハーネスがないプロジェクトで Claude Code または Codex の作業を始めるとき、または構成が大きく変わり、既存のセットアップが合わなくなったとき。
 - **エントリーポイント:** `/harness:build`、または *「build harness」*
 
 [harness の日本語 README を読む →](plugins/harness/README.ja.md)

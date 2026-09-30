@@ -14,5 +14,21 @@
     "review-gate",
     "project-rules",
     "fact-check"
-  ]
+  ],
+  "skills": "./skills/",
+  "license": "MIT",
+  "interface": {
+    "displayName": "harness",
+    "shortDescription": "Build project rules and review gates",
+    "longDescription": "Build a project-tailored Claude Code or Codex harness from-scratch by directly analyzing the target project's layer/concern separation. Generates project-rules + review-gate.sh + UserPromptSubmit hook in one workflow.",
+    "developerName": "zeriong",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use harness for this project."
+    ]
+  }
 }

@@ -34,11 +34,11 @@
 
 [plan-smith 한국어 README 보기 →](plugins/plan-smith/README.ko.md)
 
-### [harness](plugins/harness) · `v1.1.0`
+### [harness](plugins/harness) · `v1.2.0`
 
-**템플릿이 아니라 사실 기반 분석으로 프로젝트 맞춤 Claude Code 하네스를 만듭니다.** 레포의 실제 계층·관심사 분리를 직접 읽고, 모든 룰이 내 코드의 `file:line`을 인용하도록 도출한 뒤, `project-rules`, 결정론적 `review-gate.sh`, `UserPromptSubmit` 훅, `harness-engineering` 스킬을 생성합니다.
+**템플릿이 아니라 사실 기반 분석으로 프로젝트 맞춤 Claude Code·Codex 하네스를 만듭니다.** 레포의 실제 계층·관심사 분리를 직접 읽고, 모든 룰이 내 코드의 `file:line`을 인용하도록 도출한 뒤, `project-rules`, 결정론적 `review-gate.sh`, `UserPromptSubmit` 훅, `harness-engineering` 스킬을 생성합니다.
 
-- **이럴 때** `.claude/` 셋업이 없는 프로젝트에서 Claude Code 작업을 시작하거나, 구조가 크게 바뀌어 기존 셋업이 맞지 않을 때.
+- **이럴 때** 하네스가 없는 프로젝트에서 Claude Code나 Codex 작업을 시작하거나, 구조가 크게 바뀌어 기존 셋업이 맞지 않을 때.
 - **진입점:** `/harness:build` 또는 *"harness 만들어"*
 
 [harness 한국어 README 보기 →](plugins/harness/README.ko.md)

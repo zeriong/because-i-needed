@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.1.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -37,6 +37,34 @@
 大多数“Claude Code harness”插件只是套出一个固定的 `.claude/` 骨架就算完事。它们强制执行的是*插件作者*想到的规则——而不是*你的项目真正需要*的规则。
 
 **harness 把这个顺序倒了过来。** 它先读你的项目，从实际存在的内容中推导规则，然后才生成一个强制执行*这些*规则的 harness。结果是一个为你的仓库量身定制的 `.claude/` 目录，每条规则都能追溯到你自己代码中的某处 `file:line` 引用。
+
+## Codex
+
+需要 Codex CLI 0.158.0 或更高版本。安装后请启动新会话。Claude 使用 `/plugin:skill`，Codex 使用 `$plugin:skill`。共享技能和资源均包含在此插件内。依赖自动行为前，请在 `/hooks` 中审核并信任随附的钩子。
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add harness@bin
+```
+
+使用 `$harness:build`。Codex 默认生成 `.codex/hooks.json`、`.codex/hooks/inject-context.sh`、`.codex/scripts/review-gate.sh` 和 `.agents/skills/{project-rules,harness-engineering}/`。保留已有 Claude 文件和无关钩子设置。工作流程与注入脚本已随附，需要 Python 3。Codex 使用继承主代理模型与推理设置的两名独立只读评审，Claude 保留 Opus + Sonnet。事实引用、3.5 平均质量门槛和三轮上限均保持一致。下方文件列表描述 Claude 布局，Codex 使用上述路径。激活钩子需信任项目和钩子。
+
+写入受保护的 `.codex/` 和 `.agents/` 目录可能需要 Codex 批准。无法获得批准时，技能会另行准备文件并报告安装待完成，不会放宽沙箱。
+
+### Codex 设置
+
+两端共享流程、产物和评审标准。Codex 评审模型可配置，但不代表其输出或质量与 Claude 相同。启动 Codex 前设置以下环境变量，省略的值继承当前会话。委派的 CLI 使用 `CXC_MODE=off`，主会话模式保持不变。
+
+| 设置 | 行为 |
+|---|---|
+| `HARNESS_CODEX_ARCH_MODEL` | 架构评审者 模型；默认：当前会话模型 |
+| `HARNESS_CODEX_ARCH_EFFORT` | 架构评审者 推理强度；默认：当前会话推理强度 |
+| `HARNESS_CODEX_GATE_MODEL` | 门控评审者 模型；默认：当前会话模型 |
+| `HARNESS_CODEX_GATE_EFFORT` | 门控评审者 推理强度；默认：当前会话推理强度 |
+
+请求中可指定 `host=claude`、`host=codex` 或 `host=both`。执行宿主决定评审者，输出目标决定路径。内置钩子安装器保留其他设置和钩子，支持预览、合并和检查；现有钩子内容不同时须先审查再替换。生成的工作流包含可独立执行的评审说明。
+
+生成的 harness 每次运行都从当前会话解析模型和推理强度默认值，不固定生成时的设置。评审分数保持为数值，依据放在单独的字段中。
 
 ## 特性
 
@@ -218,7 +246,7 @@ Phase 1 中的分层信号是针对前端仓库（`*.tsx`、`use-*.ts`、`api/*`
 
 ## 环境要求
 
-- `git`、`jq`、`bash 4+`
+- `git`、`jq`、`bash 3.2+`, `python3`
 - 目标项目必须是 git 工作树
 - 支持插件的 Claude Code
 

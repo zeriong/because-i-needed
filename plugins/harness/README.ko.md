@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.1.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -37,6 +37,34 @@
 대부분의 "Claude Code 하네스" 플러그인은 정해진 `.claude/` 뼈대를 찍어내고 끝납니다. 그렇게 강제하는 룰은 *플러그인 저자가* 생각한 룰이지, *내 프로젝트가 실제로 필요로 하는* 룰이 아닙니다.
 
 **harness는 그 순서를 뒤집습니다.** 먼저 프로젝트를 직접 읽고, 그 안에서 룰을 도출한 다음에야 그 *도출된 룰*을 강제하는 하네스를 깝니다. 결과물은 내 repo에 맞춰 재단된 `.claude/` 디렉토리이고, 모든 룰이 내 코드의 `file:line`에 추적 가능합니다.
+
+## Codex
+
+Codex CLI 0.158.0 이상이 필요합니다. 설치 후 새 세션을 시작하세요. Claude 명령은 `/plugin:skill`, Codex 명령은 `$plugin:skill`입니다. 공통 스킬과 자료는 이 플러그인 안에 포함됩니다. 자동 동작을 사용하기 전에 `/hooks`에서 함께 설치된 훅을 검토하고 신뢰하세요.
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add harness@bin
+```
+
+`$harness:build`를 사용합니다. Codex의 기본 생성 대상은 `.codex/hooks.json`, `.codex/hooks/inject-context.sh`, `.codex/scripts/review-gate.sh`, `.agents/skills/{project-rules,harness-engineering}/`입니다. 기존 Claude 파일과 다른 훅 설정을 보존합니다. 워크플로와 주입 스크립트가 포함되며 Python 3이 필요합니다. Codex에서는 메인의 모델·추론 수준을 쓰는 독립 읽기 전용 리뷰어 2명을 사용하고, Claude는 Opus + Sonnet 구성을 유지합니다. 사실 인용, 품질 평균 3.5 기준, 반복 상한 3회는 공통입니다. 아래 파일 목록은 Claude 경로이며 Codex에서는 위 경로를 사용합니다. 훅 활성화에는 프로젝트 및 훅 신뢰 설정이 필요합니다.
+
+Codex에서 보호된 `.codex/`와 `.agents/`에 쓰려면 승인이 필요할 수 있습니다. 승인할 수 없는 세션에서는 파일을 별도로 준비하고 설치 대기로 보고하며, 샌드박스를 완화하지 않습니다.
+
+### Codex 설정
+
+작업 단계·산출물·검토 기준을 공유합니다. Codex 검토 모델은 설정할 수 있으며, Claude 모델과 결과나 품질이 같다는 뜻은 아닙니다. Codex를 시작하기 전에 아래 환경변수를 지정하세요. 생략한 값은 현재 세션을 따릅니다. 위임된 CLI 프로세스는 `CXC_MODE=off`로 실행하고 메인 모드는 유지합니다.
+
+| 설정 | 동작 |
+|---|---|
+| `HARNESS_CODEX_ARCH_MODEL` | 설계 검토자 모델. 기본값: 현재 세션 모델 |
+| `HARNESS_CODEX_ARCH_EFFORT` | 설계 검토자 추론 강도. 기본값: 현재 세션 추론 강도 |
+| `HARNESS_CODEX_GATE_MODEL` | 게이트 검토자 모델. 기본값: 현재 세션 모델 |
+| `HARNESS_CODEX_GATE_EFFORT` | 게이트 검토자 추론 강도. 기본값: 현재 세션 추론 강도 |
+
+요청에 `host=claude`, `host=codex`, `host=both`를 지정할 수 있습니다. 실행 중인 호스트가 검토자를, 출력 대상이 파일 경로를 결정합니다. 번들 훅 설치기는 기존 훅과 다른 설정을 보존하면서 변경을 미리 보고 병합·검사합니다. 기존 훅 내용이 다르면 교체 전에 검토해야 합니다. 생성된 워크플로에는 독립적으로 실행할 수 있는 리뷰 지침이 포함됩니다.
+
+생성된 하네스는 실행할 때마다 현재 세션에서 모델·추론 강도 기본값을 확인합니다. 생성 당시 값을 고정하지 않습니다. 리뷰 점수는 숫자로 유지하고 근거는 별도 필드에 기록합니다.
 
 ## 핵심 특징
 
@@ -218,7 +246,7 @@ Phase 1의 layer 신호는 프론트엔드 repo (`*.tsx`, `use-*.ts`, `api/*`) �
 
 ## 요구사항
 
-- `git`, `jq`, `bash 4+`
+- `git`, `jq`, `bash 3.2+`, `python3`
 - 대상 프로젝트가 git work tree
 - 플러그인을 지원하는 Claude Code
 

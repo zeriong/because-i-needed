@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.1.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -37,6 +37,34 @@
 Most "Claude Code harness" plugins stamp out a fixed `.claude/` skeleton and call it done. The rules they enforce are the rules *the plugin author* thought of — not the rules *your project actually needs*.
 
 **harness inverts that.** It reads your project, derives the rules from what's actually there, and only then materializes a harness that enforces *those* rules. The result is a `.claude/` directory tailored to your repo, with every rule traceable to a `file:line` citation in your own code.
+
+## Codex
+
+Requires Codex CLI 0.158.0 or later. Start a new session after installation. Claude commands use `/plugin:skill`; Codex uses `$plugin:skill`. The shared skills and resource files ship inside this plugin. Review and trust bundled hooks with `/hooks` before relying on automatic behavior.
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add harness@bin
+```
+
+Use `$harness:build`. On Codex the default target is `.codex/hooks.json`, `.codex/hooks/inject-context.sh`, `.codex/scripts/review-gate.sh` and `.agents/skills/{project-rules,harness-engineering}/`. Existing Claude files and unrelated hook settings are preserved. The workflow and injection script are bundled; Python 3 is required. Codex uses two independent read-only reviewers with the main model/effort; Claude keeps its Opus + Sonnet panel. Fact citations, the 3.5 quality threshold and the three-iteration cap apply to both. The file lists below describe the Claude layout; Codex uses the paths above. Hook activation requires project and hook trust.
+
+Codex may require write approval for protected `.codex/` and `.agents/` directories. If approval is unavailable, the skill prepares the files and reports installation as pending; it does not relax the sandbox.
+
+### Codex settings
+
+The workflow, artifacts and review criteria are shared. Codex reviewer models are configurable; this does not claim identical outputs or quality to Claude models. Set these environment variables before starting Codex; omitted values inherit the current session. Delegated CLI processes use `CXC_MODE=off`, leaving the main mode unchanged.
+
+| Setting | Behavior |
+|---|---|
+| `HARNESS_CODEX_ARCH_MODEL` | Architecture reviewer model; default: current session model |
+| `HARNESS_CODEX_ARCH_EFFORT` | Architecture reviewer reasoning effort; default: current session effort |
+| `HARNESS_CODEX_GATE_MODEL` | Gate reviewer model; default: current session model |
+| `HARNESS_CODEX_GATE_EFFORT` | Gate reviewer reasoning effort; default: current session effort |
+
+Choose `host=claude`, `host=codex` or `host=both` in the request. The execution host selects reviewers; the output target selects file paths. The bundled hook installer previews, merges and checks settings without replacing unrelated hooks. A differing existing hook requires review before replacement. Generated workflows include their own review instructions.
+
+Generated harnesses resolve model/effort defaults from the current execution session on every run, rather than freezing the builder session. Review scores stay numeric, with evidence in a separate field.
 
 ## Features
 
@@ -218,7 +246,7 @@ The layer signals in Phase 1 are tuned for frontend repos (`*.tsx`, `use-*.ts`, 
 
 ## Requirements
 
-- `git`, `jq`, `bash 4+`
+- `git`, `jq`, `bash 3.2+`, `python3`
 - Target project must be a git work tree
 - Claude Code with plugin support
 

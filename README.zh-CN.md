@@ -34,11 +34,11 @@
 
 [查看 plan-smith 简体中文 README →](plugins/plan-smith/README.zh-CN.md)
 
-### [harness](plugins/harness) · `v1.1.0`
+### [harness](plugins/harness) · `v1.2.0`
 
-**基于事实分析而非模板，构建为项目量身定制的 Claude Code harness。** 它直接读取仓库中实际的分层与关注点分离，推导出每条都引用你代码中 `file:line` 的规则，然后生成 `project-rules`、确定性的 `review-gate.sh`、`UserPromptSubmit` 钩子以及 `harness-engineering` 技能。
+**基于事实分析而非模板，构建为项目量身定制的 Claude Code 或 Codex harness。** 它直接读取仓库中实际的分层与关注点分离，推导出每条都引用你代码中 `file:line` 的规则，然后生成 `project-rules`、确定性的 `review-gate.sh`、`UserPromptSubmit` 钩子以及 `harness-engineering` 技能。
 
-- **适用场景：** 在还没有 `.claude/` 配置的项目上开始使用 Claude Code，或者项目结构变化太大、旧配置已不再适用时。
+- **适用场景：** 在还没有 harness 配置的项目上开始使用 Claude Code 或 Codex，或者项目结构变化太大、旧配置已不再适用时。
 - **入口：** `/harness:build` 或 *“build harness”*
 
 [查看 harness 简体中文 README →](plugins/harness/README.zh-CN.md)

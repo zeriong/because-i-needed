@@ -3,8 +3,10 @@
 Every shared rule in the root `CLAUDE.md` applies. This file holds only what is specific to harness.
 The original repository had no development-rules file for this plugin. Everything below was derived from facts checked in the code as of 2026-09-23.
 
-Contents: a single skill, `skills/build/SKILL.md`. No agents, hooks, scripts, or references.
-The skill generates a `.claude/` harness **in the target project** — the plugin itself installs no hooks.
+Contents: `skills/build/SKILL.md`, the host adapter and public workflow in `references/`, and
+`assets/inject-context.sh` and `scripts/install-hooks.py`, all inside `skills/build/`.
+The skill generates a `.claude/` harness on Claude Code, or a
+`.codex/` + `.agents/skills/` harness on Codex, **in the target project**. The plugin itself installs no hooks.
 
 ---
 
@@ -14,7 +16,7 @@ The five READMEs restate these facts from SKILL.md. A change to one in SKILL.md 
 
 | Fact | Source in SKILL.md |
 |---|---|
-| The 8-phase workflow and the per-phase responsibility table | `## Phase 0` through `## Phase 8` |
+| Intake plus eight build phases and the per-phase responsibility table | `## Phase 0` through `## Phase 8` |
 | The generated file tree (`.claude/settings.json`, `hooks/inject-context.sh`, `scripts/review-gate.sh`, `skills/project-rules`, `skills/harness-engineering`, `docs/conventions/<rule>.md`) | the output list at the top, `## harness:build complete` |
 | The 6 trigger keywords | frontmatter `description` |
 | The 6 quality axes and rejection below a 3.5 average | `## Absolute laws` item 4, `## Phase 8` |
@@ -27,19 +29,36 @@ The five READMEs restate these facts from SKILL.md. A change to one in SKILL.md 
 An installed user's Claude can read only the plugin folder (root Rule 1).
 Documents SKILL.md relies on go in `skills/build/references/`, referenced by relative path.
 
-**Known defect (confirmed 2026-09-23, unfixed):** SKILL.md tells Claude to "use as-is" sections of private documents —
-`setup-guide` §4 (`inject-context.sh`), §5 (the 11-phase workflow), §7 (gate script skeleton and diff range),
-§8 (hard-stop report format), and `research-foundation` §2. The originals live in `~/WorkSpace/Z-Work/__private__MY-CONFIG/claude/harness/`
-and are not in the plugin, so an installed copy cannot read those sections and Claude fills them in by guesswork.
-The README's list of harness bypass phrases (`!`, `harness 빼고`, `without harness`, `skip harness`, `no harness`) also comes
-from setup-guide §4, not from SKILL.md.
+The previous release depended on private setup-guide/research-foundation sections. The public
+`references/workflow.md` now defines the required eleven phases using this plugin's published
+contracts, and `assets/inject-context.sh` supplies the injection mechanism. No private document
+was copied. Keep these resources packaged and the generated skills project-specific.
 
-- To fix it, move the needed sections into `references/` and point SKILL.md at those files.
-  That publishes private documents in a public repository, so **the maintainer decides which sections move.**
-- It changes behavior, so bump the version (root Rule 2).
-- The README requirement `bash 4+` has no basis in SKILL.md either. Treat it as unsupported until checked against the generated scripts.
+On Codex, use `references/host-codex.md` for output paths and two independent reviewers. Keep
+Claude's Opus + Sonnet panel. Preserve existing configuration when merging hooks. Protected
+Codex directories may require write approval; a staged draft is not an installed harness.
+The injection asset needs bash 3.2+ and Python 3; self-verification also uses jq.
+Use the bundled installer to merge hooks without replacing unrelated settings. Resolve
+both Codex reviewer model/effort pairs explicitly and embed the review procedure in the
+generated workflow so it remains usable without this builder. The hook reads stdin
+without a shell heredoc temporary file, including in read-only reviewer processes.
 
 ## Rule 3 — Names
 
 The plugin name `harness` and the skill folder name `build` are embedded in the ten READMEs' `/harness:build` and in SKILL.md's
 report headings (`## harness:build …`). A rename changes all of them together (root Rule 8). Before 1.1.0 the name was `harness-builder`.
+
+## Codex compatibility evidence — 1.2.0
+
+See z-lab `harness-lab/codex-compat-1.2.0/` and `codex-compat-1.2.0-full-access/` (H01–H03) and the shared
+`plugin-platform-lab/codex-final-0.158.0/` packaging/installer checks. These records
+cover host wiring and the named fixture paths, not quality improvements. Keep the
+existing workflow invariants when changing an adapter.
+
+Additional setting-parity checks: z-lab `harness-lab/codex-parity-1.2.0/` (H04–H06).
+
+Bypass always keeps project-rules while omitting the workflow body: z-lab
+`harness-lab/codex-bypass-1.2.0/` (H07). Test both host layouts against that existing README contract.
+
+Re-review fixes: z-lab `harness-lab/codex-rereview-1.2.0/` (H08).
+Reusable workflows resolve model/effort defaults per invocation and use numeric quality scores with separate evidence, avoiding builder-default persistence and incompatible nested score objects.
