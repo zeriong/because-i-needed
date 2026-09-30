@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.3.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -38,6 +38,35 @@
 Agents implement UI poorly when they work from imagination — invisible overflow, a missing focus ring, an unhandled empty state, a raw UUID leaking into a label. None of it shows up until you look at the real render.
 
 **ux-ui removes imagination from the loop.** Every UI change is measured on the actual render — a browser page via chrome-devtools, or a real device/simulator for mobile — critiqued by an art-director agent against the *measured* snapshots, iterated until it is both correct and elegant, and then hard-gated: you cannot commit UI the art director has not APPROVED against the exact staged diff.
+
+## Codex
+
+Requires Codex CLI 0.158.0 or later. Start a new session after installation. Claude commands use `/plugin:skill`; Codex uses `$plugin:skill`. The shared skills and resource files ship inside this plugin. Review and trust bundled hooks with `/hooks` before relying on automatic behavior.
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add ux-ui@bin
+```
+
+Use `$ux-ui:build` or `$ux-ui:build-mobile`. Codex discovers the actual tools for the same four MCP servers and runs independent read-only reviewers using the bundled art-director instructions. Reviewers inherit the main model/effort; Claude art directors remain Opus. Measurement requirements, backend selection, the three-cycle cap and staged-diff approval are shared. Missing screenshots cannot receive approval. The UI gate works only when the installed hook is active and trusted. Browser and mobile SDK/device prerequisites still apply.
+
+### Codex settings
+
+The workflow, artifacts and review criteria are shared. Codex reviewer models are configurable; this does not claim identical outputs or quality to Claude models. Set these environment variables before starting Codex; omitted values inherit the current session. Delegated CLI processes use `CXC_MODE=off`, leaving the main mode unchanged.
+
+| Setting | Behavior |
+|---|---|
+| `UX_UI_CODEX_REVIEW_MODEL` | Web/mobile reviewer model; default: current session model |
+| `UX_UI_CODEX_REVIEW_EFFORT` | Web/mobile reviewer reasoning effort; default: current session effort |
+
+`UX_UI_GLOBS` controls the same UI file set on both hosts. Configure bundled MCP servers individually in Codex; for example, disable unused Flutter tooling as shown below. Review `/hooks` trust separately. Missing capture or audit tools remain an explicit incomplete check.
+
+```toml
+[plugins."ux-ui@bin".mcp_servers.flutter]
+enabled = false
+```
+
+The gate keeps filename bytes intact, including Unicode and newlines, and resolves literal `git -C <path> commit` targets. Stage the reviewed diff and invoke commit separately; shell aliases and dynamically generated commands are outside this static hook inspection.
 
 ## Features
 
@@ -84,6 +113,7 @@ Installing registers everything automatically: the four MCP servers (`chrome-dev
 
 - **Web**: **Node.js** (the bundled `chrome-devtools-mcp` runs via `npx`), a local **Chrome**, and a runnable **dev server** for the project whose UI you are building.
 - **Mobile**: the platform SDK for your stack — Xcode + simulators (iOS, macOS-only), Android SDK + emulator, or the Flutter SDK — with the app running on a booted device/simulator. The mobile MCPs (`@mobilenext/mobile-mcp`, `ios-simulator-mcp`, `dart mcp-server`) start only where their tool is installed; the `mobile-snapshot.sh` harness needs only `simctl`/`adb`.
+- **Python 3.8+** is required by the commit-target resolver on both hosts.
 - **git** work tree, and `shasum`/`sha256sum` (present on macOS/Linux by default).
 
 ## Quick Start

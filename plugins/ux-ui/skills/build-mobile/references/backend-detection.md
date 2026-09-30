@@ -24,13 +24,11 @@ one that owns the screen you are changing.
 
 Also run the harness doctor to see what is actually installed and booted:
 
-```
-"${CLAUDE_PLUGIN_ROOT}/scripts/mobile-snapshot.sh" doctor
-```
+Run the doctor command in SKILL.md's **Host setup** section.
 
 It reports which of `xcrun simctl`, `adb`, `flutter`/`dart`, and a booted
-simulator/emulator are present, and whether the plugin's mobile MCP tools are live in
-this session.
+simulator/emulator are present. The shell doctor cannot inspect MCP tools; separately
+discover the plugin's live tools in this session and verify capture capabilities.
 
 ## 2. Choose the measurement backend
 
@@ -80,11 +78,10 @@ When no MCP gives the director real pixels for the detected stack, wire up the h
 It captures the currently-booted simulator/emulator screen straight from the platform
 SDK the developer already has:
 
-```
-# one screenshot (+ Android view-hierarchy dump when available)
-"${CLAUDE_PLUGIN_ROOT}/scripts/mobile-snapshot.sh" capture ios     .ux-ui/measure/<slug> default__iphone15
-"${CLAUDE_PLUGIN_ROOT}/scripts/mobile-snapshot.sh" capture android .ux-ui/measure/<slug> default__pixel7
-```
+Use the capture commands in SKILL.md's **Host setup** section, with measure directory
+`.ux-ui/measure/<slug>` and a label such as `default__iphone15` (iOS) or
+`default__pixel7` (Android). Each command captures one screenshot and, when available,
+the Android view hierarchy.
 
 - iOS: `xcrun simctl io booted screenshot` → real PNG (pixels only).
 - Android: `adb exec-out screencap -p` → real PNG, plus `adb exec-out uiautomator dump`

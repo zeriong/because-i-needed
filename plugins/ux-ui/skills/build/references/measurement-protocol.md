@@ -15,8 +15,8 @@ environment first. Never fall back to reviewing hand-written HTML or guessed sta
 1. A dev server is reachable at a known URL (default `http://localhost:3000`, or the
    project's configured port). If not running, start it (or ask the project's run
    skill to) and wait until it responds.
-2. The `chrome-devtools` MCP server is available (tools prefixed
-   `chrome-devtools__*` in this session). If not, the plugin's MCP is misconfigured —
+2. The `chrome-devtools` MCP server is available. Discover its actual tool names
+   in this host; the operation names below are capability examples. If not, the plugin's MCP is misconfigured —
    see the skill's bootstrap section.
 3. An output directory exists for artifacts: `.ux-ui/measure/<feature-slug>/`.
    Screenshots and the verdict artifact go here.

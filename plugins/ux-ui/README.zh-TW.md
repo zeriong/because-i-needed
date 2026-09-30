@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.3.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -38,6 +38,35 @@
 代理憑想像實作 UI 時，成果往往很差——看不見的 overflow、消失的 focus ring、沒有處理的空狀態、洩漏到標籤上的原始 UUID。這些問題在你看到真實渲染之前，全都不會浮現。
 
 **ux-ui 把想像從迴圈中移除。** 每一次 UI 變更都會在實際渲染上實測——Web 透過 chrome-devtools 量測瀏覽器頁面，行動裝置則使用真實的裝置或模擬器——再由藝術總監代理依據*實測*快照進行評論，反覆迭代直到既正確又優雅，最後以硬性閘門把關：藝術總監尚未針對暫存中的這份 diff 本身給出 APPROVED 的 UI，你就無法提交。
+
+## Codex
+
+需要 Codex CLI 0.158.0 或更高版本。安裝後請啟動新工作階段。Claude 使用 `/plugin:skill`，Codex 使用 `$plugin:skill`。共用技能和資源均包含在此外掛內。依賴自動行為前，請在 `/hooks` 中審核並信任隨附的掛鉤。
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add ux-ui@bin
+```
+
+使用 `$ux-ui:build` 或 `$ux-ui:build-mobile`。Codex 發現相同四個 MCP 伺服器實際提供的工具，並按隨附的藝術總監指令執行獨立唯讀評審。評審繼承主代理的模型和推理設定，Claude 藝術總監仍使用 Opus。共用實測要求、後端選擇、三輪上限及綁定暫存 diff 的批准。沒有截圖不能批准。提交閘門僅在已安裝的掛鉤啟用且受信任時生效；仍需準備瀏覽器、行動 SDK 和裝置。
+
+### Codex 設定
+
+兩端共用流程、產物與審查標準。Codex 審查模型可以設定，但不代表其輸出或品質與 Claude 相同。啟動 Codex 前設定以下環境變數，省略的值繼承目前工作階段。委派的 CLI 使用 `CXC_MODE=off`，主工作階段模式保持不變。
+
+| 設定 | 行為 |
+|---|---|
+| `UX_UI_CODEX_REVIEW_MODEL` | Web/行動評審者 模型；預設：目前工作階段模型 |
+| `UX_UI_CODEX_REVIEW_EFFORT` | Web/行動評審者 推理強度；預設：目前工作階段推理強度 |
+
+`UX_UI_GLOBS` 在兩端指定相同的 UI 檔案範圍。Codex 支援個別設定內建 MCP，例如依下方範例停用未使用的 Flutter。請另行確認 `/hooks` 信任。缺少擷取或稽核工具時，不會將檢查記為完成。
+
+```toml
+[plugins."ux-ui@bin".mcp_servers.flutter]
+enabled = false
+```
+
+閘門保留 Unicode 和換行字元等檔名內容，並解析明確的 `git -C <path> commit` 目標。先暫存已評審的差異，再單獨執行提交。Shell 別名和動態產生的命令不在此靜態掛鉤檢查的範圍內。
 
 ## 功能特色
 
@@ -84,6 +113,7 @@ claude plugin install ux-ui@bin
 
 - **Web**：**Node.js**（隨附的 `chrome-devtools-mcp` 透過 `npx` 執行）、本機的 **Chrome**，以及你要打造 UI 的那個專案的可執行**開發伺服器**。
 - **行動裝置**：對應你技術堆疊的平台 SDK——Xcode + 模擬器（iOS，僅限 macOS）、Android SDK + 模擬器，或 Flutter SDK——並讓 App 在已啟動的裝置／模擬器上執行。行動裝置 MCP（`@mobilenext/mobile-mcp`、`ios-simulator-mcp`、`dart mcp-server`）只會在已安裝對應工具的環境中啟動；`mobile-snapshot.sh` harness 只需要 `simctl`/`adb`。
+- 兩個宿主的提交目標解析都需要 **Python 3.8 以上版本**。
 - **git** 工作樹，以及 `shasum`/`sha256sum`（macOS/Linux 預設即內建）。
 
 ## 快速開始

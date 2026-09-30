@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.3.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -38,6 +38,35 @@
 エージェントが想像で UI を実装すると、出来は悪くなります — 見えない overflow、欠けた focus ring、処理されていない empty 状態、ラベルに漏れ出た生の UUID。どれも、実際のレンダリングを見るまでは表に出てきません。
 
 **ux-ui はループから想像を取り除きます**。すべての UI の変更は実際のレンダリングで計測され（Web は chrome-devtools によるブラウザページ、モバイルは実機 / シミュレーター）、アートディレクターエージェントが*計測された*スナップショットをもとに批評し、正確かつエレガントになるまで反復したうえで、ハードゲートがかかります: ステージされた diff そのものに対してアートディレクターが APPROVED を出していない UI は、コミットできません。
+
+## Codex
+
+Codex CLI 0.158.0 以降が必要です。インストール後、新しいセッションを開始してください。Claude は `/plugin:skill`、Codex は `$plugin:skill` を使います。共通のスキルと資料はこのプラグインに同梱されています。自動動作を利用する前に `/hooks` で同梱フックを確認して信頼してください。
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add ux-ui@bin
+```
+
+`$ux-ui:build` または `$ux-ui:build-mobile` を使います。Codex は同じ4つの MCP サーバーの実際のツールを検出し、同梱のアートディレクター指示で独立した読み取り専用レビューを実行します。レビュアーはメインのモデル・推論設定を継承し、Claude は引き続き Opus を使います。実測要件、バックエンド選択、3回の反復上限、ステージ済み diff に結び付く承認を共有します。スクリーンショットなしでは承認できません。ゲートには有効で信頼済みのフックが必要です。ブラウザーやモバイル SDK・端末の準備も必要です。
+
+### Codex 設定
+
+手順・成果物・レビュー基準を共有します。Codex のレビューモデルは設定できますが、Claude と同一の出力や品質を保証するものではありません。Codex 起動前に環境変数を設定し、省略した値は現在のセッションを継承します。委任された CLI は `CXC_MODE=off` で実行され、メインのモードは変わりません。
+
+| 設定 | 動作 |
+|---|---|
+| `UX_UI_CODEX_REVIEW_MODEL` | Web・モバイルレビュアー モデル。既定: 現在のセッションのモデル |
+| `UX_UI_CODEX_REVIEW_EFFORT` | Web・モバイルレビュアー 推論強度。既定: 現在のセッションの推論強度 |
+
+`UX_UI_GLOBS` は両ホストで同じ UI ファイル範囲を指定します。Codex では同梱 MCP を個別に設定でき、以下のように未使用の Flutter を無効にできます。`/hooks` の信頼は別途確認してください。キャプチャや監査ツールがなければ検査完了とは扱いません。
+
+```toml
+[plugins."ux-ui@bin".mcp_servers.flutter]
+enabled = false
+```
+
+ゲートは Unicode や改行を含むファイル名を保持し、明示的な `git -C <path> commit` の対象を解決します。レビュー済みの差分をステージしてからコミットを別途実行してください。シェルエイリアスや動的に生成されるコマンドは、この静的フック検査の対象外です。
 
 ## 特長
 
@@ -84,6 +113,7 @@ claude plugin install ux-ui@bin
 
 - **Web**: **Node.js**（同梱の `chrome-devtools-mcp` は `npx` 経由で実行されます）、ローカルの **Chrome**、そして UI を作るプロジェクトの実行可能な**開発サーバー**。
 - **モバイル**: スタックに応じたプラットフォーム SDK — Xcode + シミュレーター（iOS、macOS のみ）、Android SDK + エミュレーター、または Flutter SDK — と、起動済みの実機 / シミュレーター上で動作しているアプリ。モバイル MCP（`@mobilenext/mobile-mcp`、`ios-simulator-mcp`、`dart mcp-server`）は、対応するツールがインストールされた環境でのみ起動します。`mobile-snapshot.sh` ハーネスに必要なのは `simctl`/`adb` だけです。
+- 両ホストのコミット先解決には **Python 3.8 以降**が必要です。
 - **git** の work tree と、`shasum`/`sha256sum`（macOS / Linux には標準で入っています）。
 
 ## クイックスタート

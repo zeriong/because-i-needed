@@ -21,7 +21,22 @@
     "design-review",
     "commit-gate"
   ],
-  "hooks": "./hooks/hooks.json",
+  "skills": "./skills/",
+  "license": "MIT",
+  "interface": {
+    "displayName": "ux-ui",
+    "shortDescription": "Build and review measured web and mobile UI",
+    "longDescription": "Build web AND mobile UI end-to-end: measure the real render (chrome-devtools for web; mobile MCP or a CLI snapshot harness for RN/Flutter/iOS/Android), have an art-director agent critique the measured snapshots, iterate to elegant, and hard-block commits until APPROVED. Bundles its own browser + mobile MCPs and design bar.",
+    "developerName": "zeriong",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use ux-ui for this project."
+    ]
+  },
   "mcpServers": {
     "chrome-devtools": {
       "command": "npx",

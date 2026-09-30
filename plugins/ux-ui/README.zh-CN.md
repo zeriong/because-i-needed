@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.3.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -38,6 +38,35 @@
 智能体凭想象实现 UI 时，往往做得很糟——看不见的溢出、缺失的 focus ring、未处理的空状态、泄漏到标签里的原始 UUID。不看真实渲染，这些问题一个都不会暴露。
 
 **ux-ui 把想象从循环中剔除。** 每一处 UI 改动都在真实渲染上实测——Web 通过 chrome-devtools 在浏览器页面上测，移动端则在真实设备/模拟器上测——由艺术总监智能体对照*实测*快照进行评审，反复迭代直到既正确又优雅，最后再经过硬门禁：艺术总监没有针对这份暂存 diff 本身给出 APPROVED 的 UI，就无法提交。
+
+## Codex
+
+需要 Codex CLI 0.158.0 或更高版本。安装后请启动新会话。Claude 使用 `/plugin:skill`，Codex 使用 `$plugin:skill`。共享技能和资源均包含在此插件内。依赖自动行为前，请在 `/hooks` 中审核并信任随附的钩子。
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add ux-ui@bin
+```
+
+使用 `$ux-ui:build` 或 `$ux-ui:build-mobile`。Codex 发现相同四个 MCP 服务器实际提供的工具，并按随附的艺术总监指令执行独立只读评审。评审继承主代理的模型和推理设置，Claude 艺术总监仍使用 Opus。共享实测要求、后端选择、三轮上限及绑定暂存 diff 的批准。没有截图不能批准。提交门禁仅在已安装的钩子启用且受信任时生效；仍需准备浏览器、移动 SDK 和设备。
+
+### Codex 设置
+
+两端共享流程、产物和评审标准。Codex 评审模型可配置，但不代表其输出或质量与 Claude 相同。启动 Codex 前设置以下环境变量，省略的值继承当前会话。委派的 CLI 使用 `CXC_MODE=off`，主会话模式保持不变。
+
+| 设置 | 行为 |
+|---|---|
+| `UX_UI_CODEX_REVIEW_MODEL` | Web/移动评审者 模型；默认：当前会话模型 |
+| `UX_UI_CODEX_REVIEW_EFFORT` | Web/移动评审者 推理强度；默认：当前会话推理强度 |
+
+`UX_UI_GLOBS` 在两端指定相同的 UI 文件范围。Codex 支持单独配置内置 MCP，例如按下方示例禁用不用的 Flutter。请单独检查 `/hooks` 信任。缺少捕获或审计工具时，不会将检查记为完成。
+
+```toml
+[plugins."ux-ui@bin".mcp_servers.flutter]
+enabled = false
+```
+
+门控保留 Unicode 和换行符等文件名内容，并解析明确的 `git -C <path> commit` 目标。先暂存已评审的差异，再单独执行提交。Shell 别名和动态生成的命令不在此静态钩子检查的范围内。
 
 ## 特性
 
@@ -84,6 +113,7 @@ claude plugin install ux-ui@bin
 
 - **Web**：**Node.js**（内置的 `chrome-devtools-mcp` 通过 `npx` 运行）、本地 **Chrome**，以及你正在构建 UI 的那个项目的可运行**开发服务器**。
 - **移动端**：对应技术栈的平台 SDK——Xcode + 模拟器（iOS，仅限 macOS）、Android SDK + 模拟器，或 Flutter SDK——并且应用正运行在已启动的设备/模拟器上。移动端 MCP（`@mobilenext/mobile-mcp`、`ios-simulator-mcp`、`dart mcp-server`）只在安装了相应工具的环境中启动；`mobile-snapshot.sh` harness 只需要 `simctl`/`adb`。
+- 两个宿主的提交目标解析都需要 **Python 3.8 及以上版本**。
 - **git** 工作树，以及 `shasum`/`sha256sum`（macOS/Linux 默认自带）。
 
 ## 快速开始

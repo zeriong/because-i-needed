@@ -29,21 +29,22 @@ hash_cmd() {
 }
 
 # List staged UI files (added/copied/modified/renamed), excluding our own artifacts.
-ui_files() {
+ui_files() (
+  # Expand the configured list into words, never against files in the shell cwd.
+  set -f
   local globs="${UX_UI_GLOBS:-$DEFAULT_GLOBS}"
   local pathspecs=() g
   for g in $globs; do pathspecs+=( ":(glob)**/$g" ); done
-  git diff --cached --name-only --diff-filter=ACMR -- "${pathspecs[@]}" 2>/dev/null \
-    | grep -v '^\.ux-ui/' || true
-}
+  git diff --cached --name-only -z --diff-filter=ACMR -- \
+    "${pathspecs[@]}" ':(exclude,glob).ux-ui/**' 2>/dev/null || true
+)
 
 # sha256 of the staged diff content of those UI files. Empty if none staged.
 staged_ui_hash() {
-  local files
-  files="$(ui_files)"
-  [ -z "$files" ] && { printf ''; return 0; }
-  printf '%s\n' "$files" | tr '\n' '\0' \
-    | xargs -0 git diff --cached -- 2>/dev/null \
+  local file files=()
+  while IFS= read -r -d '' file; do files+=("$file"); done < <(ui_files)
+  [ ${#files[@]} -eq 0 ] && { printf ''; return 0; }
+  git --literal-pathspecs diff --cached -- "${files[@]}" 2>/dev/null \
     | hash_cmd | awk '{print $1}'
 }
 
@@ -72,10 +73,12 @@ mode="${1:-hook}"
 
 case "$mode" in
   hash)
+    cd "$(git rev-parse --show-toplevel)"
     staged_ui_hash
     ;;
 
   approve)
+    cd "$(git rev-parse --show-toplevel)"
     feature="${2:-unknown}"
     measdir="${3:-}"
     h="$(staged_ui_hash)"
@@ -84,8 +87,11 @@ case "$mode" in
       exit 1
     fi
     mkdir -p "$APPROVAL_DIR"
-    printf '{"verdict":"APPROVED","feature":"%s","diffHash":"%s","measureDir":"%s","approvedAtEpoch":%s}\n' \
-      "$feature" "$h" "$measdir" "$(date +%s)" > "$APPROVAL_DIR/$h.json"
+    python3 -c 'import json, sys, time
+print(json.dumps({"verdict": "APPROVED", "feature": sys.argv[1],
+                  "diffHash": sys.argv[2], "measureDir": sys.argv[3],
+                  "approvedAtEpoch": int(time.time())}, ensure_ascii=False))' \
+      "$feature" "$h" "$measdir" > "$APPROVAL_DIR/$h.json"
     echo "ux-ui-gate: wrote $APPROVAL_DIR/$h.json"
     ;;
 
@@ -96,8 +102,8 @@ case "$mode" in
     [ -z "$input" ] && exit 0
 
     # cd into the project so git sees the right repo.
-    proj="${CLAUDE_PROJECT_DIR:-}"
-    [ -z "$proj" ] && proj="$(json_field "$input" '.cwd' 'cwd')"
+    proj="$(json_field "$input" '.cwd' 'cwd')"
+    [ -z "$proj" ] && proj="${CLAUDE_PROJECT_DIR:-}"
     [ -n "$proj" ] && [ -d "$proj" ] && cd "$proj"
 
     cmd="$(json_field "$input" '.tool_input.command' 'tool_input.command')"
@@ -106,15 +112,23 @@ case "$mode" in
     # Only care about git commits. (matches `git commit`, `git -C x commit`, amend)
     printf '%s' "$cmd" | grep -Eq '(^|[^[:alnum:]])git([[:space:]]+-[^[:space:]]+|[[:space:]]+[^[:space:]]+)*[[:space:]]+commit([[:space:]]|$)' || exit 0
 
-    git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
-
-    h="$(staged_ui_hash)"
-    [ -z "$h" ] && exit 0   # no UI files staged → nothing to gate
-
-    if [ -f "$APPROVAL_DIR/$h.json" ] \
-       && grep -q '"verdict"[[:space:]]*:[[:space:]]*"APPROVED"' "$APPROVAL_DIR/$h.json"; then
-      exit 0   # approved for exactly this staged UI diff
-    fi
+    command -v python3 >/dev/null 2>&1 || {
+      echo 'ux-ui gate: python3 is required to resolve commit targets; gate inactive.' >&2
+      exit 0
+    }
+    resolver="$(cd "$(dirname "$0")" && pwd)/commit-roots.py"
+    blocked=0
+    while IFS= read -r -d '' root; do
+      cd "$root" || continue
+      h="$(staged_ui_hash)"
+      [ -z "$h" ] && continue
+      if [ ! -f "$APPROVAL_DIR/$h.json" ] \
+         || ! grep -q '"verdict"[[:space:]]*:[[:space:]]*"APPROVED"' "$APPROVAL_DIR/$h.json"; then
+        blocked=1
+        break
+      fi
+    done < <(printf '%s' "$cmd" | python3 "$resolver" "$PWD")
+    [ "$blocked" = 0 ] && exit 0
 
     # Blocked. stderr is fed back to the agent as the reason.
     cat >&2 <<'MSG'
@@ -122,8 +136,9 @@ case "$mode" in
 matches the exact staged diff.
 
 Run the UI build/review loop before committing:
-  → invoke the `/ux-ui:build` skill.
-It will measure the real render with chrome-devtools, have the art director critique
+  → invoke ux-ui:build (web) or ux-ui:build-mobile (mobile).
+Use /plugin:skill in Claude Code or $plugin:skill in Codex.
+The skill will measure the real render, have the art director critique
 the measured snapshots, apply fixes until APPROVED, then record the approval.
 The approval is bound to the diff hash, so re-edit → re-review is required.
 

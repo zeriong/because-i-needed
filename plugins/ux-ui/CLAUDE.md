@@ -5,7 +5,7 @@ The original repository had no development-rules file for this plugin. Everythin
 
 Contents: two skills (`skills/build` for web, `skills/build-mobile` for mobile), two agents (`agents/ux-ui-art-director.md`,
 `agents/ux-ui-mobile-art-director.md`, both `model: opus`), the hook `hooks/hooks.json` (PreToolUse → commit gate),
-two scripts (`scripts/ui-commit-gate.sh`, `scripts/mobile-snapshot.sh`), and four MCP servers in `plugin.json`
+three scripts (`scripts/ui-commit-gate.sh`, `scripts/commit-roots.py`, `scripts/mobile-snapshot.sh`), and four MCP servers in `plugin.json`
 (`chrome-devtools`, `mobile-mcp`, `ios-simulator`, `flutter`).
 
 ---
@@ -60,17 +60,32 @@ rm -rf "$t"
 
 If you changed the extensions, run it once more with a file of that extension.
 
-## Rule 5 — Known defects (confirmed 2026-09-23, unfixed)
+## Rule 5 — Host adapters and resource paths
 
-- The block message (`ui-commit-gate.sh` hook mode) points only to the web skill `/ux-ui:build` and chrome-devtools.
-  When a mobile file (`.swift` `.kt` `.dart` `.storyboard` `.xib`, `res/layout`) is blocked it does not mention `/ux-ui:build-mobile`.
-  Changing the message is a behavior change visible to installed users, so bump the version (root Rule 2).
-- `skills/build-mobile/references/backend-detection.md` lines 28, 85 and 86 call `"${CLAUDE_PLUGIN_ROOT}/scripts/mobile-snapshot.sh"`.
-  That variable is replaced only in SKILL.md text at skill load and is not set in the Bash environment (z-lab
-  `plugin-platform-lab/skill-plugin-root-2.1.283/`, V01–V02), so a reference read later keeps it literal and the path
-  resolves to `/scripts/…` — measured: a reference with that line ran `bash: /scripts/hello.sh: No such file or directory`
-  3/3, and haiku never recovered (V03–V04, `reference-plugin-root-2.1.283/`). `doctor` is also in SKILL.md (fine); the two
-  `capture` commands exist only here.
-  Fix by pointing to the SKILL.md path — the pattern ran 3/3 in a minimal skill (V05–V06, `reference-pointer-2.1.283/`);
-  it changes behavior, so measure it on this skill in z-lab and bump the version (root Rule 9, Rule 2).
-  (Confirmed 2026-09-28, unfixed.)
+- Codex uses the shared art-director bodies through an independent read-only execution route;
+  Claude retains its registered Opus agents and MCP tool allowlists. Discover actual MCP tool
+  names on Codex instead of requiring Claude's namespaced prefix.
+- Keep script commands in SKILL.md's host setup, with a plugin-root alias that works on both
+  hosts. Backend references point to those commands. Never depend on a shell expanding an
+  unset CLAUDE_PLUGIN_ROOT in a reference file.
+- The gate's diagnostic names both web and mobile skills and both host invocation prefixes.
+  Its exit semantics, extension list and staged-diff hash remain shared.
+- Both host manifests must declare the same four MCP servers inline; do not add a second
+  default `.mcp.json` that Claude might also discover.
+- Resolve `UX_UI_CODEX_REVIEW_MODEL` and `UX_UI_CODEX_REVIEW_EFFORT` for both directors.
+  CLI reviewers use `CXC_MODE=off`; native reviewers receive the same delegated role.
+  Missing or disabled MCP backends must remain visible in the measurement report.
+
+## Codex compatibility evidence — 1.3.0
+
+See z-lab `ux-ui-lab/codex-compat-1.3.0/` and `codex-compat-1.3.0-full-access/` (U01–U03) and the shared
+`plugin-platform-lab/codex-final-0.158.0/` packaging/installer checks. These records
+cover host wiring and the named fixture paths, not quality improvements. Keep the
+existing workflow invariants when changing an adapter.
+
+Additional setting-parity checks: z-lab `ux-ui-lab/codex-parity-1.3.0/` (U04, U05).
+
+Re-review fixes: z-lab `ux-ui-lab/codex-rereview-1.3.0/` (U06–U08).
+UI hashing no longer expands configured globs in the shell or loses Unicode/newline filenames. Resolve literal commit targets (including git -C), and store approvals at the worktree root even from nested directories. The target resolver requires Python 3.8+.
+
+Approval metadata must remain valid JSON for quoted names and measurement paths.

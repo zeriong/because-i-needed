@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.3.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -38,6 +38,35 @@
 에이전트는 상상으로 UI를 만들면 반드시 틀린다 — 보이지 않는 overflow, 사라진 focus ring, 처리되지 않은 empty 상태, 라벨에 새어 나온 raw UUID. 이런 것들은 **실제 렌더를 보기 전까지** 드러나지 않는다.
 
 **ux-ui는 루프에서 상상을 제거한다.** 모든 UI 변경은 실제 렌더에서 실측되고 — 웹은 chrome-devtools로 브라우저 페이지를, 모바일은 실제 기기/시뮬레이터를 — 아트 디렉터 에이전트가 그 *실측* 스냅샷을 기준으로 비평하며, 정확하고 우아해질 때까지 반복된 뒤 하드 게이트로 막힌다: 아트 디렉터가 **정확히 스테이징된 diff에 대해** APPROVED 하지 않은 UI는 커밋할 수 없다.
+
+## Codex
+
+Codex CLI 0.158.0 이상이 필요합니다. 설치 후 새 세션을 시작하세요. Claude 명령은 `/plugin:skill`, Codex 명령은 `$plugin:skill`입니다. 공통 스킬과 자료는 이 플러그인 안에 포함됩니다. 자동 동작을 사용하기 전에 `/hooks`에서 함께 설치된 훅을 검토하고 신뢰하세요.
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add ux-ui@bin
+```
+
+`$ux-ui:build` 또는 `$ux-ui:build-mobile`을 사용합니다. Codex는 같은 MCP 서버 4개의 실제 도구를 찾아 연결하고, 포함된 아트 디렉터 지침으로 독립 읽기 전용 리뷰를 실행합니다. 리뷰어는 메인의 모델·추론 수준을 이어받으며 Claude 아트 디렉터는 계속 Opus입니다. 실측 조건, 백엔드 선택, 반복 상한 3회, 스테이징 diff에 묶인 승인을 공유합니다. 스크린샷이 없으면 승인할 수 없습니다. 커밋 게이트는 설치된 훅이 활성화되고 신뢰된 경우에 동작합니다. 브라우저·모바일 SDK 및 기기 준비는 별도로 필요합니다.
+
+### Codex 설정
+
+작업 단계·산출물·검토 기준을 공유합니다. Codex 검토 모델은 설정할 수 있으며, Claude 모델과 결과나 품질이 같다는 뜻은 아닙니다. Codex를 시작하기 전에 아래 환경변수를 지정하세요. 생략한 값은 현재 세션을 따릅니다. 위임된 CLI 프로세스는 `CXC_MODE=off`로 실행하고 메인 모드는 유지합니다.
+
+| 설정 | 동작 |
+|---|---|
+| `UX_UI_CODEX_REVIEW_MODEL` | 웹·모바일 검토자 모델. 기본값: 현재 세션 모델 |
+| `UX_UI_CODEX_REVIEW_EFFORT` | 웹·모바일 검토자 추론 강도. 기본값: 현재 세션 추론 강도 |
+
+`UX_UI_GLOBS`는 두 호스트에서 같은 UI 파일 범위를 지정합니다. Codex에서는 번들 MCP 서버를 개별 설정할 수 있습니다. 아래처럼 사용하지 않는 Flutter 도구를 끌 수 있습니다. `/hooks` 신뢰는 별도로 확인하세요. 캡처·감사 도구가 없으면 검사를 완료한 것으로 처리하지 않습니다.
+
+```toml
+[plugins."ux-ui@bin".mcp_servers.flutter]
+enabled = false
+```
+
+게이트는 한글·줄바꿈을 포함한 파일명을 그대로 처리하고, 명시적인 `git -C <경로> commit`의 대상 저장소를 확인합니다. 검토한 변경을 스테이징한 뒤 커밋은 별도로 호출하세요. 셸 별칭이나 동적으로 만들어지는 명령은 이 정적 훅 검사의 범위 밖입니다.
 
 ## 특징
 
@@ -84,6 +113,7 @@ claude plugin install ux-ui@bin
 
 - **웹**: **Node.js**(번들된 `chrome-devtools-mcp`가 `npx`로 실행됨), 로컬 **Chrome**, UI를 만들 프로젝트의 실행 가능한 **개발 서버**.
 - **모바일**: 스택별 플랫폼 SDK — Xcode + 시뮬레이터(iOS, macOS 전용), Android SDK + 에뮬레이터, 또는 Flutter SDK — 및 부팅된 기기/시뮬레이터에서 실행 중인 앱. 모바일 MCP(`@mobilenext/mobile-mcp`, `ios-simulator-mcp`, `dart mcp-server`)는 해당 도구가 설치된 환경에서만 기동하며, `mobile-snapshot.sh` 하네스는 `simctl`/`adb`만 있으면 된다.
+- 두 호스트 모두 커밋 대상 경로를 확인하는 데 **Python 3.8 이상**이 필요합니다.
 - **git** 워크트리, 그리고 `shasum`/`sha256sum`(macOS/Linux 기본 제공).
 
 ## 빠른 시작

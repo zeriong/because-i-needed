@@ -2,7 +2,7 @@
 
 This plugin must work in a project with **zero prior configuration**. So it carries
 its own design bar here rather than depending on any host repo's rules. If the host
-project *does* define design rules (e.g. a `CLAUDE.md` design section, a design-tokens
+project *does* define design rules (e.g. an `AGENTS.md` / `CLAUDE.md` design section, a design-tokens
 file, a component library), those win — read them first and treat this file as the
 floor beneath them.
 

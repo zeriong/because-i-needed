@@ -43,7 +43,7 @@
 
 [查看 harness 简体中文 README →](plugins/harness/README.zh-CN.md)
 
-### [ux-ui](plugins/ux-ui) · `v1.2.0`
+### [ux-ui](plugins/ux-ui) · `v1.3.0`
 
 **以真实渲染的实测结果为依据构建 Web 与移动端 UI。** 它截取真实截图（Web 用 chrome-devtools；React Native / Flutter / iOS / Android 用移动端 MCP 或 CLI 快照 harness），让艺术总监智能体评审这些实测快照，反复迭代直到 UI 正确且优雅，并且在暂存的 diff 本身获得 APPROVED 之前拦截 UI 的 `git commit`。
 

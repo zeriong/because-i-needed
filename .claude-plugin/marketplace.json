@@ -47,7 +47,7 @@
       "name": "ux-ui",
       "source": "./plugins/ux-ui",
       "description": "Web + mobile: measure the real render (chrome-devtools for web; a mobile MCP or CLI snapshot harness for RN/Flutter/iOS/Android) → art-director critique of the measured snapshots → iterate to elegant → hard-block commits until APPROVED. (adds a PreToolUse commit-gate hook and 4 MCP servers)",
-      "version": "1.2.0",
+      "version": "1.3.0",
       "author": {
         "name": "zeriong"
       },

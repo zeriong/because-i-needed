@@ -1,9 +1,32 @@
 ---
 name: build-mobile
-description: Build or change any MOBILE UI end-to-end, measured and reviewed, without extra user instruction. Use whenever implementing/editing mobile UI — React Native, Flutter, native iOS (Swift/SwiftUI), native Android (Kotlin/Compose/XML), or responsive mobile-web screens, components, navigation, forms, sheets, lists. Detects the project's stack, picks the right measurement backend (an MCP that returns real screenshots, or a CLI snapshot harness when no MCP can), MEASURES the real render on device/simulator, has the ux-ui-mobile-art-director agent critique the measured snapshots, iterates until elegant and correct, then records the approval that unblocks commit. Trigger on: build/implement/fix/redesign/style a mobile screen, component, navigation, sheet, list, form; RN/Flutter/iOS/Android UI.
+description: "Build or change any MOBILE UI end-to-end, measured and reviewed, without extra user instruction. Use whenever implementing/editing mobile UI — React Native, Flutter, native iOS (Swift/SwiftUI), native Android (Kotlin/Compose/XML), or responsive mobile-web screens, components, navigation, forms, sheets, lists. Detects the project's stack, picks the right measurement backend (an MCP that returns real screenshots, or a CLI snapshot harness when no MCP can), MEASURES the real render on device/simulator, has the ux-ui-mobile-art-director agent critique the measured snapshots, iterates until elegant and correct, then records the approval that unblocks commit. Trigger on: build/implement/fix/redesign/style a mobile screen, component, navigation, sheet, list, form; RN/Flutter/iOS/Android UI."
 ---
 
 # UX/UI Builder (Mobile) — detect, measure, critique, iterate, gate
+
+## Host setup
+
+Claude Code uses `/ux-ui:build-mobile` and its registered mobile art director.
+Codex uses `$ux-ui:build-mobile`; first read
+[../build/references/host-codex.md](../build/references/host-codex.md) for MCP discovery,
+independent reviewer dispatch and hook trust. Use the host's question tool or the
+conversation for the backend selection and wait for the user's choice.
+`<plugin>` is `${CLAUDE_PLUGIN_ROOT}` when expanded by Claude Code, or the absolute
+path two directories above this skill's directory on Codex. Resolve it from the
+loaded SKILL.md path, never from the target project's working directory.
+The commit-target resolver requires Python 3.8+. Check `python3 --version` before
+claiming the commit gate is active. Stage and approve the exact UI diff before a
+separate literal `git commit` call; shell aliases or dynamic command generation
+are outside this hook's static inspection.
+
+The snapshot commands used by the backend reference are:
+
+```bash
+bash "<plugin>/scripts/mobile-snapshot.sh" doctor
+bash "<plugin>/scripts/mobile-snapshot.sh" capture ios <measure-dir> <state-device-label>
+bash "<plugin>/scripts/mobile-snapshot.sh" capture android <measure-dir> <state-device-label>
+```
 
 Agents implement UI poorly when they work from imagination. This skill removes
 imagination from the loop for **mobile**: it first detects the app's stack, then
@@ -45,7 +68,7 @@ UI. The **one** place you pause for the user is backend selection in step 0.
 - Detect the mobile stack from the repo (RN / Expo / Flutter / native iOS / native
   Android / responsive mobile-web). Run the harness doctor to see which backends are
   actually functional on this machine:
-  `"${CLAUDE_PLUGIN_ROOT}/scripts/mobile-snapshot.sh" doctor`
+  `"<plugin>/scripts/mobile-snapshot.sh" doctor`
 - Pick the measurement backend by the matrix in `backend-detection.md`:
   - **Mobile web** → the bundled `chrome-devtools` MCP (device emulation) — no native SDK.
   - **Flutter** → the `flutter` MCP (`dart mcp-server`): widget tree + hot reload + screenshot.
@@ -67,7 +90,7 @@ UI. The **one** place you pause for the user is backend selection in step 0.
 
 ### 1. Plan the design (before writing code)
 - Read `references/mobile-design-principles.md`. If the host project defines its own
-  rules (a `CLAUDE.md` design section, a design system, platform theme), those win.
+  rules (an `AGENTS.md` / `CLAUDE.md` design section, a design system, platform theme), those win.
 - Brainstorm a compact design intent for this feature: hierarchy, spacing scale, type
   roles, states, gesture/affordance model, and the one signature element — within the
   platform's idiom (iOS HIG vs. Material). Record it into `context.md`.
@@ -86,7 +109,7 @@ UI. The **one** place you pause for the user is backend selection in step 0.
   which cells were skipped and why).
 
 ### 4. Critique (hard gate)
-- Spawn the `ux-ui-mobile-art-director` agent. Give it the `.ux-ui/measure/<slug>/` path,
+- Spawn the `ux-ui-mobile-art-director` through the host setup above. Give it the `.ux-ui/measure/<slug>/` path,
   the detected stack, and the chosen backend. It reviews the measured artifacts and
   returns `VERDICT: APPROVED | CHANGES_REQUIRED` (see `mobile-review-rubric.md`).
 
@@ -100,7 +123,7 @@ UI. The **one** place you pause for the user is backend selection in step 0.
 ### 6. Record approval (unblocks commit)
 - Only when the director returns `APPROVED`, stage your UI changes, then run from the
   project root:
-  `"${CLAUDE_PLUGIN_ROOT}/scripts/ui-commit-gate.sh" approve <feature-slug> .ux-ui/measure/<slug>/`
+  `"<plugin>/scripts/ui-commit-gate.sh" approve <feature-slug> .ux-ui/measure/<slug>/`
 - This writes `.ux-ui/approvals/<hash>.json` bound to the staged UI diff hash. Any further
   UI edit changes the hash → re-run the loop.
 

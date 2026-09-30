@@ -1,9 +1,22 @@
 ---
 name: build
-description: Build or change any frontend UI end-to-end, measured and reviewed, without extra user instruction. Use whenever implementing/editing UI — components, pages, screens, styles, layout, design tweaks. Drives chrome-devtools to MEASURE the real render, has the ux-ui-art-director agent critique the measured snapshots, iterates until elegant and correct, then records the approval that unblocks commit. Trigger on: build/implement/fix/redesign/style a component, page, screen, form, dashboard, modal, layout.
+description: "Build or change any frontend UI end-to-end, measured and reviewed, without extra user instruction. Use whenever implementing/editing UI — components, pages, screens, styles, layout, design tweaks. Drives chrome-devtools to MEASURE the real render, has the ux-ui-art-director agent critique the measured snapshots, iterates until elegant and correct, then records the approval that unblocks commit. Trigger on: build/implement/fix/redesign/style a component, page, screen, form, dashboard, modal, layout."
 ---
 
 # UX/UI Builder — measure, critique, iterate, gate
+
+## Host setup
+
+Claude Code uses `/ux-ui:build` and its registered art director. Codex uses
+`$ux-ui:build`; first read [references/host-codex.md](references/host-codex.md) for
+MCP discovery, independent reviewer dispatch and hook trust.
+`<plugin>` is `${CLAUDE_PLUGIN_ROOT}` when expanded by Claude Code, or the absolute
+path two directories above this skill's directory on Codex. Resolve it from the
+loaded SKILL.md path, never from the target project's working directory.
+The commit-target resolver requires Python 3.8+. Check `python3 --version` before
+claiming the commit gate is active. Stage and approve the exact UI diff before a
+separate literal `git commit` call; shell aliases or dynamic command generation
+are outside this hook's static inspection.
 
 Agents implement UI poorly when they work from imagination. This skill removes
 imagination from the loop: **every UI change is measured on the real render, critiqued
@@ -33,7 +46,7 @@ Run this loop autonomously (no extra user prompting) whenever you build or chang
 
 ### 0. Bootstrap (self-check — zero-config)
 - Confirm the `chrome-devtools` MCP tools are present in this session
-  (`mcp__plugin_ux-ui_chrome-devtools__*`). If missing, the plugin's MCP
+  (Claude Code: `mcp__plugin_ux-ui_chrome-devtools__*`; Codex: discover the actual server tools). If missing, the plugin's MCP
   server failed to start (needs Node + Chrome). Tell the user how to fix, then stop.
 - Find the dev server URL (project config; default `http://localhost:3000`). If it is
   not running, start it (prefer the project's own run/dev script) and wait until it
@@ -42,7 +55,7 @@ Run this loop autonomously (no extra user prompting) whenever you build or chang
 
 ### 1. Plan the design (before writing code)
 - Read `references/design-principles.md`. If the host project defines its own design
-  rules (a `CLAUDE.md` design section, design tokens, a component library), read those
+  rules (an `AGENTS.md` / `CLAUDE.md` design section, design tokens, a component library), read those
   — they win.
 - Brainstorm a compact design intent for this specific feature: hierarchy, spacing
   scale, type roles, states, and the one signature element. Avoid the templated AI
@@ -64,7 +77,7 @@ Run this loop autonomously (no extra user prompting) whenever you build or chang
   cells were skipped and why).
 
 ### 4. Critique (hard gate)
-- Spawn the `ux-ui-art-director` agent. Give it the `.ux-ui/measure/<slug>/` path and
+- Spawn the `ux-ui-art-director` through the host setup above. Give it the `.ux-ui/measure/<slug>/` path and
   the context. It reviews the measured artifacts and returns
   `VERDICT: APPROVED | CHANGES_REQUIRED` with findings (see `review-rubric.md`).
 
@@ -78,7 +91,7 @@ Run this loop autonomously (no extra user prompting) whenever you build or chang
 
 ### 6. Record approval (unblocks commit)
 - Only when the director returns `APPROVED`, run from the project root:
-  `"${CLAUDE_PLUGIN_ROOT}/scripts/ui-commit-gate.sh" approve <feature-slug> .ux-ui/measure/<slug>/`
+  `"<plugin>/scripts/ui-commit-gate.sh" approve <feature-slug> .ux-ui/measure/<slug>/`
   (stage your UI changes first — the approval is bound to the staged UI diff hash).
 - This writes `.ux-ui/approvals/<hash>.json`. The gate will now allow the commit for
   exactly this diff. Any further UI edit changes the hash → re-run the loop.

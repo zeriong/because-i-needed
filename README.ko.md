@@ -43,7 +43,7 @@
 
 [harness 한국어 README 보기 →](plugins/harness/README.ko.md)
 
-### [ux-ui](plugins/ux-ui) · `v1.2.0`
+### [ux-ui](plugins/ux-ui) · `v1.3.0`
 
 **웹과 모바일 UI를 실제 렌더 실측으로 만듭니다.** 실제 스크린샷을 캡처하고(웹은 chrome-devtools, React Native / Flutter / iOS / Android는 모바일 MCP 또는 CLI 스냅샷 하네스), 아트 디렉터 에이전트가 그 실측 스냅샷을 비평하게 하며, 정확하고 우아해질 때까지 반복한 뒤, 스테이징된 diff 그대로 APPROVED 되기 전까지 UI의 `git commit`을 막습니다.
 
