@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.1] - 2026-09-30
+
+### Changed
+
+- The README no longer points to plan-smith, which the marketplace retired. `run` still hands planning to a
+  repository's dedicated planning skill when one is available.
+
+### Why
+
+plan-smith left the marketplace, so the README pointed to a plugin that can no longer be installed. `run` never named it, so its behavior is unchanged.
+
 ## [0.3.0] - 2026-09-30
 
 ### Changed

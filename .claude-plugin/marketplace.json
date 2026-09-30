@@ -54,7 +54,7 @@
       "name": "claude-x-codex",
       "source": "./plugins/claude-x-codex",
       "description": "Claude × Codex peer orchestration: the two plan, build, and review each other's work as peers, with evidence-based triage, a rebuttal round, and shared project context across both vendors. Unofficial community plugin. (adds a UserPromptSubmit hook; silent when mode is off)",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "author": {
         "name": "zeriong"
       },

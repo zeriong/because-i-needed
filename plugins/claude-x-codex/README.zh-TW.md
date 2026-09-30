@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.1-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -113,7 +113,7 @@ claude plugin install claude-x-codex@bin
 - **脈絡橋接**——稽核會找出兩個廠商讀取不同指示檔的位置、只約束一個廠商的 hook，以及工作者的 worktree 中會缺少的未提交脈絡。`run` 發出的 Codex 呼叫透過 Codex 的後備設定讀取 `CLAUDE.md`，不需修改儲存庫；互動式 Codex 工作階段（Orca 工作者，或作為主代理的 Codex）需要在你的 Codex 設定中加入同樣的設定。任何需要修改你的設定或儲存庫的調整都會在計畫核准時提出。
 - **狀態寫入磁碟**——`.claude-x-codex/`（已排除在 git 之外）保存計畫、決定與審查，因此一次執行在脈絡壓縮後仍可恢復。
 
-與 [plan-smith](../plan-smith) 一起安裝時，規劃步驟會使用 `/plan-smith:forge`——只要有專用的規劃技能，`run` 就會把規劃交給它。
+有專用規劃技能時，`run` 會將規劃交給該技能。
 
 ## 設定
 

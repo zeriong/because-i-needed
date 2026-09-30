@@ -67,7 +67,7 @@ codex plugin add claude-x-codex@bin
 
 [查看 ux-ui 简体中文 README →](plugins/ux-ui/README.zh-CN.md)
 
-### [claude-x-codex](plugins/claude-x-codex) · `v0.3.0`
+### [claude-x-codex](plugins/claude-x-codex) · `v0.3.1`
 
 **Claude × Codex 同伴编排。** 主智能体负责规划并做出每个关卡的决定，把工作分派给快速的 Claude 工作者或批量处理的 Codex 工作者，两个厂商互相评审对方的工作——包括主智能体自己的计划。反驳只有一轮，裁定依据的是证据而不是角色。审计功能确保两个厂商从同样的项目指令出发。非官方社区插件。
 

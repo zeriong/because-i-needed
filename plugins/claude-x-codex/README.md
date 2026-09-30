@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.1-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -113,7 +113,7 @@ claude plugin install claude-x-codex@bin
 - **Context bridge** — the audit finds where the two vendors read different instruction files, hooks that bind only one vendor, and uncommitted context that worker worktrees would lack. The Codex calls `run` makes read `CLAUDE.md` through Codex's fallback setting, with no repo change; interactive Codex sessions (Orca workers, or Codex as the main agent) need the same setting in your Codex config. Anything that would change your config or the repo is proposed at plan approval.
 - **State on disk** — `.claude-x-codex/` (git-excluded) keeps the plan, decisions, and reviews, so a run survives compaction and can be resumed.
 
-Installed alongside [plan-smith](../plan-smith), the plan step uses `/plan-smith:forge` — `run` hands planning to a dedicated planning skill when one is available.
+When a dedicated planning skill is available, `run` hands planning to it.
 
 ## Configuration
 

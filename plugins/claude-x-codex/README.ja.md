@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.1-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -113,7 +113,7 @@ claude plugin install claude-x-codex@bin
 - **コンテキストブリッジ** — 監査は、2 つのベンダーが別々の指示ファイルを読んでいる場所、片方のベンダーにしか効かないフック、ワーカーの worktree に欠けるコミットされていない文脈を見つけます。`run` が行う Codex の呼び出しは Codex のフォールバック設定で `CLAUDE.md` を読むので、リポジトリの変更は不要です。対話型の Codex セッション（Orca のワーカー、またはメインエージェントとしての Codex）では、同じ設定がユーザーの Codex 設定に必要です。ユーザーの設定やリポジトリを変える修正は、計画の承認時に提案します。
 - **ディスク上の状態** — `.claude-x-codex/`（git から除外）に計画・判断・レビューが残るため、実行はコンパクションを経ても再開できます。
 
-[plan-smith](../plan-smith) と一緒にインストールすると、計画ステップに `/plan-smith:forge` が使われます — `run` は専用の計画スキルがあれば計画をそれに任せます。
+専用の計画スキルが利用できる場合、`run` は計画をそのスキルに任せます。
 
 ## 設定
 
