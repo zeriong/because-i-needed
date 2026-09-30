@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.7.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.8.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -48,15 +48,15 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add plan-smith@bin
 ```
 
-使用 `$plan-smith:forge <任务>`。Codex 使用相同的代理指令、框架和文风，在全新上下文中执行写作、各轮接力、审计和拆分。使用自己的提问工具并继承主代理的模型和推理设置；Opus/Fable 仍是文风名称。保留确认上下文包、独立写作和原文交付要求。
+使用 `$plan-smith:forge <任务>`。Codex 使用相同的代理指令、框架和文风，在全新上下文中执行写作、各轮接力、审计和拆分。使用自己的提问工具、主会话所属系列的最新模型和主会话的推理设置；Opus/Fable 仍是文风名称。保留确认上下文包、独立写作和原文交付要求。
 
 ### Codex 设置
 
-两端共享流程、产物和评审标准。Codex 评审模型可配置，但不代表其输出或质量与 Claude 相同。启动 Codex 前设置以下环境变量，省略的值继承当前会话。委派的 CLI 使用 `CXC_MODE=off`，主会话模式保持不变。
+两端共享流程、产物和评审标准。Codex 评审模型可配置，但不代表其输出或质量与 Claude 相同。启动 Codex 前设置以下环境变量。省略模型时使用当前会话所属系列的最新模型；已设置的值可以是系列名或模型 ID，并会提升到该系列的最新模型。委派的 CLI 使用 `CXC_MODE=off`，主会话模式保持不变。如果无法确定最新模型（例如沙箱无法刷新目录时，技能会先请求在沙箱外重新运行检查），该步骤会说明原因并停止，不会回退到其他模型。Codex 会话无法查看自身模型或所属系列时，会请求你设置该变量。在 Claude Code 中，若 `ANTHROPIC_DEFAULT_<FAMILY>_MODEL` 别名被重定向到其他模型，该步骤也会停止。
 
 | 设置 | 行为 |
 |---|---|
-| `PLAN_SMITH_CODEX_MODEL` | 撰写者 模型；默认：当前会话模型 |
+| `PLAN_SMITH_CODEX_MODEL` | 撰写者 模型；默认：当前会话所属系列的最新模型 |
 | `PLAN_SMITH_CODEX_EFFORT` | 撰写者 推理强度；默认：当前会话推理强度 |
 
 ## 它能做什么

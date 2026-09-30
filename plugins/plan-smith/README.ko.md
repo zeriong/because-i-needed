@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.7.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.8.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -48,15 +48,15 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add plan-smith@bin
 ```
 
-`$plan-smith:forge <작업>`을 사용합니다. Codex는 동일한 에이전트 지침·프레임·문체를 사용해 집필, 릴레이 각 패스, 감사, 분할을 새 컨텍스트에서 실행합니다. 자체 질문 도구를 사용하고 메인의 모델·추론 수준을 이어받습니다. Opus/Fable은 문체 이름입니다. 패킷 확인, 독립 집필, 원문 전달 조건을 유지합니다.
+`$plan-smith:forge <작업>`을 사용합니다. Codex는 동일한 에이전트 지침·프레임·문체를 사용해 집필, 릴레이 각 패스, 감사, 분할을 새 컨텍스트에서 실행합니다. 자체 질문 도구를 사용하고 메인 세션 제품군의 최신 모델과 메인의 추론 수준을 사용합니다. Opus/Fable은 문체 이름입니다. 패킷 확인, 독립 집필, 원문 전달 조건을 유지합니다.
 
 ### Codex 설정
 
-작업 단계·산출물·검토 기준을 공유합니다. Codex 검토 모델은 설정할 수 있으며, Claude 모델과 결과나 품질이 같다는 뜻은 아닙니다. Codex를 시작하기 전에 아래 환경변수를 지정하세요. 생략한 값은 현재 세션을 따릅니다. 위임된 CLI 프로세스는 `CXC_MODE=off`로 실행하고 메인 모드는 유지합니다.
+작업 단계·산출물·검토 기준을 공유합니다. Codex 검토 모델은 설정할 수 있으며, Claude 모델과 결과나 품질이 같다는 뜻은 아닙니다. Codex를 시작하기 전에 아래 환경변수를 지정하세요. 모델을 생략하면 현재 세션 제품군의 최신 모델을 사용합니다. 설정한 모델 값은 제품군명이나 모델 ID를 지정할 수 있으며 해당 제품군의 최신 모델로 올려집니다. 위임된 CLI 프로세스는 `CXC_MODE=off`로 실행하고 메인 모드는 유지합니다. 최신 모델을 확인할 수 없으면(예: 샌드박스에서 카탈로그를 새로 고칠 수 없는 경우, 스킬이 먼저 샌드박스 밖에서 확인을 다시 실행하라고 요청합니다) 대체 모델로 넘어가지 않고 단계가 이유를 알리며 멈춥니다. Codex 세션이 자신의 모델이나 제품군을 확인할 수 없으면 변수 설정을 요청합니다. Claude Code에서는 `ANTHROPIC_DEFAULT_<FAMILY>_MODEL` 별칭이 다른 모델로 리디렉션된 경우에도 단계가 멈춥니다.
 
 | 설정 | 동작 |
 |---|---|
-| `PLAN_SMITH_CODEX_MODEL` | 집필자 모델. 기본값: 현재 세션 모델 |
+| `PLAN_SMITH_CODEX_MODEL` | 집필자 모델. 기본값: 현재 세션 제품군의 최신 모델 |
 | `PLAN_SMITH_CODEX_EFFORT` | 집필자 추론 강도. 기본값: 현재 세션 추론 강도 |
 
 ## 무엇을 하는가

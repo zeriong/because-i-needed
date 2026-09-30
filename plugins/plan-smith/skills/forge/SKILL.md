@@ -18,6 +18,17 @@ argument-hint: "[frame=<frame>] [style=opus|fable|relay|auto] <task description>
   the loaded skill path, not the target project's working directory. Scripts stay in
   `<plugin>/scripts/`; read the active host's `.claude-plugin/plugin.json` or
   `.codex-plugin/plugin.json` for the run stamp.
+- Newest model: every plan-writer dispatch (each writer pass, the wiring audit, the split)
+  runs the newest model of the main session's family, resolved right before that dispatch.
+  Codex: the resolver command in [references/host-codex.md](references/host-codex.md).
+  Claude Code: the agent definition says `model: inherit`, and your session may run an older
+  id of its family, so run
+  `python3 "<plugin>/scripts/latest-model.py" claude "<your own model id>" --project "<project root>"`
+  and pass the alias it prints (e.g. `opus`) as the Task/Agent tool's `model` on every
+  plan-writer call; the alias runs the family's newest. Exit 2 means an
+  `ANTHROPIC_DEFAULT_<FAMILY>_MODEL` override would silently run an older model. On exit 2
+  or 3, do not dispatch, do not substitute another model, and do not write the plan
+  yourself: tell the user the resolver's `latest-model:` message and stop that step.
 
 When this skill loads, **you (the main agent) do not write the plan yourself.** Your only unique asset is the session context — the user's intent, nuance, and history — and you spend it entirely on intent extraction. The writing happens in a noise-free context owned by the `plan-writer` agent. This division of labor is the whole point:
 
@@ -46,7 +57,7 @@ Argument shape: `[frame=<frame>] [style=opus|fable|relay|auto] <task description
 2. Using the **entire conversation** as source material, write a context packet following [references/packet-template.md](references/packet-template.md). Core fields: goal (definition of success) / hard constraints / soft preferences / **rejected alternatives and why** / decisions already made / relevant file paths with their gist / unknowns & open questions / selected frame + rationale / selected style + rationale.
    - Any field you inferred rather than confirmed from the conversation must carry a `⚠guess` marker.
    - For relevant files, never give bare paths — add "why it matters + the one-line takeaway". Assume the plan-writer knows nothing about this conversation and must reconstruct context from files alone.
-2b. **Fill the run stamp** (packet's first section) before anything else in the packet: the plugin version read from the plugin's own `plugin.json`, the frames.md fingerprint, and the **resolved model ids** of yourself and of the writer — `opus` / `sonnet` / `fable` are aliases whose meaning changes over time, so an alias is not a version. Also record whether this run is interactive or scripted. A plan that cannot name what produced it is not comparable to the next one.
+2b. **Fill the run stamp** (packet's first section) before anything else in the packet: the plugin version read from the plugin's own `plugin.json`, the frames.md fingerprint, and the **resolved model id** of yourself — `opus` / `sonnet` / `fable` are aliases whose meaning changes over time, so an alias is not a version. Leave the writer's model `pending` and fill it after each dispatch with the id that actually ran, taken from the run (Codex run header `model:`, a native subagent's receipt), never from the writer's self-report. Also record whether this run is interactive or scripted. A plan that cannot name what produced it is not comparable to the next one.
 3. Save the packet: `plans/<kebab-slug>/packet.md` (slug derived from the task; append `-2` on collision).
 4. **User confirmation gate (never skip):** show the user the packet's essentials (goal / hard constraints / rejected alternatives / **deliverable type and implementer from Gate 0** / frame & style selection with rationale) and confirm via that host question route: "Here is the intent and constraints I distilled — is this correct?"
    - If any `⚠guess` fields exist, turn them into question options and confirm them in the same gate.

@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.7.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.8.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -48,15 +48,15 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add plan-smith@bin
 ```
 
-`$plan-smith:forge <タスク>` を使います。Codex は同じエージェント指示・フレーム・文体で執筆、各リレーパス、監査、分割を新しいコンテキストで実行します。独自の質問ツールを使い、メインのモデルと推論設定を継承します。Opus/Fable は文体名です。パケット確認、独立執筆、原文の引き渡しを維持します。
+`$plan-smith:forge <タスク>` を使います。Codex は同じエージェント指示・フレーム・文体で執筆、各リレーパス、監査、分割を新しいコンテキストで実行します。独自の質問ツールを使い、メインセッションのファミリーの最新モデルと推論設定を使います。Opus/Fable は文体名です。パケット確認、独立執筆、原文の引き渡しを維持します。
 
 ### Codex 設定
 
-手順・成果物・レビュー基準を共有します。Codex のレビューモデルは設定できますが、Claude と同一の出力や品質を保証するものではありません。Codex 起動前に環境変数を設定し、省略した値は現在のセッションを継承します。委任された CLI は `CXC_MODE=off` で実行され、メインのモードは変わりません。
+手順・成果物・レビュー基準を共有します。Codex のレビューモデルは設定できますが、Claude と同一の出力や品質を保証するものではありません。Codex 起動前に環境変数を設定してください。モデルを省略すると現在のセッションのファミリーの最新モデルを使います。設定値にはファミリー名またはモデル ID を指定でき、そのファミリーの最新モデルに引き上げられます。委任された CLI は `CXC_MODE=off` で実行され、メインのモードは変わりません。最新モデルを特定できない場合（例: サンドボックス内でカタログを更新できないときは、スキルが先にサンドボックス外で確認を再実行するよう求めます）、フォールバックせず理由を説明してステップを停止します。Codex セッションが自身のモデルまたはファミリーを確認できない場合は、変数の設定を求めます。Claude Code では、`ANTHROPIC_DEFAULT_<FAMILY>_MODEL` エイリアスが別モデルにリダイレクトされている場合もステップを停止します。
 
 | 設定 | 動作 |
 |---|---|
-| `PLAN_SMITH_CODEX_MODEL` | 執筆者 モデル。既定: 現在のセッションのモデル |
+| `PLAN_SMITH_CODEX_MODEL` | 執筆者 モデル。既定: 現在のセッションのファミリーの最新モデル |
 | `PLAN_SMITH_CODEX_EFFORT` | 執筆者 推論強度。既定: 現在のセッションの推論強度 |
 
 ## できること

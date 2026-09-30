@@ -16,8 +16,8 @@ Marking rule: any field inferred rather than confirmed from the conversation car
      from raw transcripts; two rounds were nearly mislabelled. Fill every line or mark it unknown. -->
 - plan-smith version: <from the active host's `.claude-plugin/plugin.json` or `.codex-plugin/plugin.json`, sibling of the plugin's `skills/` directory — not from memory; if the file cannot be found, write "unknown" rather than inferring from a path>
 - frames.md fingerprint: <line count, or a digest if you can compute one>
-- Main agent model: <resolved id, e.g. claude-opus-5 — an alias like "opus" is NOT a version>
-- plan-writer model: <resolved id of the writing agent; state it if it differs from the main agent>
+- Main agent model: <resolved id — an alias like "opus" is NOT a version>
+- plan-writer model: <the id that actually ran, taken from the run (Codex run header `model:`, a native subagent's receipt) — never the writer's self-report; "pending" until the first dispatch returns, then update it after each dispatch>
 - Skill invocation: <Claude `/plan-smith:forge` | Codex `$plan-smith:forge` | batch/scripted — comparability requires the same harness>
 
 ## Task (one line)

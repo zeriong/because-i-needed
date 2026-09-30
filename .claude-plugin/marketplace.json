@@ -12,7 +12,7 @@
       "name": "plan-smith",
       "source": "./plugins/plan-smith",
       "description": "Forge plans through a two-stage pipeline: the main agent distills session intent into a context packet, a clean-context plan-writer drafts with a proven reasoning-frame library and Opus/Fable-derived writing styles, and the result is relayed verbatim. Includes a relay mode (disciplined draft + auditing revision) validated by a 26-plan experiment.",
-      "version": "1.7.0",
+      "version": "1.8.0",
       "author": {
         "name": "zeriong"
       },

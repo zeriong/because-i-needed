@@ -49,7 +49,7 @@ codex plugin add claude-x-codex@bin
 
 ## 插件
 
-### [plan-smith](plugins/plan-smith) · `v1.7.0`
+### [plan-smith](plugins/plan-smith) · `v1.8.0`
 
 **通过两阶段流水线锻造计划。** 主智能体把整段对话提炼成一份上下文包（目标、硬约束、被否决的备选方案），并与你确认；随后由一个上下文干净的 `plan-writer` 智能体借助推理框架库和经过验证的写作风格撰写计划，再把计划原样转交给你——没有摘要损失，也没有上下文污染。
 

@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.7.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.8.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -48,15 +48,15 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add plan-smith@bin
 ```
 
-使用 `$plan-smith:forge <任務>`。Codex 使用相同的代理指令、框架和文風，在全新上下文中執行寫作、各輪接力、稽核和拆分。使用自己的提問工具並繼承主代理的模型和推理設定；Opus/Fable 仍是文風名稱。保留確認上下文包、獨立寫作和原文交付要求。
+使用 `$plan-smith:forge <任務>`。Codex 使用相同的代理指令、框架和文風，在全新上下文中執行寫作、各輪接力、稽核和拆分。使用自己的提問工具、主工作階段所屬系列的最新模型和主工作階段的推理設定；Opus/Fable 仍是文風名稱。保留確認上下文包、獨立寫作和原文交付要求。
 
 ### Codex 設定
 
-兩端共用流程、產物與審查標準。Codex 審查模型可以設定，但不代表其輸出或品質與 Claude 相同。啟動 Codex 前設定以下環境變數，省略的值繼承目前工作階段。委派的 CLI 使用 `CXC_MODE=off`，主工作階段模式保持不變。
+兩端共用流程、產物與審查標準。Codex 審查模型可以設定，但不代表其輸出或品質與 Claude 相同。啟動 Codex 前設定以下環境變數。省略模型時使用目前工作階段所屬系列的最新模型；已設定的值可以是系列名稱或模型 ID，並會提升至該系列的最新模型。委派的 CLI 使用 `CXC_MODE=off`，主工作階段模式保持不變。若無法判定最新模型（例如沙箱無法重新整理目錄時，技能會先要求在沙箱外重新執行檢查），該步驟會說明原因並停止，不會改用其他模型。Codex 工作階段無法查看自身模型或所屬系列時，會要求你設定該變數。在 Claude Code 中，若 `ANTHROPIC_DEFAULT_<FAMILY>_MODEL` 別名被重新導向至其他模型，該步驟也會停止。
 
 | 設定 | 行為 |
 |---|---|
-| `PLAN_SMITH_CODEX_MODEL` | 撰寫者 模型；預設：目前工作階段模型 |
+| `PLAN_SMITH_CODEX_MODEL` | 撰寫者 模型；預設：目前工作階段所屬系列的最新模型 |
 | `PLAN_SMITH_CODEX_EFFORT` | 撰寫者 推理強度；預設：目前工作階段推理強度 |
 
 ## 它能做什麼

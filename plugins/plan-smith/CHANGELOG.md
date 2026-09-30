@@ -12,6 +12,21 @@ version has to move. Release 1.1.1 exists for that reason alone.
 
 ---
 
+## [1.8.0] - 2026-09-30
+
+### Changed
+
+- The Codex writer defaults to the newest model of the main session's family. `PLAN_SMITH_CODEX_MODEL` accepts a family or model id and is raised to that family's newest; resolution happens before every writer pass, audit and split.
+- On Claude Code, each plan-writer call receives the family alias for the main session's own model. A redirected Claude alias stops the step, and the run stamp records the writer id from the run.
+- If a Codex main cannot see its own id or family and the setting is unset, it asks for `PLAN_SMITH_CODEX_MODEL` instead of guessing.
+- When the resolver reports `catalog not refreshed` inside a sandbox, the Codex main first reruns that one resolver command outside the sandbox before stopping the step.
+
+### Why
+
+A pinned writer model can become stale, and inheriting the main session's id can select an older version. Resolving each dispatch keeps every pass current and makes the run record reflect the model that executed.
+
+Evidence: z-lab `plan-smith-lab/latest-model-1.8.0/` (N01, N02) and `latest-model-1.8.0-own-id/` (N03); shared resolver evidence in `plugin-platform-lab/latest-model-0.159.0/` (L01–L07), `latest-model-r2-0.159.0/` (L04r, L06r, L07r, L08), `latest-model-r3-0.159.0/` (L08i, L09), and `latest-model-r4-0.159.0/` (L02x). N03 took the own-family branch; the stop-and-ask branch was not measured. Also not measured: the redirected-alias stop inside forge (N02 ran without an override; the resolver's stop was measured in L06/L06r and a wired-skill stop only in ux-ui R02); a main on a family other than `sol`; a Codex main escalating the resolver out of its sandbox (L08i shows only that the same stale home refreshed when the lab reran the resolver outside); relay passes, wiring audits and splits; an older Claude main id; and model quality.
+
 ## [1.7.0] - 2026-09-29
 
 ### Added

@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.7.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.8.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -48,15 +48,15 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add plan-smith@bin
 ```
 
-Use `$plan-smith:forge <task>`. Codex runs each writer, relay pass, audit and split in a fresh context using the same agent instructions, frames and styles. It uses its own question tool and inherits the main model/effort; Opus/Fable remain style names. The confirmed packet, independent writer and verbatim relay requirements are unchanged.
+Use `$plan-smith:forge <task>`. Codex runs each writer, relay pass, audit and split in a fresh context using the same agent instructions, frames and styles. It uses its own question tool, the newest model of the main session's family and the main session's effort; Opus/Fable remain style names. The confirmed packet, independent writer and verbatim relay requirements are unchanged.
 
 ### Codex settings
 
-The workflow, artifacts and review criteria are shared. Codex reviewer models are configurable; this does not claim identical outputs or quality to Claude models. Set these environment variables before starting Codex; omitted values inherit the current session. Delegated CLI processes use `CXC_MODE=off`, leaving the main mode unchanged.
+The workflow, artifacts and review criteria are shared. Codex reviewer models are configurable; this does not claim identical outputs or quality to Claude models. Set these environment variables before starting Codex; omitted model values use the newest model of the current session's family. A set model value may name a family or model id and is raised to that family's newest model. Delegated CLI processes use `CXC_MODE=off`, leaving the main mode unchanged. If the newest model cannot be determined (for example, if a sandbox cannot refresh the catalog, the skill first asks to rerun that check outside the sandbox), the step stops and explains why instead of falling back. A Codex session that cannot see its own model or family asks you to set the variable. On Claude Code, a redirected `ANTHROPIC_DEFAULT_<FAMILY>_MODEL` alias also stops the step.
 
 | Setting | Behavior |
 |---|---|
-| `PLAN_SMITH_CODEX_MODEL` | Writer model; default: current session model |
+| `PLAN_SMITH_CODEX_MODEL` | Writer model; default: newest model of the current session's family |
 | `PLAN_SMITH_CODEX_EFFORT` | Writer reasoning effort; default: current session effort |
 
 ## What it does
