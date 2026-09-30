@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.4.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.4.1-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -45,7 +45,7 @@ Requires Codex CLI 0.158.0 or later. Start a new session after installation. Cla
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add ux-ui@bin
+codex plugin add ux-ui@because-i-needed
 ```
 
 Use `$ux-ui:build` or `$ux-ui:build-mobile`. Codex discovers the actual tools for the same four MCP servers and runs independent read-only reviewers using the bundled art-director instructions. Reviewers use the newest model of the main session's family and inherit its effort; Claude art directors remain Opus. Measurement requirements, backend selection, the three-cycle cap and staged-diff approval are shared. Missing screenshots cannot receive approval. The UI gate works only when the installed hook is active and trusted. Browser and mobile SDK/device prerequisites still apply.
@@ -62,7 +62,7 @@ The workflow, artifacts and review criteria are shared. Codex reviewer models ar
 `UX_UI_GLOBS` controls the same UI file set on both hosts. Configure bundled MCP servers individually in Codex; for example, disable unused Flutter tooling as shown below. Review `/hooks` trust separately. Missing capture or audit tools remain an explicit incomplete check.
 
 ```toml
-[plugins."ux-ui@bin".mcp_servers.flutter]
+[plugins."ux-ui@because-i-needed".mcp_servers.flutter]
 enabled = false
 ```
 
@@ -91,7 +91,7 @@ The gate keeps filename bytes intact, including Unicode and newlines, and resolv
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git   # or a local path
-claude plugin install ux-ui@bin
+claude plugin install ux-ui@because-i-needed
 ```
 
 ### Or wire it directly in `~/.claude/settings.json`
@@ -99,11 +99,11 @@ claude plugin install ux-ui@bin
 ```json
 {
   "extraKnownMarketplaces": {
-    "bin": {
+    "because-i-needed": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "ux-ui@bin": true }
+  "enabledPlugins": { "ux-ui@because-i-needed": true }
 }
 ```
 

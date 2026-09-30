@@ -44,7 +44,7 @@ Requires Codex CLI 0.158.0 or later. Start a new session after installation. Cla
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add harness@bin
+codex plugin add harness@because-i-needed
 ```
 
 Use `$harness:build`. On Codex the default target is `.codex/hooks.json`, `.codex/hooks/inject-context.sh`, `.codex/scripts/review-gate.sh`, `.codex/scripts/latest-model.py` and `.agents/skills/{project-rules,harness-engineering}/`. Existing Claude files and unrelated hook settings are preserved. The workflow and injection script are bundled; Python 3 is required. Codex uses two independent read-only reviewers with the newest model of the main session's family and the main session's effort; Claude keeps its Opus + Sonnet panel. Fact citations, the 3.5 quality threshold and the three-iteration cap apply to both. The file lists below describe the Claude layout; Codex uses the paths above. Hook activation requires project and hook trust.
@@ -100,7 +100,7 @@ Generated harnesses resolve model/effort defaults from the current execution ses
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
-claude plugin install harness@bin
+claude plugin install harness@because-i-needed
 ```
 
 ### Or wire it directly in `~/.claude/settings.json`
@@ -108,11 +108,11 @@ claude plugin install harness@bin
 ```json
 {
   "extraKnownMarketplaces": {
-    "bin": {
+    "because-i-needed": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "harness@bin": true }
+  "enabledPlugins": { "harness@because-i-needed": true }
 }
 ```
 

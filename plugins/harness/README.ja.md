@@ -44,7 +44,7 @@ Codex CLI 0.158.0 以降が必要です。インストール後、新しいセ�
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add harness@bin
+codex plugin add harness@because-i-needed
 ```
 
 `$harness:build` を使います。Codex の既定出力は `.codex/hooks.json`、`.codex/hooks/inject-context.sh`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py`、`.agents/skills/{project-rules,harness-engineering}/` です。既存の Claude ファイルと無関係なフック設定を保持します。ワークフローと注入スクリプトを同梱し、Python 3 が必要です。Codex はメインセッションのファミリーの最新モデルと推論設定を使う独立した読み取り専用レビュアー2名、Claude は Opus + Sonnet を使います。事実の引用、平均品質3.5、反復上限3回は共通です。以下のファイル一覧は Claude の配置です。Codex は上記のパスを使い、プロジェクトとフックの信頼設定が必要です。
@@ -100,7 +100,7 @@ codex plugin add harness@bin
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
-claude plugin install harness@bin
+claude plugin install harness@because-i-needed
 ```
 
 ### または `~/.claude/settings.json` に直接記述
@@ -108,11 +108,11 @@ claude plugin install harness@bin
 ```json
 {
   "extraKnownMarketplaces": {
-    "bin": {
+    "because-i-needed": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "harness@bin": true }
+  "enabledPlugins": { "harness@because-i-needed": true }
 }
 ```
 

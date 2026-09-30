@@ -44,7 +44,7 @@ Requires Codex CLI 0.158.0 or later. Start a new session after installation. Cla
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add claude-x-codex@bin
+codex plugin add claude-x-codex@because-i-needed
 ```
 
 Use `$claude-x-codex:run`, `$claude-x-codex:mode on|off|status|clear`, and `$claude-x-codex:audit`. The mode skill requires an explicit user request on both hosts. Codex can be the main agent; the existing Codex host adapter keeps review routing across vendors. The audit includes `.codex/hooks.json` and uncommitted `.codex/` and `.agents/` context. For automatic mode, trust the UserPromptSubmit hook; explicit run does not depend on it. Claude CLI is needed for cross-vendor work when Codex is main; without it, the documented single-vendor fallback applies.
@@ -78,7 +78,7 @@ Host routing uses the configured CXC reviewer model and effort; names in parenth
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git   # or a local path
-claude plugin install claude-x-codex@bin
+claude plugin install claude-x-codex@because-i-needed
 ```
 
 ### Or wire it directly in `~/.claude/settings.json`
@@ -86,11 +86,11 @@ claude plugin install claude-x-codex@bin
 ```json
 {
   "extraKnownMarketplaces": {
-    "bin": {
+    "because-i-needed": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "claude-x-codex@bin": true }
+  "enabledPlugins": { "claude-x-codex@because-i-needed": true }
 }
 ```
 

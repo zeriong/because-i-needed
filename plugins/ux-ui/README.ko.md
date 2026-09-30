@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.4.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.4.1-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -45,7 +45,7 @@ Codex CLI 0.158.0 이상이 필요합니다. 설치 후 새 세션을 시작하�
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add ux-ui@bin
+codex plugin add ux-ui@because-i-needed
 ```
 
 `$ux-ui:build` 또는 `$ux-ui:build-mobile`을 사용합니다. Codex는 같은 MCP 서버 4개의 실제 도구를 찾아 연결하고, 포함된 아트 디렉터 지침으로 독립 읽기 전용 리뷰를 실행합니다. 리뷰어는 메인 세션 제품군의 최신 모델과 메인의 추론 수준을 사용하며 Claude 아트 디렉터는 계속 Opus입니다. 실측 조건, 백엔드 선택, 반복 상한 3회, 스테이징 diff에 묶인 승인을 공유합니다. 스크린샷이 없으면 승인할 수 없습니다. 커밋 게이트는 설치된 훅이 활성화되고 신뢰된 경우에 동작합니다. 브라우저·모바일 SDK 및 기기 준비는 별도로 필요합니다.
@@ -62,7 +62,7 @@ codex plugin add ux-ui@bin
 `UX_UI_GLOBS`는 두 호스트에서 같은 UI 파일 범위를 지정합니다. Codex에서는 번들 MCP 서버를 개별 설정할 수 있습니다. 아래처럼 사용하지 않는 Flutter 도구를 끌 수 있습니다. `/hooks` 신뢰는 별도로 확인하세요. 캡처·감사 도구가 없으면 검사를 완료한 것으로 처리하지 않습니다.
 
 ```toml
-[plugins."ux-ui@bin".mcp_servers.flutter]
+[plugins."ux-ui@because-i-needed".mcp_servers.flutter]
 enabled = false
 ```
 
@@ -91,7 +91,7 @@ enabled = false
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git   # 또는 로컬 경로
-claude plugin install ux-ui@bin
+claude plugin install ux-ui@because-i-needed
 ```
 
 ### 또는 `~/.claude/settings.json`에 직접 연결
@@ -99,11 +99,11 @@ claude plugin install ux-ui@bin
 ```json
 {
   "extraKnownMarketplaces": {
-    "bin": {
+    "because-i-needed": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "ux-ui@bin": true }
+  "enabledPlugins": { "ux-ui@because-i-needed": true }
 }
 ```
 

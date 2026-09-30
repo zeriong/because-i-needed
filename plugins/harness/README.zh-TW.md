@@ -44,7 +44,7 @@
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add harness@bin
+codex plugin add harness@because-i-needed
 ```
 
 使用 `$harness:build`。Codex 預設產生 `.codex/hooks.json`、`.codex/hooks/inject-context.sh`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py` 和 `.agents/skills/{project-rules,harness-engineering}/`。保留已有 Claude 檔案和無關掛鉤設定。工作流程與注入腳本已隨附，需要 Python 3。Codex 使用主工作階段所屬系列的最新模型與主工作階段推理設定的兩名獨立唯讀評審，Claude 保留 Opus + Sonnet。事實引用、3.5 平均品質門檻和三輪上限均保持一致。下方檔案列表描述 Claude 配置，Codex 使用上述路徑。啟用掛鉤需信任專案和掛鉤。
@@ -100,7 +100,7 @@ codex plugin add harness@bin
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
-claude plugin install harness@bin
+claude plugin install harness@because-i-needed
 ```
 
 ### 或直接寫入 `~/.claude/settings.json`
@@ -108,11 +108,11 @@ claude plugin install harness@bin
 ```json
 {
   "extraKnownMarketplaces": {
-    "bin": {
+    "because-i-needed": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "harness@bin": true }
+  "enabledPlugins": { "harness@because-i-needed": true }
 }
 ```
 

@@ -44,7 +44,7 @@ Codex CLI 0.158.0 이상이 필요합니다. 설치 후 새 세션을 시작하�
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add claude-x-codex@bin
+codex plugin add claude-x-codex@because-i-needed
 ```
 
 `$claude-x-codex:run`, `$claude-x-codex:mode on|off|status|clear`, `$claude-x-codex:audit`을 사용합니다. 모드 변경은 두 호스트 모두 사용자의 명시적인 요청이 필요합니다. Codex가 메인이 될 수 있으며 기존 Codex 실행 지침에 따라 벤더 간 리뷰를 유지합니다. 감사에는 `.codex/hooks.json`과 커밋되지 않은 `.codex/`, `.agents/` 맥락이 포함됩니다. 자동 모드는 UserPromptSubmit 훅 신뢰가 필요하고, 명시적인 run 호출은 훅 없이도 시작할 수 있습니다. Codex가 메인일 때 교차 벤더 작업에는 Claude CLI가 필요하며, 없으면 기존 단일 벤더 대체 경로를 사용합니다.
@@ -78,7 +78,7 @@ codex plugin add claude-x-codex@bin
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git   # 또는 로컬 경로
-claude plugin install claude-x-codex@bin
+claude plugin install claude-x-codex@because-i-needed
 ```
 
 ### 또는 `~/.claude/settings.json`에 직접 연결
@@ -86,11 +86,11 @@ claude plugin install claude-x-codex@bin
 ```json
 {
   "extraKnownMarketplaces": {
-    "bin": {
+    "because-i-needed": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "claude-x-codex@bin": true }
+  "enabledPlugins": { "claude-x-codex@because-i-needed": true }
 }
 ```
 

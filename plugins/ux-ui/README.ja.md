@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.4.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.4.1-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -45,7 +45,7 @@ Codex CLI 0.158.0 以降が必要です。インストール後、新しいセ�
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add ux-ui@bin
+codex plugin add ux-ui@because-i-needed
 ```
 
 `$ux-ui:build` または `$ux-ui:build-mobile` を使います。Codex は同じ4つの MCP サーバーの実際のツールを検出し、同梱のアートディレクター指示で独立した読み取り専用レビューを実行します。レビュアーはメインセッションのファミリーの最新モデルと推論設定を使い、Claude は引き続き Opus を使います。実測要件、バックエンド選択、3回の反復上限、ステージ済み diff に結び付く承認を共有します。スクリーンショットなしでは承認できません。ゲートには有効で信頼済みのフックが必要です。ブラウザーやモバイル SDK・端末の準備も必要です。
@@ -62,7 +62,7 @@ codex plugin add ux-ui@bin
 `UX_UI_GLOBS` は両ホストで同じ UI ファイル範囲を指定します。Codex では同梱 MCP を個別に設定でき、以下のように未使用の Flutter を無効にできます。`/hooks` の信頼は別途確認してください。キャプチャや監査ツールがなければ検査完了とは扱いません。
 
 ```toml
-[plugins."ux-ui@bin".mcp_servers.flutter]
+[plugins."ux-ui@because-i-needed".mcp_servers.flutter]
 enabled = false
 ```
 
@@ -91,7 +91,7 @@ enabled = false
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git   # またはローカルパス
-claude plugin install ux-ui@bin
+claude plugin install ux-ui@because-i-needed
 ```
 
 ### または `~/.claude/settings.json` に直接記述
@@ -99,11 +99,11 @@ claude plugin install ux-ui@bin
 ```json
 {
   "extraKnownMarketplaces": {
-    "bin": {
+    "because-i-needed": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "ux-ui@bin": true }
+  "enabledPlugins": { "ux-ui@because-i-needed": true }
 }
 ```
 

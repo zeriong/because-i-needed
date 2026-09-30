@@ -35,9 +35,9 @@ curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/insta
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add harness@bin
-codex plugin add ux-ui@bin
-codex plugin add claude-x-codex@bin
+codex plugin add harness@because-i-needed
+codex plugin add ux-ui@because-i-needed
+codex plugin add claude-x-codex@because-i-needed
 ```
 
 새 Codex 세션에서 `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$claude-x-codex:run`을 호출합니다. 자동 오케스트레이션은 `$claude-x-codex:mode on`, 컨텍스트 점검은 `$claude-x-codex:audit`입니다. 자동 라우팅과 UI 커밋 게이트를 사용하기 전에 `/hooks`에서 설치된 훅을 검토하고 신뢰해야 합니다.
@@ -57,7 +57,7 @@ codex plugin add claude-x-codex@bin
 
 [harness 한국어 README 보기 →](plugins/harness/README.ko.md)
 
-### [ux-ui](plugins/ux-ui) · `v1.4.0`
+### [ux-ui](plugins/ux-ui) · `v1.4.1`
 
 **웹과 모바일 UI를 실제 렌더 실측으로 만듭니다.** 실제 스크린샷을 캡처하고(웹은 chrome-devtools, React Native / Flutter / iOS / Android는 모바일 MCP 또는 CLI 스냅샷 하네스), 아트 디렉터 에이전트가 그 실측 스냅샷을 비평하게 하며, 정확하고 우아해질 때까지 반복한 뒤, 스테이징된 diff 그대로 APPROVED 되기 전까지 UI의 `git commit`을 막습니다.
 
@@ -85,8 +85,8 @@ z-lab에서 plan-smith 1.6.0 파이프라인(Claude Code, 작업 1개)은 같은
 
 설치된 사본을 제거하려면:
 
-- Claude Code: `claude plugin uninstall plan-smith@bin` (project 또는 local 범위로 설치했다면 `--scope project` 또는 `--scope local`을 추가하세요.)
-- Codex: `codex plugin remove plan-smith@bin`
+- Claude Code: `claude plugin uninstall plan-smith@bin` (project 또는 local 범위로 설치했다면 `--scope project` 또는 `--scope local`을 추가하세요.) <!-- legacy-id -->
+- Codex: `codex plugin remove plan-smith@bin` <!-- legacy-id -->
 
 ## 설치
 
@@ -102,9 +102,9 @@ curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/insta
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
-claude plugin install harness@bin
-claude plugin install ux-ui@bin
-claude plugin install claude-x-codex@bin
+claude plugin install harness@because-i-needed
+claude plugin install ux-ui@because-i-needed
+claude plugin install claude-x-codex@because-i-needed
 ```
 
 또는 Claude Code에서: `/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git` 입력 후 목록에서 설치.
@@ -114,17 +114,33 @@ claude plugin install claude-x-codex@bin
 ```json
 {
   "extraKnownMarketplaces": {
-    "bin": {
+    "because-i-needed": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
   "enabledPlugins": {
-    "harness@bin": true,
-    "ux-ui@bin": true,
-    "claude-x-codex@bin": true
+    "harness@because-i-needed": true,
+    "ux-ui@because-i-needed": true,
+    "claude-x-codex@because-i-needed": true
   }
 }
 ```
+
+### 예전에 `bin`으로 설치했다면
+
+마켓플레이스 이름이 `bin`에서 `because-i-needed`로 바뀌었습니다. 플러그인 이름과 명령은 그대로입니다. 제거한 뒤 위와 같이 다시 설치하세요:
+
+```bash
+# Claude Code — 마켓플레이스를 제거하면 그 플러그인도 함께 제거됩니다
+claude plugin marketplace remove bin
+# Codex — 설치한 플러그인을 먼저 제거하세요. 그러지 않으면 예전 사본이 계속 로드됩니다
+codex plugin remove harness@bin
+codex plugin remove ux-ui@bin
+codex plugin remove claude-x-codex@bin
+codex plugin marketplace remove bin
+```
+
+예전 ID(`<plugin>@bin`)에 묶인 설정은 옮겨지지 않습니다.
 
 ## 네이밍
 

@@ -35,9 +35,9 @@ curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/insta
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add harness@bin
-codex plugin add ux-ui@bin
-codex plugin add claude-x-codex@bin
+codex plugin add harness@because-i-needed
+codex plugin add ux-ui@because-i-needed
+codex plugin add claude-x-codex@because-i-needed
 ```
 
 在新的 Codex 工作階段中呼叫 `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile` 或 `$claude-x-codex:run`。使用 `$claude-x-codex:mode on` 開啟自動協作，使用 `$claude-x-codex:audit` 檢查上下文。在依賴自動路由和 UI 提交閘門之前，請透過 `/hooks` 審核並信任已安裝的掛鉤。
@@ -57,7 +57,7 @@ codex plugin add claude-x-codex@bin
 
 [閱讀 harness 繁體中文 README →](plugins/harness/README.zh-TW.md)
 
-### [ux-ui](plugins/ux-ui) · `v1.4.0`
+### [ux-ui](plugins/ux-ui) · `v1.4.1`
 
 **以真實渲染的實測結果打造 Web 與行動 UI。** 它會擷取真實的螢幕截圖（Web 用 chrome-devtools；React Native / Flutter / iOS / Android 則用行動裝置 MCP 或 CLI 快照 harness），讓藝術總監代理評論這些實測快照，反覆迭代直到 UI 既正確又優雅，並在暫存的 diff 本身取得 APPROVED 之前，阻擋 UI 的 `git commit`。
 
@@ -85,8 +85,8 @@ codex plugin add claude-x-codex@bin
 
 移除已安裝副本：
 
-- Claude Code：`claude plugin uninstall plan-smith@bin`（若安裝於 project 或 local 範圍，請加上 `--scope project` 或 `--scope local`。）
-- Codex：`codex plugin remove plan-smith@bin`
+- Claude Code：`claude plugin uninstall plan-smith@bin`（若安裝於 project 或 local 範圍，請加上 `--scope project` 或 `--scope local`。） <!-- legacy-id -->
+- Codex：`codex plugin remove plan-smith@bin` <!-- legacy-id -->
 
 ## 安裝
 
@@ -102,9 +102,9 @@ curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/insta
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
-claude plugin install harness@bin
-claude plugin install ux-ui@bin
-claude plugin install claude-x-codex@bin
+claude plugin install harness@because-i-needed
+claude plugin install ux-ui@because-i-needed
+claude plugin install claude-x-codex@because-i-needed
 ```
 
 或在 Claude Code 中：`/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git`，然後從清單中安裝。
@@ -114,17 +114,33 @@ claude plugin install claude-x-codex@bin
 ```json
 {
   "extraKnownMarketplaces": {
-    "bin": {
+    "because-i-needed": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
   "enabledPlugins": {
-    "harness@bin": true,
-    "ux-ui@bin": true,
-    "claude-x-codex@bin": true
+    "harness@because-i-needed": true,
+    "ux-ui@because-i-needed": true,
+    "claude-x-codex@because-i-needed": true
   }
 }
 ```
+
+### 以前以 `bin` 安裝過？
+
+外掛市集已從 `bin` 更名為 `because-i-needed`，外掛名稱和指令不變。請先解除安裝，再依上文重新安裝：
+
+```bash
+# Claude Code — 移除市集時也會解除安裝其中的外掛
+claude plugin marketplace remove bin
+# Codex — 先移除已安裝的每個外掛，否則舊副本會繼續載入
+codex plugin remove harness@bin
+codex plugin remove ux-ui@bin
+codex plugin remove claude-x-codex@bin
+codex plugin marketplace remove bin
+```
+
+綁定舊 ID（`<plugin>@bin`）的設定不會遷移。
 
 ## 命名規則
 

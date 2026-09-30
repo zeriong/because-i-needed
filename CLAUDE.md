@@ -10,7 +10,7 @@ Every rule carries its reason. A rule whose reason is forgotten decays into ritu
 
 ## Rule 1 — Only `plugins/<name>/` reaches an installed client
 
-- On install, the cache `~/.claude/plugins/cache/bin/<plugin>/<version>/` receives **only the plugin folder**.
+- On install, the cache `~/.claude/plugins/cache/because-i-needed/<plugin>/<version>/` receives **only the plugin folder**.
   The root READMEs and this file never reach users. Anything a user must read goes in the plugin README.
 - `plugins/<name>/CLAUDE.md` ships in the package but is **not loaded into user sessions**
   (Claude Code reads only the working-directory hierarchy and the user's global CLAUDE.md). These files are for maintainers.

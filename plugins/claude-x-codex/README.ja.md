@@ -44,7 +44,7 @@ Codex CLI 0.158.0 以降が必要です。インストール後、新しいセ�
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add claude-x-codex@bin
+codex plugin add claude-x-codex@because-i-needed
 ```
 
 `$claude-x-codex:run`、`$claude-x-codex:mode on|off|status|clear`、`$claude-x-codex:audit` を使います。モード操作は両ホストともユーザーの明示的な要求が必要です。Codex をメインにでき、既存の Codex アダプターがベンダー間レビューを維持します。監査は `.codex/hooks.json` と未コミットの `.codex/`、`.agents/` も対象です。自動モードには UserPromptSubmit フックの信頼が必要ですが、明示的な run はフックに依存しません。Codex がメインの場合、ベンダー間作業には Claude CLI が必要で、なければ既存の単一ベンダー経路を使います。
@@ -78,7 +78,7 @@ codex plugin add claude-x-codex@bin
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git   # またはローカルパス
-claude plugin install claude-x-codex@bin
+claude plugin install claude-x-codex@because-i-needed
 ```
 
 ### または `~/.claude/settings.json` に直接記述
@@ -86,11 +86,11 @@ claude plugin install claude-x-codex@bin
 ```json
 {
   "extraKnownMarketplaces": {
-    "bin": {
+    "because-i-needed": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "claude-x-codex@bin": true }
+  "enabledPlugins": { "claude-x-codex@because-i-needed": true }
 }
 ```
 

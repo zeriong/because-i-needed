@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.4.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.4.1-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -45,7 +45,7 @@
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add ux-ui@bin
+codex plugin add ux-ui@because-i-needed
 ```
 
 使用 `$ux-ui:build` 或 `$ux-ui:build-mobile`。Codex 发现相同四个 MCP 服务器实际提供的工具，并按随附的艺术总监指令执行独立只读评审。评审使用主会话所属系列的最新模型和主会话的推理设置，Claude 艺术总监仍使用 Opus。共享实测要求、后端选择、三轮上限及绑定暂存 diff 的批准。没有截图不能批准。提交门禁仅在已安装的钩子启用且受信任时生效；仍需准备浏览器、移动 SDK 和设备。
@@ -62,7 +62,7 @@ codex plugin add ux-ui@bin
 `UX_UI_GLOBS` 在两端指定相同的 UI 文件范围。Codex 支持单独配置内置 MCP，例如按下方示例禁用不用的 Flutter。请单独检查 `/hooks` 信任。缺少捕获或审计工具时，不会将检查记为完成。
 
 ```toml
-[plugins."ux-ui@bin".mcp_servers.flutter]
+[plugins."ux-ui@because-i-needed".mcp_servers.flutter]
 enabled = false
 ```
 
@@ -91,7 +91,7 @@ enabled = false
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git   # 或本地路径
-claude plugin install ux-ui@bin
+claude plugin install ux-ui@because-i-needed
 ```
 
 ### 或直接写入 `~/.claude/settings.json`
@@ -99,11 +99,11 @@ claude plugin install ux-ui@bin
 ```json
 {
   "extraKnownMarketplaces": {
-    "bin": {
+    "because-i-needed": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "ux-ui@bin": true }
+  "enabledPlugins": { "ux-ui@because-i-needed": true }
 }
 ```
 

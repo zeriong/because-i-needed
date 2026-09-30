@@ -35,9 +35,9 @@ Or use the CLI directly:
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add harness@bin
-codex plugin add ux-ui@bin
-codex plugin add claude-x-codex@bin
+codex plugin add harness@because-i-needed
+codex plugin add ux-ui@because-i-needed
+codex plugin add claude-x-codex@because-i-needed
 ```
 
 Start a new Codex session and invoke `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, or `$claude-x-codex:run`. Use `$claude-x-codex:mode on` for automatic orchestration and `$claude-x-codex:audit` to inspect context parity. Review and trust installed hooks with `/hooks` before relying on automatic routing or the UI commit gate.
@@ -57,7 +57,7 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the harness README →](plugins/harness)
 
-### [ux-ui](plugins/ux-ui) · `v1.4.0`
+### [ux-ui](plugins/ux-ui) · `v1.4.1`
 
 **Build web and mobile UI measured on the real render.** It captures real screenshots (chrome-devtools for web; a mobile MCP or CLI snapshot harness for React Native / Flutter / iOS / Android), has an art-director agent critique those measured snapshots, iterates until the UI is correct and elegant, and blocks `git commit` of UI until the exact staged diff is APPROVED.
 
@@ -85,8 +85,8 @@ In z-lab, plan-smith 1.6.0's pipeline (Claude Code, one task) was a net cost whe
 
 To remove an installed copy:
 
-- Claude Code: `claude plugin uninstall plan-smith@bin` (add `--scope project` or `--scope local` if you installed it there).
-- Codex: `codex plugin remove plan-smith@bin`.
+- Claude Code: `claude plugin uninstall plan-smith@bin` (add `--scope project` or `--scope local` if you installed it there). <!-- legacy-id -->
+- Codex: `codex plugin remove plan-smith@bin`. <!-- legacy-id -->
 
 ## Installation
 
@@ -102,9 +102,9 @@ Or add the marketplace yourself, then install the plugins you want:
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
-claude plugin install harness@bin
-claude plugin install ux-ui@bin
-claude plugin install claude-x-codex@bin
+claude plugin install harness@because-i-needed
+claude plugin install ux-ui@because-i-needed
+claude plugin install claude-x-codex@because-i-needed
 ```
 
 Or in Claude Code: `/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git`, then install from the list.
@@ -114,17 +114,33 @@ Or wire it directly in `~/.claude/settings.json`:
 ```json
 {
   "extraKnownMarketplaces": {
-    "bin": {
+    "because-i-needed": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
   "enabledPlugins": {
-    "harness@bin": true,
-    "ux-ui@bin": true,
-    "claude-x-codex@bin": true
+    "harness@because-i-needed": true,
+    "ux-ui@because-i-needed": true,
+    "claude-x-codex@because-i-needed": true
   }
 }
 ```
+
+### Installed as `bin` before?
+
+The marketplace was renamed from `bin` to `because-i-needed`; plugin names and commands are unchanged. Uninstall, then install again as above:
+
+```bash
+# Claude Code — removing the marketplace also uninstalls its plugins
+claude plugin marketplace remove bin
+# Codex — remove each installed plugin first, or the old copies keep loading
+codex plugin remove harness@bin
+codex plugin remove ux-ui@bin
+codex plugin remove claude-x-codex@bin
+codex plugin marketplace remove bin
+```
+
+Settings keyed by the old id (`<plugin>@bin`) do not carry over.
 
 ## Naming
 

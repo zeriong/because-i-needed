@@ -35,13 +35,13 @@ class CompatibilityTests(unittest.TestCase):
                          'with open(os.environ["BIN_TEST_LOG"],"a") as f: '
                          'f.write(json.dumps([os.path.basename(sys.argv[0]),*sys.argv[1:]])+"\\n")\n'
                          'if os.environ.get("BIN_TEST_FAIL") == "marketplace" and "marketplace" in sys.argv: sys.exit(1)\n'
-                         'if os.environ.get("BIN_TEST_FAIL") == "plugin" and "harness@bin" in sys.argv: sys.exit(1)\n')
+                         'if os.environ.get("BIN_TEST_FAIL") == "plugin" and "harness@because-i-needed" in sys.argv: sys.exit(1)\n')
             f.chmod(0o755)
         env = {"PATH": str(bin_dir) + os.pathsep + os.environ["PATH"], "BIN_TEST_LOG": str(log)}
         installer = ["bash", str(ROOT / "install.sh"), "--only", "harness"]
         for host, extra, expected in [
-            ("claude", ["--scope", "project"], ["claude", "plugin", "install", "harness@bin", "--scope", "project"]),
-            ("codex", ["--host", "codex", "--scope", "user"], ["codex", "plugin", "add", "harness@bin"]),
+            ("claude", ["--scope", "project"], ["claude", "plugin", "install", "harness@because-i-needed", "--scope", "project"]),
+            ("codex", ["--host", "codex", "--scope", "user"], ["codex", "plugin", "add", "harness@because-i-needed"]),
         ]:
             with self.subTest(host=host):
                 log.write_text("")

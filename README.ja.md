@@ -35,9 +35,9 @@ CLI から直接インストールすることもできます。
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add harness@bin
-codex plugin add ux-ui@bin
-codex plugin add claude-x-codex@bin
+codex plugin add harness@because-i-needed
+codex plugin add ux-ui@because-i-needed
+codex plugin add claude-x-codex@because-i-needed
 ```
 
 新しい Codex セッションで `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$claude-x-codex:run` を呼び出します。自動オーケストレーションは `$claude-x-codex:mode on`、コンテキスト点検は `$claude-x-codex:audit` です。自動ルーティングと UI コミットゲートを使う前に、`/hooks` でフックを確認して信頼してください。
@@ -57,7 +57,7 @@ codex plugin add claude-x-codex@bin
 
 [harness の日本語 README を読む →](plugins/harness/README.ja.md)
 
-### [ux-ui](plugins/ux-ui) · `v1.4.0`
+### [ux-ui](plugins/ux-ui) · `v1.4.1`
 
 **実際のレンダリングを実測しながら Web とモバイルの UI を構築します**。実際のスクリーンショットを撮影し（Web は chrome-devtools、React Native / Flutter / iOS / Android はモバイル MCP または CLI スナップショットハーネス）、アートディレクターエージェントにその実測スナップショットを批評させ、UI が正確かつエレガントになるまで反復し、ステージされた diff そのものが APPROVED されるまで UI の `git commit` をブロックします。
 
@@ -85,8 +85,8 @@ z-lab では、plan-smith 1.6.0 のパイプライン（Claude Code、1タスク
 
 インストール済みのコピーを削除するには:
 
-- Claude Code: `claude plugin uninstall plan-smith@bin`（project または local スコープでインストールした場合は `--scope project` または `--scope local` を追加してください。）
-- Codex: `codex plugin remove plan-smith@bin`
+- Claude Code: `claude plugin uninstall plan-smith@bin`（project または local スコープでインストールした場合は `--scope project` または `--scope local` を追加してください。） <!-- legacy-id -->
+- Codex: `codex plugin remove plan-smith@bin` <!-- legacy-id -->
 
 ## インストール
 
@@ -102,9 +102,9 @@ curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/insta
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
-claude plugin install harness@bin
-claude plugin install ux-ui@bin
-claude plugin install claude-x-codex@bin
+claude plugin install harness@because-i-needed
+claude plugin install ux-ui@because-i-needed
+claude plugin install claude-x-codex@because-i-needed
 ```
 
 または Claude Code 内で `/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git` と進み、一覧からインストールします。
@@ -114,17 +114,33 @@ claude plugin install claude-x-codex@bin
 ```json
 {
   "extraKnownMarketplaces": {
-    "bin": {
+    "because-i-needed": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
   "enabledPlugins": {
-    "harness@bin": true,
-    "ux-ui@bin": true,
-    "claude-x-codex@bin": true
+    "harness@because-i-needed": true,
+    "ux-ui@because-i-needed": true,
+    "claude-x-codex@because-i-needed": true
   }
 }
 ```
+
+### 以前 `bin` としてインストールした場合
+
+マーケットプレイス名が `bin` から `because-i-needed` に変わりました。プラグイン名とコマンドは変わりません。アンインストールしてから、上の手順で再インストールしてください：
+
+```bash
+# Claude Code — マーケットプレイスを削除すると、そのプラグインもアンインストールされます
+claude plugin marketplace remove bin
+# Codex — インストール済みのプラグインを先に削除します。削除しないと古いコピーが読み込まれ続けます
+codex plugin remove harness@bin
+codex plugin remove ux-ui@bin
+codex plugin remove claude-x-codex@bin
+codex plugin marketplace remove bin
+```
+
+古い ID（`<plugin>@bin`）に紐づく設定は引き継がれません。
 
 ## 命名規則
 

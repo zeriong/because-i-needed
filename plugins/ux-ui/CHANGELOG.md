@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.1] - 2026-09-30
+
+### Changed
+
+- The Codex reference names this plugin's install id as `ux-ui@because-i-needed`, after the marketplace was renamed from `bin`. Nothing else changed.
+
 ## [1.4.0] - 2026-09-30
 
 ### Changed

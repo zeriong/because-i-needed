@@ -1,11 +1,11 @@
 {
-  "name": "bin",
+  "name": "because-i-needed",
   "owner": {
     "name": "zeriong"
   },
   "metadata": {
     "description": "Claude Code plugins built because I needed them — harness, ux-ui, claude-x-codex",
-    "version": "2.0.0"
+    "version": "3.0.0"
   },
   "plugins": [
     {
@@ -30,7 +30,7 @@
       "name": "ux-ui",
       "source": "./plugins/ux-ui",
       "description": "Web + mobile: measure the real render (chrome-devtools for web; a mobile MCP or CLI snapshot harness for RN/Flutter/iOS/Android) → art-director critique of the measured snapshots → iterate to elegant → hard-block commits until APPROVED. (adds a PreToolUse commit-gate hook and 4 MCP servers)",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "author": {
         "name": "zeriong"
       },

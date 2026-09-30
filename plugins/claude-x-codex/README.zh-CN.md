@@ -44,7 +44,7 @@ claude-x-codex 是非官方的社区插件，并非由 Anthropic 或 OpenAI 制�
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add claude-x-codex@bin
+codex plugin add claude-x-codex@because-i-needed
 ```
 
 使用 `$claude-x-codex:run`、`$claude-x-codex:mode on|off|status|clear` 和 `$claude-x-codex:audit`。两个宿主的模式操作都需要用户明确请求。Codex 可以担任主代理，现有 Codex 适配器保持跨厂商评审。审计包含 `.codex/hooks.json` 及未提交的 `.codex/`、`.agents/` 上下文。自动模式需要信任 UserPromptSubmit 钩子，显式 run 不依赖它。Codex 为主代理时，跨厂商工作需要 Claude CLI；缺少时使用既有单厂商回退路径。
@@ -78,7 +78,7 @@ codex plugin add claude-x-codex@bin
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git   # 或本地路径
-claude plugin install claude-x-codex@bin
+claude plugin install claude-x-codex@because-i-needed
 ```
 
 ### 或直接写入 `~/.claude/settings.json`
@@ -86,11 +86,11 @@ claude plugin install claude-x-codex@bin
 ```json
 {
   "extraKnownMarketplaces": {
-    "bin": {
+    "because-i-needed": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "claude-x-codex@bin": true }
+  "enabledPlugins": { "claude-x-codex@because-i-needed": true }
 }
 ```
 

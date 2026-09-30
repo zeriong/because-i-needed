@@ -1,7 +1,7 @@
 {
   "name": "ux-ui",
   "description": "Build web AND mobile UI end-to-end: measure the real render (chrome-devtools for web; mobile MCP or a CLI snapshot harness for RN/Flutter/iOS/Android), have an art-director agent critique the measured snapshots, iterate to elegant, and hard-block commits until APPROVED. Bundles its own browser + mobile MCPs and design bar.",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "author": {
     "name": "zeriong"
   },

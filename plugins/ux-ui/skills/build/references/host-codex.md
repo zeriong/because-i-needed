@@ -53,7 +53,7 @@ report. Do not reduce the review criteria. Existing `UX_UI_GLOBS` configures the
 commit-gate extension set on both hosts.
 
 Enable only needed MCP backends through Codex's plugin MCP settings (plugin id
-`ux-ui@bin` for this marketplace). A disabled backend is distinct from a server that
+`ux-ui@because-i-needed` for this marketplace). A disabled backend is distinct from a server that
 failed to start. Keep other plugins' settings unchanged; configuration changes must
 follow the user's selected backend. Inspect the actual exposed tools on every host.
 The command names in measurement references describe capabilities, not required

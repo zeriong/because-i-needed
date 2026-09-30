@@ -44,7 +44,7 @@ Codex CLI 0.158.0 이상이 필요합니다. 설치 후 새 세션을 시작하�
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add harness@bin
+codex plugin add harness@because-i-needed
 ```
 
 `$harness:build`를 사용합니다. Codex의 기본 생성 대상은 `.codex/hooks.json`, `.codex/hooks/inject-context.sh`, `.codex/scripts/review-gate.sh`, `.codex/scripts/latest-model.py`, `.agents/skills/{project-rules,harness-engineering}/`입니다. 기존 Claude 파일과 다른 훅 설정을 보존합니다. 워크플로와 주입 스크립트가 포함되며 Python 3이 필요합니다. Codex에서는 메인 세션 제품군의 최신 모델과 메인의 추론 수준을 사용하는 독립 읽기 전용 리뷰어 2명을 사용하고, Claude는 Opus + Sonnet 구성을 유지합니다. 사실 인용, 품질 평균 3.5 기준, 반복 상한 3회는 공통입니다. 아래 파일 목록은 Claude 경로이며 Codex에서는 위 경로를 사용합니다. 훅 활성화에는 프로젝트 및 훅 신뢰 설정이 필요합니다.
@@ -100,7 +100,7 @@ Codex에서 보호된 `.codex/`와 `.agents/`에 쓰려면 승인이 필요할 �
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
-claude plugin install harness@bin
+claude plugin install harness@because-i-needed
 ```
 
 ### 또는 `~/.claude/settings.json`에 직접 추가
@@ -108,11 +108,11 @@ claude plugin install harness@bin
 ```json
 {
   "extraKnownMarketplaces": {
-    "bin": {
+    "because-i-needed": {
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "harness@bin": true }
+  "enabledPlugins": { "harness@because-i-needed": true }
 }
 ```
 
