@@ -5,7 +5,8 @@ Workers can't ask questions mid-task, so the delegation prompt must anticipate t
 the return's "Uncertain" section carries what's left. Blocking for the user (Gates 1
 and 4, escalations) means stopping and asking in the conversation.
 
-These forms were checked on Codex CLI 0.157.1 and Claude Code 2.1.283. CLI flags differ
+These forms were checked on Codex CLI 0.157.1 and Claude Code 2.1.283, and ids resolved by
+`latest-model.py` ran on Codex CLI 0.159.0 and Claude Code 2.1.284. CLI flags differ
 between versions; check `codex exec --help` / `claude --help` once per session and adapt.
 
 Rules that hold for every call below:
@@ -22,7 +23,7 @@ Rules that hold for every call below:
 
 ```bash
 git worktree add .claude-x-codex/wt/<id> -b cxc/<feature>/<id>
-<plugin>/scripts/worktree-setup.sh .claude-x-codex/wt/<id>   # materialize uncommitted context
+"<plugin>/scripts/worktree-setup.sh" .claude-x-codex/wt/<id>   # materialize uncommitted context
 # cleanup at finish
 git worktree remove .claude-x-codex/wt/<id>
 ```
@@ -31,31 +32,34 @@ git worktree remove .claude-x-codex/wt/<id>
 
 ```bash
 F="$PWD/.claude-x-codex/<feature>"   # absolute, so the paths don't depend on where you cd
-CXC_MODE=off codex exec -m "${CXC_WORKER_MODEL:-gpt-6-luna}" -c model_reasoning_effort="${CXC_WORKER_EFFORT:-high}" \
+M=$(python3 "<plugin>/scripts/latest-model.py" codex "${CXC_WORKER_MODEL:-luna}" --effort "${CXC_WORKER_EFFORT:-high}") || exit
+CXC_MODE=off codex exec -m "$M" -c model_reasoning_effort="${CXC_WORKER_EFFORT:-high}" \
   -C .claude-x-codex/wt/<id> -s workspace-write \
   -c 'project_doc_fallback_filenames=["CLAUDE.md"]' \
   -o "$F/returns/<id>.md" \
-  "$(cat "$F/tasks/<id>.md")" < /dev/null
+  "$(cat "$F/tasks/<id>.md")" < /dev/null > "$F/returns/<id>.log" 2>&1
 ```
 
-`-o` writes the agent's last message to the file; stdout carries the progress log. A relative
-`-o` resolves against the caller's directory, not the `-C` directory.
+A resolver failure stops here (SKILL.md, "Newest model per family"). `-o` writes the agent's
+last message to the file; the log carries the progress and the run header, whose `model:` line
+is the id to log. A relative `-o` resolves against the caller's directory, not the `-C` directory.
 
 ## Codex reviewer
 
 ```bash
-F="$PWD/.claude-x-codex/<feature>"; P=<plugin>/skills/run/references
-CXC_MODE=off codex exec -m "${CXC_REVIEW_MODEL:-gpt-6-sol}" -c model_reasoning_effort="${CXC_REVIEW_EFFORT:-xhigh}" \
+F="$PWD/.claude-x-codex/<feature>"; P="<plugin>/skills/run/references"
+M=$(python3 "<plugin>/scripts/latest-model.py" codex "${CXC_REVIEW_MODEL:-sol}" --effort "${CXC_REVIEW_EFFORT:-xhigh}") || exit
+CXC_MODE=off codex exec -m "$M" -c model_reasoning_effort="${CXC_REVIEW_EFFORT:-xhigh}" \
   -s read-only -c 'project_doc_fallback_filenames=["CLAUDE.md"]' \
   --output-schema "$P/review.schema.json" \
   -o "$F/reviews/<phase>-r<n>.json" \
-  "$(cat "$F/reviews/<phase>-prompt.md")" < /dev/null
+  "$(cat "$F/reviews/<phase>-prompt.md")" < /dev/null > "$F/reviews/<phase>-r<n>.log" 2>&1
 ```
 
 `--output-schema` makes the final message conform to the review schema, and `-s read-only`
 keeps the reviewer from writing: told to create a file, it could not (the shell write failed).
-Delta re-reviews use the same model and effort. A high-risk final review uses
-`CXC_FINAL_MODEL`, and only after the user approved it.
+Delta re-reviews use the same family and effort, resolved again. A high-risk final review
+resolves `CXC_FINAL_MODEL` (default `astra`), and runs only after the user approved it.
 The run header prints `reasoning effort:` — Codex doesn't check the value locally, so a
 misspelled level reaches the run unchanged.
 
@@ -67,9 +71,13 @@ the audit warns about it.
 ## Claude worker (`claude-fast`)
 
 ```bash
-cd .claude-x-codex/wt/<id> && CXC_MODE=off claude -p "$(cat ../../<feature>/tasks/<id>.md)" \
-  --model "${CXC_CLAUDE_WORKER:-sonnet}" --effort "${CXC_WORKER_EFFORT:-high}" --permission-mode acceptEdits \
-  > ../../<feature>/returns/<id>.md < /dev/null
+cd .claude-x-codex/wt/<id> || exit; R=../../<feature>/returns
+M=$(python3 "<plugin>/scripts/latest-model.py" claude "${CXC_CLAUDE_WORKER:-sonnet}" --effort "${CXC_WORKER_EFFORT:-high}" --project "$PWD") || exit
+CXC_MODE=off claude -p "$(cat ../../<feature>/tasks/<id>.md)" \
+  --model "$M" --effort "${CXC_WORKER_EFFORT:-high}" --permission-mode acceptEdits \
+  --output-format json > "$R/<id>.raw.json" < /dev/null
+jq -r '.result' "$R/<id>.raw.json" > "$R/<id>.md"
+jq -r '.modelUsage | keys[]' "$R/<id>.raw.json"   # the id that ran
 ```
 
 Grant only the permissions the task needs: `--permission-mode` (`acceptEdits` lets it
@@ -81,17 +89,20 @@ form from either host: a native subagent can't pin its effort.
 ## Claude reviewer
 
 ```bash
-CXC_MODE=off claude -p "$(cat .claude-x-codex/<feature>/reviews/<phase>-prompt.md)" \
-  --model "${CXC_CLAUDE_REVIEWER:-opus}" --effort "${CXC_REVIEW_EFFORT:-xhigh}" \
+F=.claude-x-codex/<feature>/reviews
+M=$(python3 "<plugin>/scripts/latest-model.py" claude "${CXC_CLAUDE_REVIEWER:-opus}" --effort "${CXC_REVIEW_EFFORT:-xhigh}" --project "$PWD") || exit
+CXC_MODE=off claude -p "$(cat "$F/<phase>-prompt.md")" \
+  --model "$M" --effort "${CXC_REVIEW_EFFORT:-xhigh}" \
   --allowedTools "Read" "Grep" "Glob" "Bash(git diff:*)" "Bash(git log:*)" \
   --disallowedTools "Skill" "ReportFindings" "Write" "Edit" "NotebookEdit" \
-  --json-schema "$(cat <plugin>/skills/run/references/review.schema.json)" \
-  --output-format json < /dev/null \
-  | jq '.structured_output' > .claude-x-codex/<feature>/reviews/<phase>-r<n>.json
+  --json-schema "$(cat "<plugin>/skills/run/references/review.schema.json")" \
+  --output-format json < /dev/null > "$F/<phase>-r<n>.raw.json"
+jq '.structured_output' "$F/<phase>-r<n>.raw.json" > "$F/<phase>-r<n>.json"
+jq -r '.modelUsage | keys[]' "$F/<phase>-r<n>.raw.json"   # the id that ran
 ```
 
 With `--json-schema`, the conforming object is the `structured_output` field of the
-JSON result. `--allowedTools` grants only reading and `git diff`/`git log`; Claude Code also
+JSON result; keep the raw file, since the review schema has no room for the model id. `--allowedTools` grants only reading and `git diff`/`git log`; Claude Code also
 runs read-only commands such as `ls` or `git status` unlisted, and denies writes — told to
 create a file, this reviewer could not, even under a user `defaultMode` of `auto`. Tools that
 need no permission stay available unless removed, and a reviewer was seen starting a forked

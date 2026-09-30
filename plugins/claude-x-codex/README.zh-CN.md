@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -106,8 +106,8 @@ claude plugin install claude-x-codex@bin
 
 ## 工作原理
 
-- **通道**——工作者以 effort `high` 运行。`claude-fast`（Claude Sonnet：UI、交互、代码品味、Claude 侧的工具）、`codex-bulk`（Codex `gpt-6-luna`：结果已完全确定的工作，例如针对现有契约的测试、类型和机械式迁移）、`main`（主智能体：紧密耦合的工作，或规格仍在摸索中的工作）。
-- **跨厂商评审**——评审者始终与作者属于不同厂商，主智能体自己的计划和分诊决定也交给另一个厂商评审。Claude 用 Opus、Codex 用 `gpt-6-sol` 评审，两者的 effort 都是 `xhigh`——在两个 CLI 中都是仅次于 `max` 的级别。即使是认证、支付、数据迁移等高风险阶段，在追加顶级模型（`gpt-6-astra` 或 `max` 的 Opus）评审之前也会先询问你，绝不自行升级。评审者以只读方式运行，返回由两个 CLI 用 schema 强制约束的 JSON。
+- **通道**——工作者以 effort `high` 运行。`claude-fast`（Claude 最新 Sonnet：UI、交互、代码品味、Claude 侧的工具）、`codex-bulk`（Codex 最新 `luna`：结果已完全确定的工作，例如针对现有契约的测试、类型和机械式迁移）、`main`（主智能体：紧密耦合的工作，或规格仍在摸索中的工作）。
+- **跨厂商评审**——评审者始终与作者属于不同厂商，主智能体自己的计划和分诊决定也交给另一个厂商评审。Claude 用最新 Opus、Codex 用最新 `sol` 评审，两者的 effort 都是 `xhigh`——在两个 CLI 中都是仅次于 `max` 的级别。即使是认证、支付、数据迁移等高风险阶段，在追加顶级模型（最新 `astra` 或 `max` 的最新 Opus）评审之前也会先询问你，绝不自行升级。评审者以只读方式运行，返回由两个 CLI 用 schema 强制约束的 JSON。
 - **一轮反驳**——被驳回的 blocking 或 major 意见会连同理由退回给评审者一次。评审者要么认可，要么用新证据反驳；仍未解决时，会连同双方论点以 DISPUTED 提交给你。
 - **证据说了算**——出现分歧时，拥有测试、复现或追踪的一方胜出。没有证据时由你决定。
 - **上下文桥接**——审计会找出两个厂商读取不同指令文件的位置、只约束一个厂商的钩子，以及工作者的 worktree 中会缺失的未提交上下文。`run` 发起的 Codex 调用通过 Codex 的回退设置读取 `CLAUDE.md`，无需修改仓库；交互式 Codex 会话（Orca 工作者，或作为主智能体的 Codex）需要在你的 Codex 配置中加入同样的设置。任何需要修改你的配置或仓库的调整都会在计划审批时提出。
@@ -121,15 +121,17 @@ claude plugin install claude-x-codex@bin
 
 | 变量 | 默认值 |
 |---|---|
-| `CXC_WORKER_MODEL` | `gpt-6-luna` |
-| `CXC_REVIEW_MODEL` | `gpt-6-sol` |
-| `CXC_FINAL_MODEL` | `gpt-6-astra` |
+| `CXC_WORKER_MODEL` | `luna` |
+| `CXC_REVIEW_MODEL` | `sol` |
+| `CXC_FINAL_MODEL` | `astra` |
 | `CXC_CLAUDE_WORKER` | `sonnet` |
 | `CXC_CLAUDE_REVIEWER` | `opus` |
 | `CXC_REVIEW_EFFORT` | `xhigh` |
 | `CXC_WORKER_EFFORT` | `high` |
 | `CXC_MAX_CYCLES` | `3` |
 | `CXC_PARALLEL` | `3` |
+
+模型设置表示一个系列，并始终运行已安装 CLI 提供的该系列最新版本。像 `gpt-6-sol` 这样的版本值也会提升到该系列最新版本；若无法确定最新版本，通道会说明原因并停止。
 
 CXC = **C**laude **×** **C**odex——你在 shell 中设置的变量的前缀。
 

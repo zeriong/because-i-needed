@@ -109,8 +109,8 @@ exploration logs — so your context stays useful for the whole feature.
 
 | Lane | Model · effort (default) | Route here when |
 |---|---|---|
-| `claude-fast` | Claude `CXC_CLAUDE_WORKER` (`sonnet`) · `CXC_WORKER_EFFORT` (`high`) | Fast feedback and code taste matter: UI, interaction, styling, design-system work; needs Claude-side tools or MCP servers |
-| `codex-bulk` | Codex `CXC_WORKER_MODEL` (`gpt-6-luna`) · `CXC_WORKER_EFFORT` (`high`) | The correct result is already fully specified: tests for an existing contract, types, mechanical migrations, repetitive mappings, fixtures, docs from code |
+| `claude-fast` | Claude newest `CXC_CLAUDE_WORKER` (`sonnet`) · `CXC_WORKER_EFFORT` (`high`) | Fast feedback and code taste matter: UI, interaction, styling, design-system work; needs Claude-side tools or MCP servers |
+| `codex-bulk` | Codex newest `CXC_WORKER_MODEL` (`luna`) · `CXC_WORKER_EFFORT` (`high`) | The correct result is already fully specified: tests for an existing contract, types, mechanical migrations, repetitive mappings, fixtures, docs from code |
 | `main` | you | Tightly coupled cross-layer changes; spec still being discovered; tasks smaller than their delegation prompt |
 
 Splitting coupled work costs more in coordination than it saves in parallelism. When
@@ -121,26 +121,27 @@ in doubt between a worker lane and `main`, choose `main`.
 The reviewer's vendor must differ from the author's vendor. Every cross-vendor review —
 the plan review, phase reviews, and delta re-reviews — uses these reviewers:
 
-| Reviewer vendor | Model (default) | Effort (default) |
+| Reviewer vendor | Model (newest of the family) | Effort (default) |
 |---|---|---|
 | Claude | `CXC_CLAUDE_REVIEWER` (`opus`) | `CXC_REVIEW_EFFORT` (`xhigh`) |
-| Codex | `CXC_REVIEW_MODEL` (`gpt-6-sol`) | `CXC_REVIEW_EFFORT` (`xhigh`) |
+| Codex | `CXC_REVIEW_MODEL` (`sol`) | `CXC_REVIEW_EFFORT` (`xhigh`) |
 
 `xhigh` is the same rung on both CLIs — one below `max` (Codex's `ultra` sits above `max`
 and adds task delegation) — so the two reviewers sit on the same rung. Neither CLI
 rejects a misspelled level: Claude warns and falls back to its default, Codex passes it
 through. Spell it exactly.
 
-- **If your vendor differs from the author's** and you are running as that table's
-  reviewer model at the review effort or higher, review it yourself. (Claude Code host:
+- **If your vendor differs from the author's** and you are running as the newest model of
+  that table's reviewer family (resolved as below) at the review effort or higher, review
+  it yourself. (Claude Code host:
   you review `codex-bulk` work. Codex host: you review `claude-fast` work.) Otherwise
   start your vendor's reviewer as a separate read-only call — being main doesn't make
   your session's model or effort the reviewer's.
 - **Otherwise**, start a read-only reviewer from the other vendor, per the table.
 - **High-risk phases** (auth, permissions, data integrity, payments, production data
   migrations) use the same reviewers. Never move to a top model or `max` effort on your
-  own — an extra final review from the other vendor's top model (Codex `CXC_FINAL_MODEL`,
-  `gpt-6-astra`, or Claude Opus at `max`) runs only if the user approves it. Ask at plan
+  own — an extra final review from the other vendor's top model (Codex newest
+  `CXC_FINAL_MODEL`, family `astra`, or Claude newest Opus at `max`) runs only if the user approves it. Ask at plan
   approval for every phase marked `Risk: high`, and again whenever a phase turns out
   high-risk later: with the AskUserQuestion tool on Claude Code, in the conversation on
   other hosts (an Orca gate under Orca). Record the answer in `decisions.md`.
@@ -166,13 +167,14 @@ doesn't narrow scope.
 
 ### Configuration
 
-Model names change often. Read these from the environment, falling back to defaults:
+Read these from the environment, falling back to defaults. A model setting names a
+**family**; what runs is always the newest version of that family (next section):
 
 | Variable | Default |
 |---|---|
-| `CXC_WORKER_MODEL` | `gpt-6-luna` |
-| `CXC_REVIEW_MODEL` | `gpt-6-sol` |
-| `CXC_FINAL_MODEL` | `gpt-6-astra` |
+| `CXC_WORKER_MODEL` | `luna` |
+| `CXC_REVIEW_MODEL` | `sol` |
+| `CXC_FINAL_MODEL` | `astra` |
 | `CXC_CLAUDE_WORKER` | `sonnet` |
 | `CXC_CLAUDE_REVIEWER` | `opus` |
 | `CXC_REVIEW_EFFORT` | `xhigh` |
@@ -181,6 +183,41 @@ Model names change often. Read these from the environment, falling back to defau
 | `CXC_PARALLEL` | `3` |
 
 `CXC_FINAL_MODEL` is used only for a high-risk final review the user approved.
+
+### Newest model per family
+
+Every dispatch — worker, reviewer, rebuttal, delta re-review — resolves its model right
+before it starts, never once per run and never from memory:
+
+```bash
+python3 "<plugin>/scripts/latest-model.py" codex "${CXC_REVIEW_MODEL:-sol}" --effort "${CXC_REVIEW_EFFORT:-xhigh}"
+python3 "<plugin>/scripts/latest-model.py" claude "${CXC_CLAUDE_WORKER:-sonnet}" --effort "${CXC_WORKER_EFFORT:-high}" --project "<child's working directory>"
+```
+
+- Pass stdout as the child's model. A versioned setting (`gpt-<n>-sol`, `claude-opus-<n>`)
+  is reduced to its family and resolved to the newest, with a note on stderr: there is no
+  pinning exception. Codex's newest is the highest listed `gpt-<version>-<family>` in the
+  refreshed `codex debug models` catalog; Claude's is the family alias, which the CLI maps
+  to its latest model.
+- **Exit 2** (the newest can't be determined: no CLI, catalog not refreshed, no listed model
+  in the family, or `ANTHROPIC_DEFAULT_<FAMILY>_MODEL` redirecting the alias) or **exit 3**
+  (effort unsupported): don't start that child and don't substitute another model. Show the
+  user the script's message and stop the lane. Upgrading or logging in to a CLI is the
+  user's step; choosing the newest model the CLI offers is yours.
+- A sandboxed shell can't refresh Codex's catalog: once the cache is older than the CLI's
+  refresh window, the script stops with `catalog not refreshed` although the newest model
+  is obtainable. When your shell runs sandboxed without network (a Codex main agent), rerun
+  that one resolver command outside the sandbox through the host's escalation route before
+  stopping the lane.
+- Record the id that actually ran, taken from the run: the Codex run header `model:`,
+  Claude's `modelUsage`, Orca's `launch.effective`. A worker's own report is not evidence.
+  Log it in `decisions.md` (dispatch log, review header). A run outside the requested
+  family, or older than an id already logged for that family in this feature, is a failed
+  dispatch.
+- A delta re-review keeps the family and effort; if a newer version appeared since the
+  first review, the newer one runs.
+- You can't switch your own model. At Setup, resolve your family; if your session runs an
+  older version, tell the user once (a new session fixes it) — the lanes still get the newest.
 
 ## State on disk
 

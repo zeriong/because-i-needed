@@ -77,7 +77,7 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the ux-ui README →](plugins/ux-ui)
 
-### [claude-x-codex](plugins/claude-x-codex) · `v0.2.0`
+### [claude-x-codex](plugins/claude-x-codex) · `v0.3.0`
 
 **Claude × Codex peer orchestration.** The main agent plans and owns every gate, routes work to fast Claude or bulk Codex workers, and the two vendors review each other's work — the main agent's own plan included — with one rebuttal round and evidence, not role, deciding. An audit makes sure both vendors start from the same project instructions. Unofficial community plugin.
 

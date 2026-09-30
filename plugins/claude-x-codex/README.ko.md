@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -106,8 +106,8 @@ claude plugin install claude-x-codex@bin
 
 ## 동작 방식
 
-- **레인** — 워커는 effort `high` 로 실행합니다. `claude-fast`(Claude Sonnet: UI, 인터랙션, 코드 감각, Claude 쪽 도구), `codex-bulk`(Codex `gpt-6-luna`: 기존 계약에 대한 테스트, 타입, 기계적 마이그레이션처럼 결과가 완전히 정해진 작업), `main`(메인 에이전트: 강하게 결합된 작업이나 아직 명세를 찾아가는 작업).
-- **교차 벤더 리뷰** — 리뷰어는 항상 작성자와 다른 벤더이고, 메인 에이전트 자신의 계획과 선별 결정도 상대 벤더의 리뷰를 받습니다. Claude는 Opus로, Codex는 `gpt-6-sol` 로 리뷰하며, 둘 다 effort `xhigh` — 두 CLI 모두에서 `max` 바로 아래 단계 — 입니다. 인증·결제·데이터 마이그레이션 같은 고위험 단계라도 최상위 모델(`gpt-6-astra` 또는 `max` 의 Opus) 리뷰를 추가하기 전에 먼저 사용자에게 묻고, 스스로 올리지 않습니다. 리뷰어는 읽기 전용으로 실행되며, 두 CLI가 스키마로 강제하는 JSON을 반환합니다.
+- **레인** — 워커는 effort `high` 로 실행합니다. `claude-fast`(Claude 최신 Sonnet: UI, 인터랙션, 코드 감각, Claude 쪽 도구), `codex-bulk`(Codex 최신 `luna`: 기존 계약에 대한 테스트, 타입, 기계적 마이그레이션처럼 결과가 완전히 정해진 작업), `main`(메인 에이전트: 강하게 결합된 작업이나 아직 명세를 찾아가는 작업).
+- **교차 벤더 리뷰** — 리뷰어는 항상 작성자와 다른 벤더이고, 메인 에이전트 자신의 계획과 선별 결정도 상대 벤더의 리뷰를 받습니다. Claude는 최신 Opus로, Codex는 최신 `sol`로 리뷰하며, 둘 다 effort `xhigh` — 두 CLI 모두에서 `max` 바로 아래 단계 — 입니다. 인증·결제·데이터 마이그레이션 같은 고위험 단계라도 최상위 모델(최신 `astra` 또는 `max` 의 최신 Opus) 리뷰를 추가하기 전에 먼저 사용자에게 묻고, 스스로 올리지 않습니다. 리뷰어는 읽기 전용으로 실행되며, 두 CLI가 스키마로 강제하는 JSON을 반환합니다.
 - **반론 1회** — 기각된 blocking·major 지적은 이유와 함께 한 번 리뷰어에게 돌아갑니다. 리뷰어는 수긍하거나 새 증거로 반박하고, 그래도 풀리지 않으면 양쪽 주장과 함께 DISPUTED로 사용자에게 올라옵니다.
 - **증거가 판정** — 의견이 갈리면 테스트·재현·추적이 판정하며, 증거를 가진 쪽이 이깁니다. 증거가 없으면 사용자가 결정합니다.
 - **컨텍스트 브리지** — 감사가 두 벤더가 서로 다른 지침 파일을 읽는 곳, 한 벤더에만 걸리는 훅, 워커 worktree에 빠질 커밋되지 않은 맥락을 찾아냅니다. `run` 이 직접 하는 Codex 호출은 Codex의 폴백 설정으로 `CLAUDE.md` 를 읽으므로 레포를 바꿀 필요가 없습니다. 대화형 Codex 세션(Orca 워커, 또는 메인 에이전트로서의 Codex)에는 같은 설정이 사용자의 Codex 설정에 있어야 합니다. 사용자 설정이나 레포를 바꾸는 수정은 계획 승인 단계에서 제안합니다.
@@ -121,15 +121,17 @@ claude plugin install claude-x-codex@bin
 
 | 변수 | 기본값 |
 |---|---|
-| `CXC_WORKER_MODEL` | `gpt-6-luna` |
-| `CXC_REVIEW_MODEL` | `gpt-6-sol` |
-| `CXC_FINAL_MODEL` | `gpt-6-astra` |
+| `CXC_WORKER_MODEL` | `luna` |
+| `CXC_REVIEW_MODEL` | `sol` |
+| `CXC_FINAL_MODEL` | `astra` |
 | `CXC_CLAUDE_WORKER` | `sonnet` |
 | `CXC_CLAUDE_REVIEWER` | `opus` |
 | `CXC_REVIEW_EFFORT` | `xhigh` |
 | `CXC_WORKER_EFFORT` | `high` |
 | `CXC_MAX_CYCLES` | `3` |
 | `CXC_PARALLEL` | `3` |
+
+모델 설정값은 제품군을 지정하며, 설치된 CLI가 제공하는 해당 제품군의 최신 버전이 항상 실행됩니다. `gpt-6-sol` 같은 버전 값도 해당 제품군의 최신 버전으로 올려집니다. 최신 버전을 확인할 수 없으면 레인이 이유를 알리고 멈춥니다.
 
 CXC = **C**laude **×** **C**odex — 셸에서 설정하는 변수의 접두어입니다.
 

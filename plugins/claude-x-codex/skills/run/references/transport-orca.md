@@ -55,10 +55,12 @@ A wait timeout is not a failure; long tasks are normal. Wait again.
 ## Model per worker
 
 `worker-start` takes the model and reasoning effort directly — `--model <id>` and
-`--effort <level>` (effort requires model) for Claude and Codex agents. Pass the lane's
-model from the Configuration table (`CXC_WORKER_MODEL`, `CXC_CLAUDE_WORKER`) and
-`--effort "${CXC_WORKER_EFFORT:-high}"`; these variables are the user's named choice. Then compare the start receipt's requested and
-effective launch values — never assume a model from the arguments alone.
+`--effort <level>` (effort requires model) for Claude and Codex agents. Pass the id
+`latest-model.py` printed for this dispatch from the lane's family (`CXC_WORKER_MODEL`,
+`CXC_CLAUDE_WORKER`; SKILL.md, "Newest model per family") and
+`--effort "${CXC_WORKER_EFFORT:-high}"`. Then compare the start receipt's `launch.requested`
+and `launch.effective` and log the effective model — never assume a model from the
+arguments alone.
 
 ## Reviewers never run as Orca workers
 

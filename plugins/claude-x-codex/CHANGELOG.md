@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.0] - 2026-09-30
+
+### Changed
+
+- Model settings now name a family. Every worker, reviewer, rebuttal and delta re-review resolves the newest model immediately before dispatch; versioned settings are raised to that family's newest. If the newest cannot be determined, the lane stops and reports why without a fallback. A sandboxed Codex main reruns that resolver command outside the sandbox first.
+- Dispatch logs record the model id from the run itself, never a worker self-report. The Claude reviewer's raw JSON is retained.
+
+### Fixed
+
+- Quote plugin paths in documented shell commands so install paths containing spaces remain a single argument.
+
+### Why
+
+Pinned model ids age out, while a silent fallback or self-reported id cannot establish which model actually ran. Quoted paths make the documented commands work from installations whose path contains spaces.
+
+Evidence: z-lab `claude-x-codex-lab/latest-model-0.3.0/` (W01–W03) and `latest-model-0.3.0-own-id/` (W04); shared resolver evidence in `plugin-platform-lab/latest-model-0.159.0/` (L01–L07), `latest-model-r2-0.159.0/` (L04r, L06r, L07r, L08), `latest-model-r3-0.159.0/` (L08i, L09), and `latest-model-r4-0.159.0/` (L02x). Not measured: a full orchestration run; a Codex main escalating the resolver out of its sandbox (the cache stayed fresh in W01–W04; L08i shows only that the same stale home refreshed when the lab reran the resolver outside the sandbox); Linux/WSL and other Claude override sources; access-restricted or retiring models; model quality; Orca workers reaching readiness; and repeated W04 runs. The resolver's platform and override-channel limits are recorded in the shared findings.
+
 ## [0.2.0] - 2026-09-29
 
 ### Changed

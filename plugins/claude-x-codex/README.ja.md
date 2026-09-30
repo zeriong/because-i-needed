@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -106,8 +106,8 @@ claude plugin install claude-x-codex@bin
 
 ## 仕組み
 
-- **レーン** — ワーカーは effort `high` で動きます。`claude-fast`（Claude Sonnet: UI、インタラクション、コードのセンス、Claude 側のツール）、`codex-bulk`（Codex `gpt-6-luna`: 既存の契約に対するテスト、型、機械的なマイグレーションなど、結果が完全に決まっている作業）、`main`（メインエージェント: 密結合な作業や、仕様がまだ固まっていない作業）。
-- **クロスベンダーレビュー** — レビュアーは常に作成者と別のベンダーで、メインエージェント自身の計画や振り分けの判断も相手ベンダーがレビューします。Claude は Opus、Codex は `gpt-6-sol` でレビューし、どちらも effort `xhigh`（両 CLI で `max` のすぐ下の段階）です。認証・決済・データ移行などの高リスクな段階でも、最上位モデル（`gpt-6-astra` または `max` の Opus）のレビューを追加する前に必ずユーザーに確認し、自分からは引き上げません。レビュアーは読み取り専用で動き、両方の CLI がスキーマで強制する JSON を返します。
+- **レーン** — ワーカーは effort `high` で動きます。`claude-fast`（Claude の最新 Sonnet: UI、インタラクション、コードのセンス、Claude 側のツール）、`codex-bulk`（Codex の最新 `luna`: 既存の契約に対するテスト、型、機械的なマイグレーションなど、結果が完全に決まっている作業）、`main`（メインエージェント: 密結合な作業や、仕様がまだ固まっていない作業）。
+- **クロスベンダーレビュー** — レビュアーは常に作成者と別のベンダーで、メインエージェント自身の計画や振り分けの判断も相手ベンダーがレビューします。Claude は最新 Opus、Codex は最新 `sol` でレビューし、どちらも effort `xhigh`（両 CLI で `max` のすぐ下の段階）です。認証・決済・データ移行などの高リスクな段階でも、最上位モデル（最新 `astra` または `max` の最新 Opus）のレビューを追加する前に必ずユーザーに確認し、自分からは引き上げません。レビュアーは読み取り専用で動き、両方の CLI がスキーマで強制する JSON を返します。
 - **反論は 1 回** — 却下された blocking・major の指摘は、理由とともに一度だけレビュアーへ戻ります。レビュアーは受け入れるか、新しい証拠で反論します。それでも解決しなければ、両者の主張とともに DISPUTED としてユーザーに上がります。
 - **証拠が判定する** — 意見が分かれたら、テスト・再現・トレースのどれかを持つ側が勝ちます。証拠がなければユーザーが決めます。
 - **コンテキストブリッジ** — 監査は、2 つのベンダーが別々の指示ファイルを読んでいる場所、片方のベンダーにしか効かないフック、ワーカーの worktree に欠けるコミットされていない文脈を見つけます。`run` が行う Codex の呼び出しは Codex のフォールバック設定で `CLAUDE.md` を読むので、リポジトリの変更は不要です。対話型の Codex セッション（Orca のワーカー、またはメインエージェントとしての Codex）では、同じ設定がユーザーの Codex 設定に必要です。ユーザーの設定やリポジトリを変える修正は、計画の承認時に提案します。
@@ -121,15 +121,17 @@ claude plugin install claude-x-codex@bin
 
 | 変数 | 既定値 |
 |---|---|
-| `CXC_WORKER_MODEL` | `gpt-6-luna` |
-| `CXC_REVIEW_MODEL` | `gpt-6-sol` |
-| `CXC_FINAL_MODEL` | `gpt-6-astra` |
+| `CXC_WORKER_MODEL` | `luna` |
+| `CXC_REVIEW_MODEL` | `sol` |
+| `CXC_FINAL_MODEL` | `astra` |
 | `CXC_CLAUDE_WORKER` | `sonnet` |
 | `CXC_CLAUDE_REVIEWER` | `opus` |
 | `CXC_REVIEW_EFFORT` | `xhigh` |
 | `CXC_WORKER_EFFORT` | `high` |
 | `CXC_MAX_CYCLES` | `3` |
 | `CXC_PARALLEL` | `3` |
+
+モデル設定はファミリーを指定し、インストール済み CLI が提供するそのファミリーの最新バージョンを常に実行します。`gpt-6-sol` のようなバージョン指定も最新に引き上げ、最新を特定できない場合は理由を示してレーンを停止します。
 
 CXC = **C**laude **×** **C**odex — シェルで設定する変数の接頭辞です。
 

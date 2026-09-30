@@ -29,13 +29,14 @@ the marketplace installer, not part of this plugin.
 | Fact | Source | Copies |
 |---|---|---|
 | `CXC_*` defaults | `skills/run/SKILL.md` Configuration | five READMEs (Configuration), `host-*.md`, `transport-*.md` |
-| Reviewer models and efforts (Claude Opus · Codex `gpt-6-sol`, both `xhigh`; workers `high`; a top model or `max` only after asking the user) | `skills/run/SKILL.md` Review routing and Work lanes | `host-*.md` tables, `transport-standalone.md` and `transport-orca.md` commands, five READMEs (How it works) |
+| Reviewer model families and efforts (Claude newest `opus` · Codex newest `sol`, both `xhigh`; workers newest `sonnet` / `luna` at `high`; a top model or `max` only after asking the user) | `skills/run/SKILL.md` Review routing and Work lanes | `host-*.md` tables, `transport-standalone.md` and `transport-orca.md` commands, five READMEs (How it works) |
 | Platform support | `skills/mode/SKILL.md` Platforms | five READMEs (Platforms) |
 | Mode scopes and resolution order | `scripts/mode.sh` header | `skills/mode/SKILL.md` Scopes, five READMEs (Commands) |
 | Review JSON shape | `skills/run/references/review.schema.json` | `templates.md` review prompt example |
 | Hook note (four lines, ~100 input tokens — F21) | `hooks/mode-context.sh` | five READMEs (Heads-up: "four-line" and "about 100 input tokens") |
 | What each vendor reads | `context-bridge.md` table | `context-audit.sh` parity column, `host-*.md` Native context |
 | Command list | the three skill folders | five plugin READMEs (Commands), five root READMEs (Entry) |
+| Newest-model resolver | `scripts/latest-model.py` | byte-identical copies in plan-smith, harness and ux-ui `scripts/` (a test compares them); harness installs it into generated projects |
 
 ## Rule 3 — Environment facts carry the version they were checked on, and their evidence
 
@@ -106,6 +107,35 @@ To check the hook itself, don't look for its output in `claude -p --output-forma
 no UserPromptSubmit hook events there (G06). Compare the result event's input tokens (input + cache_creation +
 cache_read) for the same prompt with `CXC_MODE=on` and `off`, using `--setting-sources project --plugin-dir <plugin>
 --tools ""` so nothing else varies; `on` should be about 100 tokens higher (F21).
+
+## Rule 5 — Every dispatch runs the newest model of its family
+
+- A model setting names a family (`luna`, `sol`, `astra`, `sonnet`, `opus`). `scripts/latest-model.py` resolves it right
+  before each dispatch; a versioned setting is reduced to its family (user decision, 2026-09-30). No file under
+  `skills/`, `agents/`, `hooks/` or `scripts/` of any plugin names a model version — `tests/test_model_pins.py` fails on one.
+- Codex's newest is the highest listed `gpt-<version>-<family>` in `codex debug models`, accepted only when
+  `$CODEX_HOME/models_cache.json` shows a refresh. A failed refresh still exits 0 and prints the bundled catalog, which on
+  0.159.0 lacks `gpt-6.1-sol` (L01, L03). Claude's newest is the family alias (`opus` ran `claude-opus-5-5`, L05), refused
+  when `ANTHROPIC_DEFAULT_<FAMILY>_MODEL` redirects it: set in the environment or a project `settings.json`, it made
+  `sonnet` run Haiku (L06).
+- When the newest can't be determined, the lane stops and the user is told (user decision, 2026-09-30); nothing falls back
+  to a fixed or bundled version (L07).
+- Log the id that ran from the run itself (Codex header `model:`, `modelUsage`, `launch.effective`). A Codex main
+  could not see its own id (W03, W04), and one started on `gpt-6-sol` called itself the newest `sol` (plan-smith-lab N03).
+- `CACHE_MAX_AGE_SECONDS` is 315 s. In an isolated home Codex 0.159.0 served a 294.4 s old cache and refreshed a 304.4 s
+  old one (r4 L02x), a window in (294.4, 304.4] s, consistent with 300 s. 315 is a decision: a margin over the measured bound, so a cache the CLI still
+  serves never stops a lane; the cost is accepting, after a failed refresh, a real catalog up to 315 s old.
+- A sandboxed shell cannot refresh the catalog: inside `codex sandbox` a 10-minute-old cache stopped the resolver,
+  and the same home rerun outside the sandbox refreshed and resolved `gpt-6.1-sol` (r3 L08i; no network inside, L09).
+  So a sandboxed main reruns the one resolver command outside the sandbox before stopping a lane.
+
+**Why:** 0.2.0 pinned `gpt-6-sol` while the account already offered `gpt-6.1-sol`, and a pin written into a skill keeps
+serving the old model to every installed client until the next release. The maintainer's split: upgrading the CLIs is
+the user's job; choosing the newest model they offer is the plugin's.
+
+Evidence: z-lab `plugin-platform-lab/latest-model-0.159.0/` (L01–L07), `latest-model-r2-0.159.0/` (L04r, L06r, L07r,
+L08), `latest-model-r3-0.159.0/` (L08i same-home rerun, L09 sandbox network) and `latest-model-r4-0.159.0/` (L02x);
+the wired skill: `claude-x-codex-lab/latest-model-0.3.0/` (W01–W03) and `latest-model-0.3.0-own-id/` (W04).
 
 ## Codex compatibility evidence — 0.2.0
 

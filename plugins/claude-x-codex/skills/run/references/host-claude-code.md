@@ -3,7 +3,7 @@
 You are Claude. Your vendor is Anthropic.
 
 ## Main
-Run as Opus. Use high effort or more for planning and triage; ordinary effort is fine
+Run as the newest Opus (the `opus` alias). Use high effort or more for planning and triage; ordinary effort is fine
 for task gates. Reviewing `codex-bulk` work yourself needs `CXC_REVIEW_EFFORT` (`xhigh`)
 or `max`; below that, start the Claude reviewer form instead.
 
@@ -11,8 +11,8 @@ or `max`; below that, start the Claude reviewer form instead.
 
 | Lane | Standalone transport | Orca transport |
 |---|---|---|
-| `claude-fast` | `claude -p` worker form in the task's worktree (transport-standalone.md) | Orca worker, agent `claude`, `--model ${CXC_CLAUDE_WORKER:-sonnet} --effort ${CXC_WORKER_EFFORT:-high}` |
-| `codex-bulk` | `codex exec` worker form (transport-standalone.md) | Orca worker, agent `codex`, `--model ${CXC_WORKER_MODEL:-gpt-6-luna} --effort ${CXC_WORKER_EFFORT:-high}` |
+| `claude-fast` | `claude -p` worker form in the task's worktree (transport-standalone.md) | Orca worker, agent `claude`, `--model <resolved CXC_CLAUDE_WORKER> --effort ${CXC_WORKER_EFFORT:-high}` |
+| `codex-bulk` | `codex exec` worker form (transport-standalone.md) | Orca worker, agent `codex`, `--model <resolved CXC_WORKER_MODEL> --effort ${CXC_WORKER_EFFORT:-high}` |
 | `main` | yourself | yourself |
 
 A native subagent can't pin its effort — subagent definitions and the Agent tool take a
@@ -22,17 +22,18 @@ CLI form. Check the other vendor with `command -v codex`. If missing → single-
 ## Review routing, resolved for this host
 
 Resolve `CXC_REVIEW_MODEL`, `CXC_CLAUDE_REVIEWER` and `CXC_REVIEW_EFFORT` from the
-environment before routing. Resolve model aliases before comparing actual model IDs.
-Parenthesized defaults never override configured values.
+environment, then resolve each model to its family's newest with `latest-model.py` (SKILL.md,
+"Newest model per family") before routing. Compare actual model IDs, not aliases.
+Parenthesized defaults are families and never override configured values.
 
 | Author | Reviewer |
 |---|---|
-| `claude-fast` | Codex `CXC_REVIEW_MODEL` (default `gpt-6-sol`) at `CXC_REVIEW_EFFORT` (default `xhigh`), read-only |
-| `main` (you) | Codex `CXC_REVIEW_MODEL` (default `gpt-6-sol`) at `CXC_REVIEW_EFFORT` (default `xhigh`), read-only |
-| `codex-bulk` | **you**, only when your resolved model equals `CXC_CLAUDE_REVIEWER` (default `opus`) and effort meets `CXC_REVIEW_EFFORT` (default `xhigh`); otherwise use the configured Claude reviewer form |
-| High-risk final, only if the user approved it | Codex `CXC_FINAL_MODEL`, read-only |
+| `claude-fast` | Codex newest `CXC_REVIEW_MODEL` (default `sol`) at `CXC_REVIEW_EFFORT` (default `xhigh`), read-only |
+| `main` (you) | Codex newest `CXC_REVIEW_MODEL` (default `sol`) at `CXC_REVIEW_EFFORT` (default `xhigh`), read-only |
+| `codex-bulk` | **you**, only when your actual model is the newest of `CXC_CLAUDE_REVIEWER` (default `opus`) and effort meets `CXC_REVIEW_EFFORT` (default `xhigh`); otherwise use the configured Claude reviewer form |
+| High-risk final, only if the user approved it | Codex newest `CXC_FINAL_MODEL` (default `astra`), read-only |
 
-Single-vendor mode: the reviewer is a fresh `CXC_CLAUDE_REVIEWER` (default `opus`)
+Single-vendor mode: the reviewer is a fresh newest `CXC_CLAUDE_REVIEWER` (default `opus`)
 instance through the Claude reviewer form at `CXC_REVIEW_EFFORT` (default `xhigh`),
 given only `plan.md`, `decisions.md`, and the diff.
 

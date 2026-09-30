@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -106,8 +106,8 @@ claude plugin install claude-x-codex@bin
 
 ## How it works
 
-- **Lanes** — workers run at effort `high`. `claude-fast` (Claude Sonnet: UI, interaction, code taste, Claude-side tools), `codex-bulk` (Codex `gpt-6-luna`: fully specified work such as tests for an existing contract, types, and mechanical migrations), and `main` (the main agent: tightly coupled work, or a spec still being discovered).
-- **Cross-vendor review** — the reviewer's vendor always differs from the author's, and the main agent's own plan and triage decisions go to the other vendor too. Claude reviews with Opus and Codex with `gpt-6-sol`, both at effort `xhigh` — the rung just below `max` on both CLIs. For a high-risk phase (auth, payments, data migrations, …), `run` asks you before adding a review by a top model (`gpt-6-astra` or Opus at `max`); it never escalates on its own. Reviewers run read-only and return JSON that both CLIs enforce with a schema.
+- **Lanes** — workers run at effort `high`. `claude-fast` (Claude's newest Sonnet: UI, interaction, code taste, Claude-side tools), `codex-bulk` (Codex's newest `luna`: fully specified work such as tests for an existing contract, types, and mechanical migrations), and `main` (the main agent: tightly coupled work, or a spec still being discovered).
+- **Cross-vendor review** — the reviewer's vendor always differs from the author's, and the main agent's own plan and triage decisions go to the other vendor too. Claude reviews with the newest Opus and Codex with its newest `sol`, both at effort `xhigh` — the rung just below `max` on both CLIs. For a high-risk phase (auth, payments, data migrations, …), `run` asks you before adding a review by a top model (Codex's newest `astra` or Claude's newest Opus at `max`); it never escalates on its own. Reviewers run read-only and return JSON that both CLIs enforce with a schema.
 - **One rebuttal round** — a rejected blocking or major finding goes back to its reviewer once, with the reason. The reviewer concedes or counters with new evidence; if it's still unresolved, it comes to you as DISPUTED with both arguments.
 - **Evidence decides** — a test, a reproduction, or a trace settles a disagreement, whichever side has it. Without evidence, you decide.
 - **Context bridge** — the audit finds where the two vendors read different instruction files, hooks that bind only one vendor, and uncommitted context that worker worktrees would lack. The Codex calls `run` makes read `CLAUDE.md` through Codex's fallback setting, with no repo change; interactive Codex sessions (Orca workers, or Codex as the main agent) need the same setting in your Codex config. Anything that would change your config or the repo is proposed at plan approval.
@@ -121,15 +121,17 @@ Installed alongside [plan-smith](../plan-smith), the plan step uses `/plan-smith
 
 | Variable | Default |
 |---|---|
-| `CXC_WORKER_MODEL` | `gpt-6-luna` |
-| `CXC_REVIEW_MODEL` | `gpt-6-sol` |
-| `CXC_FINAL_MODEL` | `gpt-6-astra` |
+| `CXC_WORKER_MODEL` | `luna` |
+| `CXC_REVIEW_MODEL` | `sol` |
+| `CXC_FINAL_MODEL` | `astra` |
 | `CXC_CLAUDE_WORKER` | `sonnet` |
 | `CXC_CLAUDE_REVIEWER` | `opus` |
 | `CXC_REVIEW_EFFORT` | `xhigh` |
 | `CXC_WORKER_EFFORT` | `high` |
 | `CXC_MAX_CYCLES` | `3` |
 | `CXC_PARALLEL` | `3` |
+
+Model settings name a family, and the newest version the installed CLI offers for that family always runs. A versioned value such as `gpt-6-sol` is raised to its family's newest; if the newest cannot be determined, the lane stops and explains why.
 
 CXC = **C**laude **×** **C**odex — the prefix of the variables you set in your shell.
 

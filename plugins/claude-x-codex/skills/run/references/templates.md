@@ -124,7 +124,7 @@ Output only JSON:
 ## decisions.md
 
 ```markdown
-## Phase <n> · Review r<k> (reviewer: <model>)
+## Phase <n> · Review r<k> (reviewer: <id that ran>, <effort>)
 - F1 [blocking] ACCEPT — reproduced with <test/command>
 - F2 [major]    REJECT — contradicts Decision "<name>" in plan.md
   - rebuttal: concede | counter (<evidence>) → final: REJECT | ACCEPT | DISPUTED
@@ -135,4 +135,7 @@ Output only JSON:
 
 ## Worker questions
 - T2: "<question>" → <answer> (source: plan.md Decisions | new decision)
+
+## Dispatch log
+- T1 [codex-bulk] <id that ran> · <effort> (source: run header | modelUsage | launch.effective)
 ```

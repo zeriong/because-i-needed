@@ -8,7 +8,8 @@ The mode hook uses the shared `hooks/hooks.json`; review/trust it with `/hooks` 
 automatic routing. Explicit `run` works independently of the prompt hook.
 
 ## Main
-Run as `gpt-6-sol` at high effort or more. Don't move to `gpt-6-astra` or `max` effort on
+Run as the newest `sol` model (resolve it at Setup; if your session runs an older version, or
+you can't see your own model id — a probe could not — tell the user once) at high effort or more. Don't move to the `astra` family or `max` effort on
 your own for a large or high-risk feature — ask the user first. Reviewing `claude-fast` work yourself needs `CXC_REVIEW_EFFORT` (`xhigh`) or
 above; below that, start the Codex reviewer form instead.
 
@@ -16,8 +17,8 @@ above; below that, start the Codex reviewer form instead.
 
 | Lane | Standalone transport | Orca transport |
 |---|---|---|
-| `claude-fast` | `claude -p` worker form (transport-standalone.md) | Orca worker, agent `claude`, `--model ${CXC_CLAUDE_WORKER:-sonnet} --effort ${CXC_WORKER_EFFORT:-high}` |
-| `codex-bulk` | `codex exec` worker form, which sets the effort explicitly (transport-standalone.md) | Orca worker, agent `codex`, `--model ${CXC_WORKER_MODEL:-gpt-6-luna} --effort ${CXC_WORKER_EFFORT:-high}` |
+| `claude-fast` | `claude -p` worker form (transport-standalone.md) | Orca worker, agent `claude`, `--model <resolved CXC_CLAUDE_WORKER> --effort ${CXC_WORKER_EFFORT:-high}` |
+| `codex-bulk` | `codex exec` worker form, which sets the effort explicitly (transport-standalone.md) | Orca worker, agent `codex`, `--model <resolved CXC_WORKER_MODEL> --effort ${CXC_WORKER_EFFORT:-high}` |
 | `main` | yourself | yourself |
 
 Check the other vendor with `command -v claude`. If missing → single-vendor mode.
@@ -27,17 +28,18 @@ Check the other vendor with `command -v claude`. If missing → single-vendor mo
 Note how this differs from the Claude Code host: here *you* are the natural reviewer
 for Claude-authored work, and Luna work needs a Claude reviewer.
 Resolve `CXC_REVIEW_MODEL`, `CXC_CLAUDE_REVIEWER` and `CXC_REVIEW_EFFORT` from the
-environment before routing. Resolve model aliases before comparing actual model IDs.
-Parenthesized defaults never override configured values.
+environment, then resolve each model to its family's newest with `latest-model.py` (SKILL.md,
+"Newest model per family") before routing. Compare actual model IDs, not aliases.
+Parenthesized defaults are families and never override configured values.
 
 | Author | Reviewer |
 |---|---|
-| `claude-fast` | **you**, only when your resolved model equals `CXC_REVIEW_MODEL` (default `gpt-6-sol`) and effort meets `CXC_REVIEW_EFFORT` (default `xhigh`); otherwise use the configured Codex reviewer form |
-| `main` (you) | Claude `CXC_CLAUDE_REVIEWER` (default `opus`) at `CXC_REVIEW_EFFORT` (default `xhigh`), read-only |
-| `codex-bulk` | Claude `CXC_CLAUDE_REVIEWER` (default `opus`) at `CXC_REVIEW_EFFORT` (default `xhigh`), read-only |
-| High-risk final, only if the user approved it | Claude Opus at `max`, read-only |
+| `claude-fast` | **you**, only when your actual model is the newest of `CXC_REVIEW_MODEL` (default `sol`) and effort meets `CXC_REVIEW_EFFORT` (default `xhigh`); otherwise use the configured Codex reviewer form |
+| `main` (you) | Claude newest `CXC_CLAUDE_REVIEWER` (default `opus`) at `CXC_REVIEW_EFFORT` (default `xhigh`), read-only |
+| `codex-bulk` | Claude newest `CXC_CLAUDE_REVIEWER` (default `opus`) at `CXC_REVIEW_EFFORT` (default `xhigh`), read-only |
+| High-risk final, only if the user approved it | Claude newest Opus at `max`, read-only |
 
-Single-vendor mode: reviewer is a fresh `CXC_REVIEW_MODEL` (`gpt-6-sol`) instance at `CXC_REVIEW_EFFORT` (`xhigh`),
+Single-vendor mode: reviewer is a fresh newest `CXC_REVIEW_MODEL` (`sol`) instance at `CXC_REVIEW_EFFORT` (`xhigh`),
 read-only, given only `plan.md`, `decisions.md`, and the diff.
 
 ## Native context
