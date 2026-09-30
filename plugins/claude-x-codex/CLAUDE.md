@@ -36,7 +36,7 @@ the marketplace installer, not part of this plugin.
 | Hook note (four lines, ~100 input tokens — F21) | `hooks/mode-context.sh` | five READMEs (Heads-up: "four-line" and "about 100 input tokens") |
 | What each vendor reads | `context-bridge.md` table | `context-audit.sh` parity column, `host-*.md` Native context |
 | Command list | the three skill folders | five plugin READMEs (Commands), five root READMEs (Entry) |
-| Newest-model resolver | `scripts/latest-model.py` | byte-identical copies in plan-smith, harness and ux-ui `scripts/` (a test compares them); harness installs it into generated projects |
+| Newest-model resolver | `scripts/latest-model.py` | byte-identical copies in harness and ux-ui `scripts/` (a test compares them); harness installs it into generated projects |
 
 ## Rule 3 — Environment facts carry the version they were checked on, and their evidence
 

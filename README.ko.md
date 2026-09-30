@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>필요해서 만든 Claude Code와 Codex 플러그인 모음 — 플래닝, 프로젝트 하네스, 실측 기반 UI.</strong>
+  <strong>필요해서 만든 Claude Code와 Codex 플러그인 모음 — 프로젝트 하네스, 실측 기반 UI, Claude × Codex 오케스트레이션.</strong>
 </p>
 
 <p align="center">
@@ -21,42 +21,32 @@
 
 ---
 
-이 레포는 독립된 플러그인 4개를 담은 Claude Code와 Codex **플러그인 마켓플레이스**입니다. 필요한 것만 골라 설치하면 됩니다.
+이 레포는 독립된 플러그인 3개를 담은 Claude Code와 Codex **플러그인 마켓플레이스**입니다. 필요한 것만 골라 설치하면 됩니다.
 
 ## Codex
 
-같은 플러그인 4개를 Codex CLI 0.158.0 이상에서도 사용할 수 있습니다. 필요한 플러그인을 골라 설치하세요:
+같은 플러그인 3개를 Codex CLI 0.158.0 이상에서도 사용할 수 있습니다. 필요한 플러그인을 골라 설치하세요:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only plan-smith,harness,ux-ui,claude-x-codex
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,claude-x-codex
 ```
 
 또는 CLI로 직접 설치합니다:
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add plan-smith@bin
 codex plugin add harness@bin
 codex plugin add ux-ui@bin
 codex plugin add claude-x-codex@bin
 ```
 
-새 Codex 세션에서 `$plan-smith:forge`, `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$claude-x-codex:run`을 호출합니다. 자동 오케스트레이션은 `$claude-x-codex:mode on`, 컨텍스트 점검은 `$claude-x-codex:audit`입니다. 자동 라우팅과 UI 커밋 게이트를 사용하기 전에 `/hooks`에서 설치된 훅을 검토하고 신뢰해야 합니다.
+새 Codex 세션에서 `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$claude-x-codex:run`을 호출합니다. 자동 오케스트레이션은 `$claude-x-codex:mode on`, 컨텍스트 점검은 `$claude-x-codex:audit`입니다. 자동 라우팅과 UI 커밋 게이트를 사용하기 전에 `/hooks`에서 설치된 훅을 검토하고 신뢰해야 합니다.
 
 설치 스크립트의 기본 대상은 Claude Code이며, `--host codex`로 Codex를 선택합니다. Codex는 사용자 범위로 설치하므로 `--scope`를 생략하거나 `--scope user`를 사용하세요. project/local 범위는 거부합니다. 스킬·스크립트·작업 절차를 공유하고 플러그인별 Codex 명세를 함께 제공합니다. Codex에서는 자체 질문 도구와 독립 에이전트를 사용합니다. 하네스는 `.codex/hooks.json`, `.codex/hooks/`, `.codex/scripts/review-gate.sh`, `.codex/scripts/latest-model.py`, `.agents/skills/`를 생성하며 기존 Claude 파일을 보존합니다. UI 실측에는 해당 브라우저·모바일 도구가 필요합니다. 자세한 내용은 각 플러그인의 Codex 절을 참고하세요.
 
 각 플러그인의 Codex 절에서 설정 방법을 제공합니다. 작성자·검토자별 모델과 추론 강도를 지정할 수 있고, 설정하지 않은 역할은 현재 세션 제품군의 최신 모델로 실행됩니다. 하네스는 Claude·Codex·양쪽 구성을 생성할 수 있습니다. CXC는 기존 교차 벤더 모델 라우팅을 유지합니다. 브라우저·기기 요건과 훅 신뢰 설정은 여전히 필요합니다.
 
 ## 플러그인
-
-### [plan-smith](plugins/plan-smith) · `v1.8.0`
-
-**2단 파이프라인으로 플랜을 벼립니다.** 메인 에이전트가 대화 전체를 컨텍스트 패킷(목표, 하드 제약, 기각된 대안)으로 증류해 사용자에게 확인받고, 깨끗한 컨텍스트의 `plan-writer` 에이전트가 추론 프레임 라이브러리와 검증된 집필 스타일로 플랜을 쓴 뒤, 그 플랜을 요약 없이 원문 그대로 전달합니다 — 요약 손실도, 컨텍스트 오염도 없습니다.
-
-- **이럴 때** 마이그레이션, 런칭, build-out처럼 길고 잡음 많은 세션에서 플랜이 흐려지기 쉬운 작업의 계획이 필요할 때.
-- **진입점:** `/plan-smith:forge <태스크>` 또는 *"… 플랜 짜줘"*
-
-[plan-smith 한국어 README 보기 →](plugins/plan-smith/README.ko.md)
 
 ### [harness](plugins/harness) · `v1.3.0`
 
@@ -77,7 +67,7 @@ codex plugin add claude-x-codex@bin
 
 [ux-ui 한국어 README 보기 →](plugins/ux-ui/README.ko.md)
 
-### [claude-x-codex](plugins/claude-x-codex) · `v0.3.0`
+### [claude-x-codex](plugins/claude-x-codex) · `v0.3.1`
 
 **Claude × Codex 동료 오케스트레이션.** 메인 에이전트가 계획하고 모든 관문을 판단하며, 작업을 빠른 Claude 워커나 대량 처리용 Codex 워커에 보내고, 두 벤더가 서로의 작업을 리뷰합니다 — 메인 에이전트 자신의 계획도 포함됩니다. 반론은 한 번이고, 판정은 역할이 아니라 증거가 합니다. 감사 기능이 두 벤더가 같은 프로젝트 지침에서 출발하는지 확인합니다. 비공식 커뮤니티 플러그인입니다.
 
@@ -86,6 +76,17 @@ codex plugin add claude-x-codex@bin
 - **참고:** 설치하면 `UserPromptSubmit` 훅이 등록됩니다(모든 프롬프트마다 실행되며, 모드가 꺼져 있으면 아무것도 출력하지 않음).
 
 [claude-x-codex 한국어 README 보기 →](plugins/claude-x-codex/README.ko.md)
+
+## 은퇴한 플러그인
+
+### plan-smith — 2026-09-30 은퇴 (마지막 버전 1.8.0)
+
+z-lab에서 plan-smith 1.6.0 파이프라인(Claude Code, 작업 1개)은 같은 모델이 계획과 구현을 맡을 때 순비용이었습니다. 계획만으로도 전체 기본 계획·구현 체인 토큰의 약 1.65배(Fable 5.1, 완료)와 최소 2.41배(Opus 5.5, 중단)를 사용했고, 기본 계획은 첫 시도에 이미 완성됐습니다. 각 수치는 모델별 단일 실행 결과입니다. 절감 효과는 근사 파이프라인에서만 측정했으며, 실제 파이프라인에서 더 약한 구현자의 영향과 계획 품질은 측정하지 않았습니다. [측정 결과](https://github.com/zeriong/z-lab/tree/main/plan-smith-lab/real-skill-tco-1.6.0)와 [은퇴 결정](https://github.com/zeriong/z-lab/tree/main/plan-smith-lab/analyze)을 참고하세요. 마지막 소스(1.8.0)는 이 레포의 git 이력에 남아 있고, 1.4.2 이하 버전은 [zeriong/plan-smith](https://github.com/zeriong/plan-smith)에 있습니다.
+
+설치된 사본을 제거하려면:
+
+- Claude Code: `claude plugin uninstall plan-smith@bin` (project 또는 local 범위로 설치했다면 `--scope project` 또는 `--scope local`을 추가하세요.)
+- Codex: `codex plugin remove plan-smith@bin`
 
 ## 설치
 
@@ -101,7 +102,6 @@ curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/insta
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
-claude plugin install plan-smith@bin
 claude plugin install harness@bin
 claude plugin install ux-ui@bin
 claude plugin install claude-x-codex@bin
@@ -119,7 +119,6 @@ claude plugin install claude-x-codex@bin
     }
   },
   "enabledPlugins": {
-    "plan-smith@bin": true,
     "harness@bin": true,
     "ux-ui@bin": true,
     "claude-x-codex@bin": true
@@ -131,7 +130,7 @@ claude plugin install claude-x-codex@bin
 
 모든 명령은 **대상 : 동작** 으로 읽힙니다 — `/<플러그인>:<스킬>`.
 
-- **플러그인 = 대상** — 무엇을 다루는가(`harness`, `ux-ui`). `plan-smith` 는 이미 알려진 이름을 유지합니다.
+- **플러그인 = 대상** — 무엇을 다루는가(`harness`, `ux-ui`).
 - **스킬 = 동사** — 하나의 공통 어휘에서 고르며, 같은 동사는 모든 플러그인에서 같은 뜻입니다.
 - 플러그인은 따로 둡니다. 필요한 것만 설치할 수 있고, 한 플러그인의 훅이나 MCP 서버가 다른 플러그인에 딸려 오지 않습니다.
 
@@ -144,16 +143,15 @@ claude plugin install claude-x-codex@bin
 | `audit` | 읽기 전용으로 점검한다 |
 | `review` | 결과물을 검토한다 |
 
-`review` 는 앞으로 나올 플러그인을 위해 예약해 둔 동사입니다.
+현재 `forge`와 `review`를 사용하는 플러그인은 없습니다.
 
 ## 레포 구조
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # 플러그인 4개 등록
+├── .claude-plugin/marketplace.json   # 플러그인 3개 등록
 ├── install.sh                        # 대화형 설치 스크립트 (--host claude|codex)
 └── plugins/
-    ├── plan-smith/                   # 스킬 + plan-writer 에이전트 + 분할 검사기 (+ CHANGELOG.md)
     ├── harness/                      # 스킬
     ├── ux-ui/                        # 스킬 2 + 에이전트 2 + 커밋 게이트 훅 + MCP 4
     └── claude-x-codex/               # 스킬 3 + 프롬프트 훅 + 스크립트 3

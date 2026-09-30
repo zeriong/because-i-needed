@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.1-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -113,7 +113,7 @@ claude plugin install claude-x-codex@bin
 - **上下文桥接**——审计会找出两个厂商读取不同指令文件的位置、只约束一个厂商的钩子，以及工作者的 worktree 中会缺失的未提交上下文。`run` 发起的 Codex 调用通过 Codex 的回退设置读取 `CLAUDE.md`，无需修改仓库；交互式 Codex 会话（Orca 工作者，或作为主智能体的 Codex）需要在你的 Codex 配置中加入同样的设置。任何需要修改你的配置或仓库的调整都会在计划审批时提出。
 - **状态落盘**——`.claude-x-codex/`（已排除在 git 之外）保存计划、决定和评审，因此一次运行在上下文压缩后仍可恢复。
 
-与 [plan-smith](../plan-smith) 一起安装时，规划步骤会使用 `/plan-smith:forge`——只要有专用的规划技能，`run` 就会把规划交给它。
+有专用规划技能时，`run` 会将规划交给该技能。
 
 ## 配置
 

@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>Claude Code and Codex plugins I built because I needed them — planning, project harnesses, and measured UI.</strong>
+  <strong>Claude Code and Codex plugins I built because I needed them — project harnesses, measured UI, and Claude × Codex orchestration.</strong>
 </p>
 
 <p align="center">
@@ -21,42 +21,32 @@
 
 ---
 
-This repository is a Claude Code and Codex **plugin marketplace** with four independent plugins. Install only the ones you need.
+This repository is a Claude Code and Codex **plugin marketplace** with three independent plugins. Install only the ones you need.
 
 ## Codex
 
-The same four plugins also support Codex CLI 0.158.0 or later. Install a chosen subset:
+The same three plugins also support Codex CLI 0.158.0 or later. Install a chosen subset:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only plan-smith,harness,ux-ui,claude-x-codex
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,claude-x-codex
 ```
 
 Or use the CLI directly:
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add plan-smith@bin
 codex plugin add harness@bin
 codex plugin add ux-ui@bin
 codex plugin add claude-x-codex@bin
 ```
 
-Start a new Codex session and invoke `$plan-smith:forge`, `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, or `$claude-x-codex:run`. Use `$claude-x-codex:mode on` for automatic orchestration and `$claude-x-codex:audit` to inspect context parity. Review and trust installed hooks with `/hooks` before relying on automatic routing or the UI commit gate.
+Start a new Codex session and invoke `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, or `$claude-x-codex:run`. Use `$claude-x-codex:mode on` for automatic orchestration and `$claude-x-codex:audit` to inspect context parity. Review and trust installed hooks with `/hooks` before relying on automatic routing or the UI commit gate.
 
 The installer defaults to Claude Code; `--host codex` selects Codex. Codex installs at user scope: omit `--scope` or use `--scope user`; project/local scope is rejected. Skills, scripts and workflow contracts are shared; each plugin includes a Codex manifest. Codex execution uses its own questions and independent agents. The harness generates `.codex/hooks.json`, `.codex/hooks/`, `.codex/scripts/review-gate.sh`, `.codex/scripts/latest-model.py` and `.agents/skills/`; existing Claude artifacts are preserved. UI measurement still requires the relevant browser/mobile tools. See each plugin's Codex section for details.
 
 Each plugin documents its Codex settings below. Models and effort can be selected per writer/reviewer role; unconfigured roles run the newest model of the active session's family. The harness can generate Claude, Codex or both layouts. CXC retains its cross-vendor model routing. Browser/device requirements and hook trust still apply.
 
 ## Plugins
-
-### [plan-smith](plugins/plan-smith) · `v1.8.0`
-
-**Forge plans through a two-stage pipeline.** The main agent distills the whole conversation into a context packet (goals, hard constraints, rejected alternatives) and confirms it with you; a clean-context `plan-writer` agent then writes the plan with a reasoning-frame library and validated writing styles, and the plan is relayed to you verbatim — no summarization loss, no context contamination.
-
-- **Use it when** you need a plan for a migration, a launch, a build-out — anything where a long, noisy session would otherwise produce a muddled plan.
-- **Entry:** `/plan-smith:forge <task>` or just *"write a plan for …"*
-
-[Read the plan-smith README →](plugins/plan-smith)
 
 ### [harness](plugins/harness) · `v1.3.0`
 
@@ -77,7 +67,7 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the ux-ui README →](plugins/ux-ui)
 
-### [claude-x-codex](plugins/claude-x-codex) · `v0.3.0`
+### [claude-x-codex](plugins/claude-x-codex) · `v0.3.1`
 
 **Claude × Codex peer orchestration.** The main agent plans and owns every gate, routes work to fast Claude or bulk Codex workers, and the two vendors review each other's work — the main agent's own plan included — with one rebuttal round and evidence, not role, deciding. An audit makes sure both vendors start from the same project instructions. Unofficial community plugin.
 
@@ -86,6 +76,17 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 - **Heads-up:** installing it registers a `UserPromptSubmit` hook (runs on every prompt, prints nothing while the mode is off).
 
 [Read the claude-x-codex README →](plugins/claude-x-codex)
+
+## Retired plugins
+
+### plan-smith — retired 2026-09-30 (last version 1.8.0)
+
+In z-lab, plan-smith 1.6.0's pipeline (Claude Code, one task) was a net cost when the same model planned and implemented: planning alone used about 1.65× (Fable 5.1, completed) and at least 2.41× (Opus 5.5, cut off) the tokens of a whole base plan-and-implement chain, and the base plans already worked on the first try. Each figure is a single run per model. Savings were measured only on an approximated pipeline; a weaker implementer and plan quality on the real pipeline were not measured. See the [measurement](https://github.com/zeriong/z-lab/tree/main/plan-smith-lab/real-skill-tco-1.6.0) and the [retirement decision](https://github.com/zeriong/z-lab/tree/main/plan-smith-lab/analyze). The last source (1.8.0) remains in this repository's git history; versions up to 1.4.2 are at [zeriong/plan-smith](https://github.com/zeriong/plan-smith).
+
+To remove an installed copy:
+
+- Claude Code: `claude plugin uninstall plan-smith@bin` (add `--scope project` or `--scope local` if you installed it there).
+- Codex: `codex plugin remove plan-smith@bin`.
 
 ## Installation
 
@@ -101,7 +102,6 @@ Or add the marketplace yourself, then install the plugins you want:
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
-claude plugin install plan-smith@bin
 claude plugin install harness@bin
 claude plugin install ux-ui@bin
 claude plugin install claude-x-codex@bin
@@ -119,7 +119,6 @@ Or wire it directly in `~/.claude/settings.json`:
     }
   },
   "enabledPlugins": {
-    "plan-smith@bin": true,
     "harness@bin": true,
     "ux-ui@bin": true,
     "claude-x-codex@bin": true
@@ -131,7 +130,7 @@ Or wire it directly in `~/.claude/settings.json`:
 
 Every command reads **subject : action** — `/<plugin>:<skill>`.
 
-- **The plugin is the subject** — what it works on (`harness`, `ux-ui`). `plan-smith` keeps its established name.
+- **The plugin is the subject** — what it works on (`harness`, `ux-ui`).
 - **The skill is a verb** from one shared vocabulary, and a verb means the same thing in every plugin.
 - Plugins stay separate, so you install only what you need and one plugin's hooks or MCP servers never come along with another.
 
@@ -144,16 +143,15 @@ Every command reads **subject : action** — `/<plugin>:<skill>`.
 | `audit` | Inspect, read-only |
 | `review` | Evaluate a result |
 
-`review` is reserved for an upcoming plugin.
+`forge` and `review` have no plugin at the moment.
 
 ## Repository layout
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # lists the four plugins
+├── .claude-plugin/marketplace.json   # lists the three plugins
 ├── install.sh                        # interactive installer (--host claude|codex)
 └── plugins/
-    ├── plan-smith/                   # skill + plan-writer agent + split checker (+ CHANGELOG.md)
     ├── harness/                      # skill
     ├── ux-ui/                        # 2 skills + 2 agents + commit-gate hook + 4 MCPs
     └── claude-x-codex/               # 3 skills + prompt hook + 3 scripts

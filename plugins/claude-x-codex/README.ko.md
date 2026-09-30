@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.1-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -113,7 +113,7 @@ claude plugin install claude-x-codex@bin
 - **컨텍스트 브리지** — 감사가 두 벤더가 서로 다른 지침 파일을 읽는 곳, 한 벤더에만 걸리는 훅, 워커 worktree에 빠질 커밋되지 않은 맥락을 찾아냅니다. `run` 이 직접 하는 Codex 호출은 Codex의 폴백 설정으로 `CLAUDE.md` 를 읽으므로 레포를 바꿀 필요가 없습니다. 대화형 Codex 세션(Orca 워커, 또는 메인 에이전트로서의 Codex)에는 같은 설정이 사용자의 Codex 설정에 있어야 합니다. 사용자 설정이나 레포를 바꾸는 수정은 계획 승인 단계에서 제안합니다.
 - **디스크의 상태** — `.claude-x-codex/`(git 제외)에 계획·결정·리뷰가 남으므로, 실행이 압축(compaction)을 거쳐도 이어서 재개할 수 있습니다.
 
-[plan-smith](../plan-smith)와 함께 설치하면 계획 단계에 `/plan-smith:forge` 가 쓰입니다 — `run` 은 전용 계획 스킬이 있으면 계획을 그 스킬에 맡깁니다.
+전용 계획 스킬이 있으면 `run`이 계획을 그 스킬에 맡깁니다.
 
 ## 설정
 
