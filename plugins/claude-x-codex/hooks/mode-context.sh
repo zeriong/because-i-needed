@@ -13,11 +13,9 @@ if printf '%s' "$input" | grep -q 'claude-x-codex:mode'; then exit 0; fi
 mode="$(bash "$MODE_SH" get 2>/dev/null || echo off)"
 
 if [ "$mode" = "on" ]; then
-  cat <<'NOTE'
-[claude-x-codex: ON] For implementation work in this prompt, use the
-`claude-x-codex:run` skill (start at its "Mode gate"). Questions, explanations and
-trivial edits may be handled directly — say so in one line. The user can turn this
-off with /claude-x-codex:mode off.
-NOTE
+  # Structured context is consumed by both hosts; plain stdout is not reliable on Codex.
+  cat <<'JSON'
+{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"[claude-x-codex: ON] For implementation work in this prompt, use the\n`claude-x-codex:run` skill (start at its \"Mode gate\"). Questions, explanations and\ntrivial edits may be handled directly — say so in one line. The user can turn this\noff with the `claude-x-codex:mode` skill (argument: off)."}}
+JSON
 fi
 exit 0

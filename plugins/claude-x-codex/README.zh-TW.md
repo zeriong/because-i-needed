@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -37,6 +37,23 @@
 **C**laude **×** **C**odex 同儕編排。基礎不同的兩個代理會以不同的方式出錯，所以它們互相審查對方的工作——主代理自己的計畫也不例外。兩者意見分歧時，由測試而不是角色來裁定。
 
 claude-x-codex 是非官方的社群外掛，並非由 Anthropic 或 OpenAI 製作、認可或提供支援。
+
+## Codex
+
+需要 Codex CLI 0.158.0 或更高版本。安裝後請啟動新工作階段。Claude 使用 `/plugin:skill`，Codex 使用 `$plugin:skill`。共用技能和資源均包含在此外掛內。依賴自動行為前，請在 `/hooks` 中審核並信任隨附的掛鉤。
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add claude-x-codex@bin
+```
+
+使用 `$claude-x-codex:run`、`$claude-x-codex:mode on|off|status|clear` 和 `$claude-x-codex:audit`。兩個宿主的模式操作都需要使用者明確要求。Codex 可以擔任主代理，既有 Codex 配接器保持跨廠商評審。稽核包含 `.codex/hooks.json` 及未提交的 `.codex/`、`.agents/` 上下文。自動模式需要信任 UserPromptSubmit 掛鉤，明確呼叫 run 不依賴它。Codex 為主代理時，跨廠商工作需要 Claude CLI；缺少時使用既有單廠商備用路徑。
+
+### Codex 設定
+
+兩端使用相同的 `CXC_*` 設定、模式範圍及跨供應商審查規則。連結的 Git worktree 中也會在本機排除模式檔案。稽核不修改設定，並回報 `AGENTS.override.md` 的優先順序及無效的掛鉤宣告。
+
+各宿主的路由使用設定的 CXC 評審模型與推理強度，括號內僅為預設值。只提及檔名或 fallback 設定不會被判定為指令一致，而會標為 CHECK，要求核對實際生效內容。
 
 ## 命令
 

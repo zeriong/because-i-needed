@@ -53,7 +53,7 @@
 
 [ux-ui の日本語 README を読む →](plugins/ux-ui/README.ja.md)
 
-### [claude-x-codex](plugins/claude-x-codex) · `v0.1.0`
+### [claude-x-codex](plugins/claude-x-codex) · `v0.2.0`
 
 **Claude × Codex のピアオーケストレーション**。メインエージェントが計画してすべてのゲートを判断し、作業を高速な Claude ワーカーか大量処理向けの Codex ワーカーに振り分け、2 つのベンダーが互いの作業をレビューします — メインエージェント自身の計画も含みます。反論は 1 回で、判定するのは役割ではなく証拠です。監査機能が、両ベンダーが同じプロジェクトの指示から始められるかを確認します。非公式のコミュニティプラグインです。
 

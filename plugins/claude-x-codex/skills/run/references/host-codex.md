@@ -2,6 +2,11 @@
 
 You are a Codex model. Your vendor is OpenAI.
 
+Invoke `$claude-x-codex:run` on Codex. The three sibling skills and shared scripts
+ship together; resolve `<plugin>` from the loaded skill path as defined in SKILL.md.
+The mode hook uses the shared `hooks/hooks.json`; review/trust it with `/hooks` for
+automatic routing. Explicit `run` works independently of the prompt hook.
+
 ## Main
 Run as `gpt-6-sol` at high effort or more. Don't move to `gpt-6-astra` or `max` effort on
 your own for a large or high-risk feature — ask the user first. Reviewing `claude-fast` work yourself needs `CXC_REVIEW_EFFORT` (`xhigh`) or
@@ -21,15 +26,18 @@ Check the other vendor with `command -v claude`. If missing → single-vendor mo
 
 Note how this differs from the Claude Code host: here *you* are the natural reviewer
 for Claude-authored work, and Luna work needs a Claude reviewer.
+Resolve `CXC_REVIEW_MODEL`, `CXC_CLAUDE_REVIEWER` and `CXC_REVIEW_EFFORT` from the
+environment before routing. Resolve model aliases before comparing actual model IDs.
+Parenthesized defaults never override configured values.
 
 | Author | Reviewer |
 |---|---|
-| `claude-fast` (Sonnet) | **you**, if you run as `gpt-6-sol` at `xhigh` or above; otherwise the Codex reviewer form (`gpt-6-sol`, `xhigh`) |
-| `main` (you) | Claude `${CXC_CLAUDE_REVIEWER:-opus}` at `xhigh`, read-only |
-| `codex-bulk` (Luna) | Claude `${CXC_CLAUDE_REVIEWER:-opus}` at `xhigh`, read-only |
+| `claude-fast` | **you**, only when your resolved model equals `CXC_REVIEW_MODEL` (default `gpt-6-sol`) and effort meets `CXC_REVIEW_EFFORT` (default `xhigh`); otherwise use the configured Codex reviewer form |
+| `main` (you) | Claude `CXC_CLAUDE_REVIEWER` (default `opus`) at `CXC_REVIEW_EFFORT` (default `xhigh`), read-only |
+| `codex-bulk` | Claude `CXC_CLAUDE_REVIEWER` (default `opus`) at `CXC_REVIEW_EFFORT` (default `xhigh`), read-only |
 | High-risk final, only if the user approved it | Claude Opus at `max`, read-only |
 
-Single-vendor mode: reviewer is a fresh `CXC_REVIEW_MODEL` (`gpt-6-sol`) instance at `xhigh`,
+Single-vendor mode: reviewer is a fresh `CXC_REVIEW_MODEL` (`gpt-6-sol`) instance at `CXC_REVIEW_EFFORT` (`xhigh`),
 read-only, given only `plan.md`, `decisions.md`, and the diff.
 
 ## Native context

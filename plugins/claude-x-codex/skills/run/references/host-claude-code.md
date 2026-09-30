@@ -21,15 +21,20 @@ CLI form. Check the other vendor with `command -v codex`. If missing → single-
 
 ## Review routing, resolved for this host
 
+Resolve `CXC_REVIEW_MODEL`, `CXC_CLAUDE_REVIEWER` and `CXC_REVIEW_EFFORT` from the
+environment before routing. Resolve model aliases before comparing actual model IDs.
+Parenthesized defaults never override configured values.
+
 | Author | Reviewer |
 |---|---|
-| `claude-fast` (Sonnet) | Codex `CXC_REVIEW_MODEL` (`gpt-6-sol`) at `xhigh`, read-only |
-| `main` (you) | Codex `CXC_REVIEW_MODEL` (`gpt-6-sol`) at `xhigh`, read-only |
-| `codex-bulk` (Luna) | **you**, if you run as Opus at `xhigh` or `max`; otherwise the Claude reviewer form (Opus, `xhigh`) |
+| `claude-fast` | Codex `CXC_REVIEW_MODEL` (default `gpt-6-sol`) at `CXC_REVIEW_EFFORT` (default `xhigh`), read-only |
+| `main` (you) | Codex `CXC_REVIEW_MODEL` (default `gpt-6-sol`) at `CXC_REVIEW_EFFORT` (default `xhigh`), read-only |
+| `codex-bulk` | **you**, only when your resolved model equals `CXC_CLAUDE_REVIEWER` (default `opus`) and effort meets `CXC_REVIEW_EFFORT` (default `xhigh`); otherwise use the configured Claude reviewer form |
 | High-risk final, only if the user approved it | Codex `CXC_FINAL_MODEL`, read-only |
 
-Single-vendor mode: the reviewer is a fresh Opus instance through the Claude reviewer form
-(`xhigh`), given only `plan.md`, `decisions.md`, and the diff.
+Single-vendor mode: the reviewer is a fresh `CXC_CLAUDE_REVIEWER` (default `opus`)
+instance through the Claude reviewer form at `CXC_REVIEW_EFFORT` (default `xhigh`),
+given only `plan.md`, `decisions.md`, and the diff.
 
 ## Native context
 You read `CLAUDE.md`, `.claude/` skills, rules, hooks and MCP natively (and `AGENTS.md`

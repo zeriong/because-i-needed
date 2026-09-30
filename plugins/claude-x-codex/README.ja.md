@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -37,6 +37,23 @@
 **C**laude **×** **C**odex のピアオーケストレーションです。土台の異なる 2 つのエージェントは異なる形で間違えるため、それぞれが相手の作業をレビューします — メインエージェント自身の計画も例外ではありません。意見が分かれたときに判定するのは、役割ではなくテストです。
 
 claude-x-codex は非公式のコミュニティプラグインです。Anthropic や OpenAI が作成・保証・サポートしているものではありません。
+
+## Codex
+
+Codex CLI 0.158.0 以降が必要です。インストール後、新しいセッションを開始してください。Claude は `/plugin:skill`、Codex は `$plugin:skill` を使います。共通のスキルと資料はこのプラグインに同梱されています。自動動作を利用する前に `/hooks` で同梱フックを確認して信頼してください。
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add claude-x-codex@bin
+```
+
+`$claude-x-codex:run`、`$claude-x-codex:mode on|off|status|clear`、`$claude-x-codex:audit` を使います。モード操作は両ホストともユーザーの明示的な要求が必要です。Codex をメインにでき、既存の Codex アダプターがベンダー間レビューを維持します。監査は `.codex/hooks.json` と未コミットの `.codex/`、`.agents/` も対象です。自動モードには UserPromptSubmit フックの信頼が必要ですが、明示的な run はフックに依存しません。Codex がメインの場合、ベンダー間作業には Claude CLI が必要で、なければ既存の単一ベンダー経路を使います。
+
+### Codex 設定
+
+両ホストで同じ `CXC_*` 設定・モード範囲・クロスベンダーレビュー規則を使用します。リンクされた Git worktree でもモードファイルをローカル除外します。監査は設定を変更せず、`AGENTS.override.md` の優先順位と不正なフック宣言を報告します。
+
+各ホストのルーティングは設定された CXC レビュアーモデルと推論強度を使い、括弧内は既定値です。ファイル名や fallback 設定への言及だけでは指示の一致を断定せず、実効内容の確認が必要な CHECK として報告します。
 
 ## コマンド
 

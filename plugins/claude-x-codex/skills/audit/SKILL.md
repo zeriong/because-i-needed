@@ -1,14 +1,21 @@
 ---
 name: audit
-description: Read-only check of whether Claude and Codex would start from the same project context in this repo — instruction files (CLAUDE.md / AGENTS.md), hooks that bind only one vendor, uncommitted context missing from worktrees, and tools configured for one side only. Use when the user asks to audit or check claude-x-codex readiness, cross-vendor context, or "why does Codex not follow our rules", or runs /claude-x-codex:audit. Changes nothing; proposes fixes.
+description: "Read-only check of whether Claude and Codex would start from the same project context in this repo — instruction files (CLAUDE.md / AGENTS.md), hooks that bind only one vendor, uncommitted context missing from worktrees, and tools configured for one side only. Use when the user asks to audit or check claude-x-codex readiness, cross-vendor context, or \"why does Codex not follow our rules\", or runs /claude-x-codex:audit. Changes nothing; proposes fixes."
 argument-hint: "[path to repo — defaults to the current one]"
 ---
 
 # claude-x-codex: audit
 
+Claude Code invokes `/claude-x-codex:audit`; Codex invokes
+`$claude-x-codex:audit`. `<plugin>` is `${CLAUDE_PLUGIN_ROOT}` when
+expanded by Claude Code, or the absolute path two directories above this skill's
+directory on Codex. Resolve it from the loaded SKILL.md path, not the working directory.
+
 Peer review between Claude and Codex only works if both start from the same ground.
-This skill checks that ground and proposes how to close the gaps. It **never changes
-files** — every fix is a proposal the user approves.
+This skill checks that ground and proposes how to close the gaps. It never changes
+project configuration or tracked source files. Its only writes are the audit report
+under `.claude-x-codex/` and that directory's local git exclusion; every proposed fix
+requires the user's approval.
 
 The policy behind each layer lives in `../run/references/context-bridge.md`. Read it
 before interpreting results.
@@ -20,13 +27,15 @@ before interpreting results.
    ```bash
    cd <repo>   # the user's argument, or stay in the current repo
    mkdir -p .claude-x-codex
-   bash "${CLAUDE_PLUGIN_ROOT}/scripts/context-audit.sh" | tee .claude-x-codex/context-audit.md
+   bash "<plugin>/scripts/context-audit.sh" | tee .claude-x-codex/context-audit.md
    ```
 
    Outside Claude Code plugins, the script is at `../../scripts/context-audit.sh`
    relative to this skill's directory. If `.claude-x-codex/` is new, add it to
-   `.git/info/exclude` (the `mode` script does this too) — that's the only write
-   allowed, and it touches no tracked file.
+   the path returned by `git rev-parse --git-path info/exclude` (the `mode`
+   script does this too). Resolve a relative result from the target repo. Never
+   assume `.git` is a directory: linked worktrees use a file. Together with the report,
+   these are the only writes allowed, and neither touches a tracked file.
 
 2. Interpret the result layer by layer, using `context-bridge.md`:
 

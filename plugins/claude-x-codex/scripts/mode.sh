@@ -34,8 +34,9 @@ resolve() {
 }
 
 exclude_state_dir() {
-  local exclude="$ROOT/.git/info/exclude"
-  [ -d "$ROOT/.git" ] || return 0
+  local exclude
+  exclude="$(git -C "$ROOT" rev-parse --git-path info/exclude 2>/dev/null)" || return 0
+  case "$exclude" in /*) ;; *) exclude="$ROOT/$exclude" ;; esac
   mkdir -p "$(dirname "$exclude")"
   grep -qxF '.claude-x-codex/' "$exclude" 2>/dev/null || echo '.claude-x-codex/' >> "$exclude"
 }
@@ -53,21 +54,22 @@ case "$cmd" in
   status)
     read -r value source <<<"$(resolve)"
     echo "claude-x-codex mode: $value (source: $source)"
+    echo '  invoke skills with / in Claude Code or $ in Codex'
     g="$(read_flag "$USER_FILE")"; p="$(read_flag "$PROJECT_FILE")"
     echo "  project: ${p:-unset}   global: ${g:-unset}"
     case "$source" in
       env:*)
         echo "  hint: CXC_MODE overrides both files — unset it in this shell to use them" ;;
       "$PROJECT_FILE")
-        echo "  hint: this project overrides global — '/claude-x-codex:mode clear' to follow global" ;;
+        echo "  hint: this project overrides global — 'claude-x-codex:mode clear' to follow global" ;;
       "$USER_FILE")
         if [ "$value" = "on" ]; then
-          echo "  hint: disable everywhere: '/claude-x-codex:mode off --global'  ·  this project only: '/claude-x-codex:mode off'"
+          echo "  hint: disable everywhere: 'claude-x-codex:mode off --global'  ·  this project only: 'claude-x-codex:mode off'"
         else
-          echo "  hint: enable everywhere: '/claude-x-codex:mode on --global'  ·  this project only: '/claude-x-codex:mode on'"
+          echo "  hint: enable everywhere: 'claude-x-codex:mode on --global'  ·  this project only: 'claude-x-codex:mode on'"
         fi ;;
       default)
-        echo "  hint: '/claude-x-codex:mode on' for this project, '--global' for every project" ;;
+        echo "  hint: 'claude-x-codex:mode on' for this project, '--global' for every project" ;;
     esac
     ;;
   on|off)
@@ -78,7 +80,7 @@ case "$cmd" in
     read -r value source <<<"$(resolve)"
     echo "claude-x-codex mode: set $cmd in $file → effective: $value (source: $source)"
     if [ "$file" = "$USER_FILE" ] && [ "$value" != "$cmd" ]; then
-      echo "  note: still $value here because $source overrides global — '/claude-x-codex:mode clear' to follow global"
+      echo "  note: still $value here because $source overrides global — 'claude-x-codex:mode clear' to follow global"
     fi
     ;;
   clear)

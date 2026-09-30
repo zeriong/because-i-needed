@@ -1,11 +1,16 @@
 ---
 name: mode
-description: Turn claude-x-codex orchestration mode on or off, or show its current status. Use only when the user asks to enable, disable, reset, or check the mode — e.g. "/claude-x-codex:mode on", "claude-x-codex mode status", "오케스트레이션 모드 켜줘/꺼줘".
+description: "Turn claude-x-codex orchestration mode on or off, or show its current status. Use only when the user asks to enable, disable, reset, or check the mode — e.g. \"/claude-x-codex:mode on\", \"claude-x-codex mode status\", \"오케스트레이션 모드 켜줘/꺼줘\"."
 disable-model-invocation: true
 argument-hint: "on | off | status | clear  [--global]"
 ---
 
 # claude-x-codex: mode
+
+Claude Code invokes `/claude-x-codex:mode`; Codex invokes
+`$claude-x-codex:mode`. `<plugin>` is `${CLAUDE_PLUGIN_ROOT}` when
+expanded by Claude Code, or the absolute path two directories above this skill's
+directory on Codex. Resolve it from the loaded SKILL.md path, not the working directory.
 
 A one-line switch for `claude-x-codex:run`.
 
@@ -21,7 +26,7 @@ Run the script with the user's arguments, then report its output as-is, includin
 `status` when no argument is given.
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/mode.sh" <on|off|status|clear> [--global]
+"<plugin>/scripts/mode.sh" <on|off|status|clear> [--global]
 ```
 
 Outside Claude Code plugins, the script is at `../../scripts/mode.sh` relative to this
@@ -29,7 +34,8 @@ skill's directory.
 
 Do nothing else in this turn — don't start, stop, or resume an orchestration run.
 Turning the mode off mid-run leaves the run's state in `.claude-x-codex/<feature>/`;
-tell the user it can be resumed with `/claude-x-codex:run`.
+tell the user it can be resumed with `/claude-x-codex:run` on Claude Code or
+`$claude-x-codex:run` on Codex.
 
 ## Scopes
 
@@ -60,10 +66,12 @@ copy files without git, convert line endings to LF.
 
 ## How the switch reaches the main agent
 
-- **Claude Code**: the plugin's `UserPromptSubmit` hook runs `mode.sh get` on every
+- **Claude Code and Codex**: the plugin's `UserPromptSubmit` hook runs `mode.sh get` on every
   prompt and, when the mode is on, adds a short context note telling the main agent to
   route implementation work through `claude-x-codex:run`. When off, it adds nothing, so
-  normal sessions pay no token cost.
+  normal sessions pay no token cost. On Codex, review and trust the installed hook
+  in `/hooks`; installing the plugin alone does not trust it. Report whether this
+  automatic route is active before describing mode as automatic.
 - **Hosts without prompt hooks** (or if you prefer not to install the hook): add this
   line to the project's `AGENTS.md` / `CLAUDE.md`:
 

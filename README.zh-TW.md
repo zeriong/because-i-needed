@@ -53,7 +53,7 @@
 
 [閱讀 ux-ui 繁體中文 README →](plugins/ux-ui/README.zh-TW.md)
 
-### [claude-x-codex](plugins/claude-x-codex) · `v0.1.0`
+### [claude-x-codex](plugins/claude-x-codex) · `v0.2.0`
 
 **Claude × Codex 同儕編排。** 主代理負責規劃並做出每個關卡的決定，把工作分派給快速的 Claude 工作者或批次處理的 Codex 工作者，兩個廠商互相審查對方的工作——包括主代理自己的計畫。反駁只有一輪，裁定依據的是證據而不是角色。稽核功能確保兩個廠商從相同的專案指示出發。非官方社群外掛。
 

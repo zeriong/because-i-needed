@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -37,6 +37,23 @@
 **C**laude **×** **C**odex 동료 오케스트레이션입니다. 바탕이 다른 두 에이전트는 서로 다른 방식으로 실수하므로, 각자가 상대의 작업을 리뷰합니다 — 메인 에이전트의 계획도 예외가 아닙니다. 둘의 의견이 갈리면 역할이 아니라 테스트가 판정합니다.
 
 claude-x-codex는 비공식 커뮤니티 플러그인입니다. Anthropic이나 OpenAI가 만들거나 보증하거나 지원하는 도구가 아닙니다.
+
+## Codex
+
+Codex CLI 0.158.0 이상이 필요합니다. 설치 후 새 세션을 시작하세요. Claude 명령은 `/plugin:skill`, Codex 명령은 `$plugin:skill`입니다. 공통 스킬과 자료는 이 플러그인 안에 포함됩니다. 자동 동작을 사용하기 전에 `/hooks`에서 함께 설치된 훅을 검토하고 신뢰하세요.
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add claude-x-codex@bin
+```
+
+`$claude-x-codex:run`, `$claude-x-codex:mode on|off|status|clear`, `$claude-x-codex:audit`을 사용합니다. 모드 변경은 두 호스트 모두 사용자의 명시적인 요청이 필요합니다. Codex가 메인이 될 수 있으며 기존 Codex 실행 지침에 따라 벤더 간 리뷰를 유지합니다. 감사에는 `.codex/hooks.json`과 커밋되지 않은 `.codex/`, `.agents/` 맥락이 포함됩니다. 자동 모드는 UserPromptSubmit 훅 신뢰가 필요하고, 명시적인 run 호출은 훅 없이도 시작할 수 있습니다. Codex가 메인일 때 교차 벤더 작업에는 Claude CLI가 필요하며, 없으면 기존 단일 벤더 대체 경로를 사용합니다.
+
+### Codex 설정
+
+두 호스트에서 같은 `CXC_*` 설정·모드 범위·교차 벤더 리뷰 규칙을 사용합니다. 연결된 Git 작업 폴더에서도 모드 파일을 로컬 제외 처리합니다. 감사는 설정을 변경하지 않고 `AGENTS.override.md`의 우선순위와 잘못된 훅 선언을 보고합니다.
+
+각 호스트의 라우팅은 설정한 CXC 검토 모델·추론 강도를 사용하며 괄호의 이름은 기본값입니다. 파일명 언급이나 fallback 설정만으로는 지침 일치를 단정하지 않고, 실제 적용 내용을 확인하도록 CHECK로 표시합니다.
 
 ## 명령
 

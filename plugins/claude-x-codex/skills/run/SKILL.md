@@ -1,6 +1,6 @@
 ---
 name: run
-description: Cross-vendor multi-agent orchestration for coding work. The main agent plans and owns every gate decision, work is routed to fast Claude (Sonnet) or bulk Codex (Luna) workers by task type, and Claude and Codex review each other as peers — including the main agent's own plan and triage decisions, with a rebuttal round when findings are rejected. Runs from either Claude Code or Codex as the main agent, and uses Orca's orchestration runtime when available (two-way worker communication, gates) or falls back to one-way subagent/CLI calls. Use this skill when the user explicitly asks for it — names it, runs /claude-x-codex:run, or asks to orchestrate, parallelize, fan out, or run agents on a task ("오케스트레이션으로 진행해줘") — or when an [claude-x-codex: ON] context note is present and the request is implementation work. When the mode is off and the user hasn't asked for it, do not use this skill.
+description: "Cross-vendor multi-agent orchestration for coding work. The main agent plans and owns every gate decision, work is routed to fast Claude (Sonnet) or bulk Codex (Luna) workers by task type, and Claude and Codex review each other as peers — including the main agent's own plan and triage decisions, with a rebuttal round when findings are rejected. Runs from either Claude Code or Codex as the main agent, and uses Orca's orchestration runtime when available (two-way worker communication, gates) or falls back to one-way subagent/CLI calls. Use this skill when the user explicitly asks for it — names it, runs /claude-x-codex:run, or asks to orchestrate, parallelize, fan out, or run agents on a task (\"오케스트레이션으로 진행해줘\") — or when an [claude-x-codex: ON] context note is present and the request is implementation work. When the mode is off and the user hasn't asked for it, do not use this skill."
 compatibility: Main agent in Claude Code or Codex. Git worktrees. Optional — the other vendor's CLI (`codex` or `claude`), and Orca (desktop runtime with orchestration enabled).
 ---
 
@@ -200,7 +200,8 @@ Orca records *what happened*, not *why you decided*.
 └── cycles           # "<phase> <count>" per line
 ```
 
-Add `.claude-x-codex/` to `.git/info/exclude` on first use so nothing leaks into a shared
+Add `.claude-x-codex/` to the local exclude file resolved by
+`git rev-parse --git-path info/exclude` on first use (also works in linked worktrees) so nothing leaks into a shared
 repo. Record transport IDs (e.g. Orca run/task IDs) in `plan.md` next to each task.
 
 ## Pipeline

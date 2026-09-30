@@ -15,8 +15,8 @@ The bridge is symmetric. Nothing below assumes Claude is the "source" and Codex 
 |---|---|---|
 | Project instructions | `CLAUDE.md` (root + nested), `@path` imports; falls back to `AGENTS.md` in a directory with no `CLAUDE.md` | `AGENTS.override.md`, else `AGENTS.md` (root + nested), else the names in `project_doc_fallback_filenames` |
 | Personal overrides | `CLAUDE.local.md` | `AGENTS.override.md` |
-| Enforcement | hooks in `.claude/settings*.json` | Codex hooks (if configured) |
-| Procedures | `.claude/skills/`, `.claude/agents/`, `.claude/rules/` | Codex skills |
+| Enforcement | hooks in `.claude/settings*.json` | `.codex/hooks.json` / config hooks (if configured and trusted) |
+| Procedures | `.claude/skills/`, `.claude/agents/`, `.claude/rules/` | `.agents/skills/`, installed plugin skills, `.codex/agents/` |
 | Tools | MCP servers (`.mcp.json`, user config) | MCP servers (`config.toml`) |
 
 The instruction rows were checked on Claude Code 2.1.283 and Codex CLI 0.157.1 (three runs
@@ -57,7 +57,10 @@ in the repo:
   canonical; until then, put the other file's instructions in each worker's context
   pack. A `@AGENTS.md` line in `CLAUDE.md` makes Claude read both.
 
-Apply the same rule to every nested directory the audit reports.
+Apply the same rule to every nested directory the audit reports. A present
+`AGENTS.override.md` takes precedence over `AGENTS.md` and all fallback names in
+that directory. Read and bridge its actual instructions before calling a pointer
+file sufficient; never overwrite a personal override during bridging.
 
 Pointer files are repo changes that affect teammates, and the user config is theirs.
 **Propose them and wait for approval**; don't create them silently. If the user

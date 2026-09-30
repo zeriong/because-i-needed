@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -37,6 +37,23 @@
 **C**laude **×** **C**odex peer orchestration. Two agents built on different foundations fail in different ways, so each one reviews the other's work — including the main agent's own plan — and a test, not a role, settles their disagreements.
 
 claude-x-codex is an unofficial community plugin. It is not made, endorsed, or supported by Anthropic or OpenAI.
+
+## Codex
+
+Requires Codex CLI 0.158.0 or later. Start a new session after installation. Claude commands use `/plugin:skill`; Codex uses `$plugin:skill`. The shared skills and resource files ship inside this plugin. Review and trust bundled hooks with `/hooks` before relying on automatic behavior.
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add claude-x-codex@bin
+```
+
+Use `$claude-x-codex:run`, `$claude-x-codex:mode on|off|status|clear`, and `$claude-x-codex:audit`. The mode skill requires an explicit user request on both hosts. Codex can be the main agent; the existing Codex host adapter keeps review routing across vendors. The audit includes `.codex/hooks.json` and uncommitted `.codex/` and `.agents/` context. For automatic mode, trust the UserPromptSubmit hook; explicit run does not depend on it. Claude CLI is needed for cross-vendor work when Codex is main; without it, the documented single-vendor fallback applies.
+
+### Codex settings
+
+The same `CXC_*` settings, mode scopes and cross-vendor review routing apply on both hosts. Mode state is locally excluded in linked Git worktrees too. The audit reports `AGENTS.override.md` precedence and malformed hook declarations without changing configuration.
+
+Host routing uses the configured CXC reviewer model and effort; names in parentheses are defaults. A filename mention or fallback setting alone is reported as CHECK until the effective instructions are verified.
 
 ## Commands
 

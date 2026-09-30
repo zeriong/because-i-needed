@@ -13,8 +13,10 @@ the marketplace installer, not part of this plugin.
 
 - `mode-context.sh` runs on **every prompt** of every installed user. It always exits `0` and prints nothing while the
   mode is off, so a normal session pays no token cost.
-- `context-audit.sh` is **read-only**: it never writes a file or changes git state. The audit skill's only allowed
-  write is adding `.claude-x-codex/` to `.git/info/exclude`.
+- `context-audit.sh` is **read-only**: it never writes a file or changes git state. The audit skill may save its
+  report and add `.claude-x-codex/` to the path returned by `git rev-parse --git-path info/exclude`.
+  Resolve this path instead of assuming `.git` is a directory, including in linked worktrees.
+  An applicable `AGENTS.override.md` wins over `AGENTS.md`; audit it before asserting context parity.
 - `worktree-setup.sh` finds the main tree through `git rev-parse --git-common-dir`, so it works from the main tree,
   a subdirectory, or inside the worktree itself. It skips anything already present (idempotent).
 - `mode.sh` resolves `CXC_MODE` → project flag → global flag → `off`. The flag file is one line, `mode=on|off`;
@@ -104,3 +106,15 @@ To check the hook itself, don't look for its output in `claude -p --output-forma
 no UserPromptSubmit hook events there (G06). Compare the result event's input tokens (input + cache_creation +
 cache_read) for the same prompt with `CXC_MODE=on` and `off`, using `--setting-sources project --plugin-dir <plugin>
 --tools ""` so nothing else varies; `on` should be about 100 tokens higher (F21).
+
+## Codex compatibility evidence — 0.2.0
+
+See z-lab `claude-x-codex-lab/codex-compat-0.2.0/` and `codex-mode-json-0.2.0/` (C01–C04) and the shared
+`plugin-platform-lab/codex-final-0.158.0/` packaging/installer checks. These records
+cover host wiring and the named fixture paths, not quality improvements. Keep the
+existing workflow invariants when changing an adapter.
+
+Additional setting-parity checks: z-lab `claude-x-codex-lab/codex-parity-0.2.0/` (C05, C06).
+
+Re-review fixes: z-lab `claude-x-codex-lab/codex-rereview-0.2.0/` (C07, C08).
+Host routing consistently honors configured reviewer model/effort. Audit reports pointer/fallback mentions as checks rather than treating a filename substring as proof of equivalent instructions.

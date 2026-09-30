@@ -1,0 +1,33 @@
+{
+  "name": "claude-x-codex",
+  "description": "Claude × Codex peer orchestration: the two plan, build, and review each other's work as peers, with shared project context and a one-line on/off switch. Unofficial community plugin.",
+  "version": "0.2.0",
+  "author": {
+    "name": "zeriong"
+  },
+  "homepage": "https://github.com/zeriong/because-i-needed/tree/main/plugins/claude-x-codex",
+  "repository": "https://github.com/zeriong/because-i-needed",
+  "keywords": [
+    "orchestration",
+    "multi-agent",
+    "codex",
+    "code-review",
+    "orca"
+  ],
+  "skills": "./skills/",
+  "license": "MIT",
+  "interface": {
+    "displayName": "claude-x-codex",
+    "shortDescription": "Coordinate Claude and Codex peer reviews",
+    "longDescription": "Claude × Codex peer orchestration: the two plan, build, and review each other's work as peers, with shared project context and a one-line on/off switch. Unofficial community plugin.",
+    "developerName": "zeriong",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use claude-x-codex for this project."
+    ]
+  }
+}

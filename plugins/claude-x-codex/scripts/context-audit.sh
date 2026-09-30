@@ -37,30 +37,32 @@ echo
 # ---------------------------------------------------------------- 1. instructions
 echo "## 1. Instructions"
 echo
-echo "| dir | CLAUDE.md | AGENTS.md | parity |"
-echo "|---|---|---|---|"
+echo "| dir | CLAUDE.md | AGENTS.md | AGENTS.override.md | parity |"
+echo "|---|---|---|---|---|"
 dirs="$(find . \( -name .git -o -name node_modules -o -name .claude-x-codex \) -prune -o \
-          \( -name CLAUDE.md -o -name AGENTS.md \) -print 2>/dev/null \
+          \( -name CLAUDE.md -o -name AGENTS.md -o -name AGENTS.override.md \) -print 2>/dev/null \
         | while IFS= read -r f; do dirname "$f"; done | sort -u)"
-[ -z "$dirs" ] && echo "| . | missing | missing | none — no instructions for either vendor |"
+[ -z "$dirs" ] && echo "| . | missing | missing | missing | none — no instructions for either vendor |"
 printf '%s\n' "$dirs" | while IFS= read -r d; do
   [ -n "$d" ] || continue
   c="$d/CLAUDE.md"; a="$d/AGENTS.md"
-  cs="$(state "$c")"; as="$(state "$a")"
+  cs="$(state "$c")"; as="$(state "$a")"; override="$(state "$d/AGENTS.override.md")"
   parity="ok"
-  if [ "$cs" != "missing" ] && [ "$as" = "missing" ]; then
-    if [ "$codex_fallback" = 1 ]; then parity="ok (Codex fallback in user config)"
+  if [ "$override" != "missing" ]; then
+    parity="CHECK: Codex selects AGENTS.override.md before AGENTS.md or fallback; bridge its instructions explicitly"
+  elif [ "$cs" != "missing" ] && [ "$as" = "missing" ]; then
+    if [ "$codex_fallback" = 1 ]; then parity="CHECK: fallback mentioned in user config; verify the effective profile/project config and file resolution"
     else parity="GAP: Codex can't see this unless the fallback is set (see Layer 1)"; fi
   elif [ "$as" != "missing" ] && [ "$cs" = "missing" ]; then
     parity="ok (Claude Code falls back to AGENTS.md)"
   elif [ "$cs" != "missing" ] && [ "$as" != "missing" ]; then
     if grep -q '@AGENTS.md' "$c" 2>/dev/null || grep -q 'CLAUDE.md' "$a" 2>/dev/null; then
-      parity="ok (pointer)"
+      parity="CHECK: pointer text found; verify its direction and resolved instructions"
     else
       parity="CHECK: Claude reads only CLAUDE.md, Codex only AGENTS.md — may drift"
     fi
   fi
-  echo "| ${d#./} | $cs | $as | $parity |"
+  echo "| ${d#./} | $cs | $as | $override | $parity |"
 done
 for f in CLAUDE.local.md AGENTS.override.md; do
   [ -e "$f" ] && echo && echo "note: $f exists ($(state "$f")) — personal overrides; not shared with the other vendor."
@@ -76,7 +78,7 @@ for p in .claude/settings.json .claude/settings.local.json .claude/skills .claud
          .claude/commands .claude/rules .mcp.json; do
   echo "| $p | claude | $(state "$p") |"
 done
-for p in .codex .codex/config.toml .agents; do
+for p in .codex .codex/config.toml .codex/hooks.json .agents .agents/skills; do
   echo "| $p | codex (project) | $(state "$p") |"
 done
 profiles=""
@@ -105,32 +107,45 @@ if command -v python3 >/dev/null 2>&1; then
   python3 - <<'PY'
 import json, os
 rows = []
-for f in (".claude/settings.json", ".claude/settings.local.json"):
+for f in (".claude/settings.json", ".claude/settings.local.json", ".codex/hooks.json"):
     if not os.path.isfile(f):
         continue
     try:
-        data = json.load(open(f))
+        with open(f) as stream:
+            data = json.load(stream)
+        if not isinstance(data, dict) or not isinstance(data.get("hooks", {}), dict):
+            raise ValueError("expected an object with an optional hooks object")
     except Exception as e:
         rows.append((f, "?", "?", f"unreadable: {e}"))
         continue
     for event, entries in (data.get("hooks") or {}).items():
-        for entry in entries or []:
-            for h in entry.get("hooks") or []:
+        if not isinstance(entries, list):
+            rows.append((f, event, "?", "invalid: event entries must be a list"))
+            continue
+        for entry in entries:
+            if not isinstance(entry, dict) or not isinstance(entry.get("hooks"), list):
+                rows.append((f, event, "?", "invalid: expected an entry with a hooks list"))
+                continue
+            for h in entry["hooks"]:
+                if not isinstance(h, dict):
+                    rows.append((f, event, entry.get("matcher", "*"), "invalid: hook must be an object"))
+                    continue
                 rows.append((f, event, entry.get("matcher", "*"), h.get("command", h.get("type", "?"))))
 if not rows:
-    print("No Claude hooks in project settings.")
+    print("No hooks in project JSON settings.")
 else:
     print("| file | event | matcher | command |")
     print("|---|---|---|---|")
     for r in rows:
         print("| " + " | ".join(str(x).replace("|", "\\|") for x in r) + " |")
     print()
-    print("These run only when **Claude** acts. Classify each: enforcement → move its check")
+    print(".claude hooks apply to Claude; .codex hooks apply to Codex after hook trust.")
+    print("Declarations do not prove runtime activation. Classify each: enforcement → move its check")
     print("into a shared gate script; context injection → cover it in the context pack;")
     print("convenience → ignore.")
 PY
 else
-  echo "python3 not found — inspect .claude/settings*.json \"hooks\" manually."
+  echo "python3 not found — inspect .claude/settings*.json and .codex/hooks.json manually."
 fi
 if [ -f .codex/config.toml ] && grep -qi 'hook' .codex/config.toml; then
   echo
@@ -147,16 +162,17 @@ for p in CLAUDE.local.md AGENTS.override.md .claude/settings.local.json .mcp.jso
   if [ "$s" = "ignored" ] || [ "$s" = "untracked" ]; then gaps="$gaps- $p ($s)
 "; fi
 done
-if [ -d .claude ]; then
-  ign="$(git ls-files --others --ignored --exclude-standard --directory .claude 2>/dev/null \
+for context_dir in .claude .codex .agents; do
+  [ -d "$context_dir" ] || continue
+  ign="$(git ls-files --others --ignored --exclude-standard --directory "$context_dir" 2>/dev/null \
          | grep -v '^\.claude/settings\.local\.json$' | sed 's/^/- /; s/$/ (ignored)/')"
-  unt="$(git ls-files --others --exclude-standard --directory .claude 2>/dev/null \
+  unt="$(git ls-files --others --exclude-standard --directory "$context_dir" 2>/dev/null \
          | sed 's/^/- /; s/$/ (untracked)/')"
   [ -n "$ign" ] && gaps="$gaps$ign
 "
   [ -n "$unt" ] && gaps="$gaps$unt
 "
-fi
+done
 if [ -n "$gaps" ]; then printf '%s' "$gaps"; else echo "(no uncommitted agent context files found)"; fi
 echo
 echo "Ignored top-level entries (candidates for knowledge-tool output, e.g. code graphs):"
