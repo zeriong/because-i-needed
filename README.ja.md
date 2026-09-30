@@ -43,9 +43,9 @@ codex plugin add claude-x-codex@bin
 
 新しい Codex セッションで `$plan-smith:forge`、`$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$claude-x-codex:run` を呼び出します。自動オーケストレーションは `$claude-x-codex:mode on`、コンテキスト点検は `$claude-x-codex:audit` です。自動ルーティングと UI コミットゲートを使う前に、`/hooks` でフックを確認して信頼してください。
 
-インストーラーの既定は Claude Code です。`--host codex` で Codex を選択します。Codex はユーザースコープのみで、`--scope` を省略するか `--scope user` を指定します。project/local は拒否されます。スキル、スクリプト、作業手順は共有し、各プラグインに Codex マニフェストを同梱します。Codex では独自の質問ツールと独立したエージェントを使用します。ハーネスは `.codex/hooks.json`、`.codex/hooks/`、`.codex/scripts/`、`.agents/skills/` を生成し、既存の Claude ファイルを保持します。UI の実測には対応するブラウザー・モバイルツールが必要です。詳細は各プラグインの Codex 節を参照してください。
+インストーラーの既定は Claude Code です。`--host codex` で Codex を選択します。Codex はユーザースコープのみで、`--scope` を省略するか `--scope user` を指定します。project/local は拒否されます。スキル、スクリプト、作業手順は共有し、各プラグインに Codex マニフェストを同梱します。Codex では独自の質問ツールと独立したエージェントを使用します。ハーネスは `.codex/hooks.json`、`.codex/hooks/`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py`、`.agents/skills/` を生成し、既存の Claude ファイルを保持します。UI の実測には対応するブラウザー・モバイルツールが必要です。詳細は各プラグインの Codex 節を参照してください。
 
-各プラグインの Codex 節に設定方法があります。執筆者・レビュアーごとにモデルと推論強度を指定でき、省略時は現在のセッションを継承します。ハーネスは Claude・Codex・両方の構成を生成できます。CXC のクロスベンダールーティングは維持されます。ブラウザー・デバイス要件とフック信頼は引き続き必要です。
+各プラグインの Codex 節に設定方法があります。執筆者・レビュアーごとにモデルと推論強度を指定でき、未設定の役割はアクティブなセッションのファミリーの最新モデルで実行します。ハーネスは Claude・Codex・両方の構成を生成できます。CXC のクロスベンダールーティングは維持されます。ブラウザー・デバイス要件とフック信頼は引き続き必要です。
 
 ## プラグイン
 

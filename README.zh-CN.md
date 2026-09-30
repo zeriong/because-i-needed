@@ -43,9 +43,9 @@ codex plugin add claude-x-codex@bin
 
 在新的 Codex 会话中调用 `$plan-smith:forge`、`$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile` 或 `$claude-x-codex:run`。使用 `$claude-x-codex:mode on` 开启自动编排，使用 `$claude-x-codex:audit` 检查上下文。在依赖自动路由和 UI 提交门禁之前，请通过 `/hooks` 审核并信任已安装的钩子。
 
-安装器默认使用 Claude Code；`--host codex` 选择 Codex。Codex 仅支持用户范围：省略 `--scope` 或使用 `--scope user`，project/local 范围会被拒绝。两个宿主共享技能、脚本和工作流程，每个插件另附 Codex 清单。Codex 使用自己的提问工具和独立代理。生成的 harness 使用 `.codex/hooks.json`、`.codex/hooks/`、`.codex/scripts/` 和 `.agents/skills/`，保留现有 Claude 文件。UI 实测仍需要对应的浏览器或移动工具。详情参阅各插件的 Codex 章节。
+安装器默认使用 Claude Code；`--host codex` 选择 Codex。Codex 仅支持用户范围：省略 `--scope` 或使用 `--scope user`，project/local 范围会被拒绝。两个宿主共享技能、脚本和工作流程，每个插件另附 Codex 清单。Codex 使用自己的提问工具和独立代理。生成的 harness 使用 `.codex/hooks.json`、`.codex/hooks/`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py` 和 `.agents/skills/`，保留现有 Claude 文件。UI 实测仍需要对应的浏览器或移动工具。详情参阅各插件的 Codex 章节。
 
-各插件的 Codex 章节提供配置方法。可分别指定编写者和评审者的模型及推理强度，省略时继承当前会话。harness 可生成 Claude、Codex 或双方配置。CXC 保留原有跨供应商路由。仍需满足浏览器、设备条件及钩子信任要求。
+各插件的 Codex 章节提供配置方法。可分别指定编写者和评审者的模型及推理强度；未配置的角色将运行当前会话所属系列的最新模型。harness 可生成 Claude、Codex 或双方配置。CXC 保留原有跨供应商路由。仍需满足浏览器、设备条件及钩子信任要求。
 
 ## 插件
 

@@ -43,9 +43,9 @@ codex plugin add claude-x-codex@bin
 
 Start a new Codex session and invoke `$plan-smith:forge`, `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, or `$claude-x-codex:run`. Use `$claude-x-codex:mode on` for automatic orchestration and `$claude-x-codex:audit` to inspect context parity. Review and trust installed hooks with `/hooks` before relying on automatic routing or the UI commit gate.
 
-The installer defaults to Claude Code; `--host codex` selects Codex. Codex installs at user scope: omit `--scope` or use `--scope user`; project/local scope is rejected. Skills, scripts and workflow contracts are shared; each plugin includes a Codex manifest. Codex execution uses its own questions and independent agents. The harness generates `.codex/hooks.json`, `.codex/hooks/`, `.codex/scripts/` and `.agents/skills/`; existing Claude artifacts are preserved. UI measurement still requires the relevant browser/mobile tools. See each plugin's Codex section for details.
+The installer defaults to Claude Code; `--host codex` selects Codex. Codex installs at user scope: omit `--scope` or use `--scope user`; project/local scope is rejected. Skills, scripts and workflow contracts are shared; each plugin includes a Codex manifest. Codex execution uses its own questions and independent agents. The harness generates `.codex/hooks.json`, `.codex/hooks/`, `.codex/scripts/review-gate.sh`, `.codex/scripts/latest-model.py` and `.agents/skills/`; existing Claude artifacts are preserved. UI measurement still requires the relevant browser/mobile tools. See each plugin's Codex section for details.
 
-Each plugin documents its Codex settings below. Models and effort can be selected per writer/reviewer role; unconfigured roles inherit the active session. The harness can generate Claude, Codex or both layouts. CXC retains its cross-vendor model routing. Browser/device requirements and hook trust still apply.
+Each plugin documents its Codex settings below. Models and effort can be selected per writer/reviewer role; unconfigured roles run the newest model of the active session's family. The harness can generate Claude, Codex or both layouts. CXC retains its cross-vendor model routing. Browser/device requirements and hook trust still apply.
 
 ## Plugins
 

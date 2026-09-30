@@ -1,9 +1,11 @@
 """Run with python3 -m unittest discover -s tests -v. No installed settings are changed."""
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -323,6 +325,261 @@ class CompatibilityTests(unittest.TestCase):
         self.assertIn("CHECK: Codex selects AGENTS.override.md", result.stdout)
         self.assertIn("invalid: expected an entry with a hooks list", result.stdout)
         self.assertEqual(before, {p: p.read_bytes() for p in self.repo.rglob("*") if p.is_file()})
+
+
+
+class LatestModelTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix="latest-model-")
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.project = self.root / "project with spaces"
+        self.project.mkdir()
+        self.bin_dir = self.root / "bin"
+        self.bin_dir.mkdir()
+        self.codex_home = self.root / "codex-home"
+        self.codex_home.mkdir()
+        self.fixture = self.root / "codex-fixture.json"
+        fake_codex = self.bin_dir / "codex"
+        fake_codex.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json, os, sys\n"
+            "from datetime import datetime, timezone\n"
+            "with open(os.environ['LATEST_MODEL_FIXTURE'], encoding='utf-8') as stream: data=json.load(stream)\n"
+            "if sys.argv[1:] == ['--version']:\n"
+            "    print(data.get('version_output', 'codex-cli ' + data.get('version', '0.159.0')))\n"
+            "    sys.exit(data.get('version_exit', 0))\n"
+            "if sys.argv[1:] == ['debug', 'models']:\n"
+            "    if data.get('refresh_cache'):\n"
+            "        cache = {'fetched_at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),\n"
+            "                 'client_version': data.get('version', '0.159.0'),\n"
+            "                 'models': data.get('catalog', {'models': []})['models']}\n"
+            "        with open(os.path.join(os.environ['CODEX_HOME'], 'models_cache.json'), 'w', encoding='utf-8') as stream: json.dump(cache, stream)\n"
+            "    if 'models_output' in data: print(data['models_output'])\n"
+            "    else: print(json.dumps(data.get('catalog', {'models': []})))\n"
+            "    sys.exit(data.get('models_exit', 0))\n"
+            "sys.exit(9)\n", encoding="utf-8")
+        fake_codex.chmod(0o755)
+        self.models = [
+            {"slug": "gpt-6.1-sol", "visibility": "list", "supported_reasoning_levels": self.levels("low", "medium", "high", "xhigh", "max", "ultra")},
+            {"slug": "gpt-6-astra", "visibility": "list", "supported_reasoning_levels": self.levels("low", "medium", "high", "xhigh", "max", "ultra")},
+            {"slug": "gpt-6-sol", "visibility": "list", "supported_reasoning_levels": self.levels("low", "medium", "high", "xhigh", "max", "ultra")},
+            {"slug": "gpt-6-luna", "visibility": "list", "supported_reasoning_levels": self.levels("low", "medium", "high", "xhigh", "max")},
+            {"slug": "gpt-5.6-terra", "visibility": "list", "supported_reasoning_levels": self.levels("low", "medium", "high", "xhigh", "max", "ultra")},
+            {"slug": "gpt-5.6-sol", "visibility": "list", "supported_reasoning_levels": self.levels("low", "medium", "high", "xhigh", "max", "ultra")},
+            {"slug": "gpt-reserve", "visibility": "hide", "supported_reasoning_levels": []},
+        ]
+        self.write_fixture()
+        self.base_env = {
+            "PATH": str(self.bin_dir) + os.pathsep + os.environ.get("PATH", ""),
+            "CODEX_HOME": str(self.codex_home),
+            "HOME": str(self.root),
+            "CLAUDE_CONFIG_DIR": str(self.root / "claude-config"),
+            "LATEST_MODEL_MANAGED_SETTINGS": str(self.root / "managed-settings.json"),
+            "LATEST_MODEL_FIXTURE": str(self.fixture),
+            "ANTHROPIC_DEFAULT_OPUS_MODEL": "",
+            "ANTHROPIC_DEFAULT_SONNET_MODEL": "",
+            "ANTHROPIC_DEFAULT_HAIKU_MODEL": "",
+            "ANTHROPIC_DEFAULT_FABLE_MODEL": "",
+        }
+        (self.root / "claude-config").mkdir()
+        self.script = ROOT / "plugins/claude-x-codex/scripts/latest-model.py"
+
+    @staticmethod
+    def levels(*names):
+        return [{"effort": name, "description": name} for name in names]
+
+    def write_fixture(self, models=None, **extra):
+        catalog = {"models": self.models if models is None and hasattr(self, "models") else (models or [])}
+        data = {"version": "0.159.0", "catalog": catalog, **extra}
+        self.fixture.write_text(json.dumps(data), encoding="utf-8")
+        return catalog
+
+    def write_cache(self, catalog=None, **changes):
+        if catalog is None:
+            data = json.loads(self.fixture.read_text(encoding="utf-8"))["catalog"]
+        else:
+            data = catalog
+        cache = {
+            "fetched_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "client_version": "0.159.0",
+            "etag": "fixture", "identity": "fixture", "models": data["models"],
+        }
+        cache.update(changes)
+        (self.codex_home / "models_cache.json").write_text(json.dumps(cache), encoding="utf-8")
+
+    def call(self, *args, env=None, project=None):
+        return run([sys.executable, str(self.script), *args], project or self.project,
+                   env={**self.base_env, **(env or {})})
+
+    def assert_failure(self, result, code):
+        self.assertEqual(result.returncode, code, result.stderr)
+        self.assertEqual(result.stdout, "")
+        self.assertTrue(result.stderr.startswith("latest-model:"), result.stderr)
+        self.assertEqual(len(result.stderr.splitlines()), 1, result.stderr)
+
+    def test_codex_newest_model_per_family_and_numeric_versions(self):
+        catalog = self.write_fixture()
+        self.write_cache(catalog)
+        for family, expected in (("sol", "gpt-6.1-sol"), ("luna", "gpt-6-luna"),
+                                 ("astra", "gpt-6-astra"), ("terra", "gpt-5.6-terra")):
+            with self.subTest(family=family):
+                result = self.call("codex", family)
+                self.assertEqual((result.returncode, result.stdout, result.stderr), (0, expected + "\n", ""))
+        numeric = [
+            {"slug": "gpt-6.9-sol", "visibility": "list", "supported_reasoning_levels": self.levels("high")},
+            {"slug": "gpt-6.10-sol", "visibility": "list", "supported_reasoning_levels": self.levels("high")},
+            {"slug": "gpt-6.11-sol", "visibility": "hide", "supported_reasoning_levels": self.levels("high")},
+        ]
+        catalog = self.write_fixture(numeric)
+        self.write_cache(catalog)
+        self.assertEqual(self.call("codex", "sol").stdout, "gpt-6.10-sol\n")
+
+    def test_codex_family_the_plugin_has_never_seen_resolves_from_the_catalog(self):
+        catalog = self.write_fixture([
+            {"slug": "gpt-7-nova", "visibility": "list", "supported_reasoning_levels": self.levels("high")},
+            {"slug": "gpt-7.2-nova", "visibility": "list", "supported_reasoning_levels": self.levels("high")},
+        ])
+        self.write_cache(catalog)
+        self.assertEqual(self.call("codex", "nova").stdout, "gpt-7.2-nova\n")
+        self.assertEqual(self.call("codex", "gpt-7-nova").stdout, "gpt-7.2-nova\n")
+        self.assert_failure(self.call("codex", "sol"), 2)
+
+    def test_codex_versioned_input_raised_line_and_refresh_between_calls(self):
+        catalog = self.write_fixture()
+        self.write_cache(catalog)
+        result = self.call("codex", "gpt-6-sol")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "gpt-6.1-sol\n")
+        self.assertEqual(result.stderr, "latest-model: using gpt-6.1-sol (newest sol) instead of gpt-6-sol\n")
+        newer = self.models + [{"slug": "gpt-6.2-sol", "visibility": "list",
+                                "supported_reasoning_levels": self.levels("high")}]
+        catalog = self.write_fixture(newer)
+        self.write_cache(catalog)
+        self.assertEqual(self.call("codex", "sol").stdout, "gpt-6.2-sol\n")
+
+    def test_codex_accepts_long_and_three_digit_timestamp_fractions(self):
+        catalog = self.write_fixture()
+        fixed_times = ("2026-09-30T02:28:47.359384123Z", "2026-09-30T02:28:47.359Z")
+        for fetched_at in fixed_times:
+            with self.subTest(fetched_at=fetched_at):
+                self.write_cache(catalog, fetched_at=fetched_at)
+                result = self.call("codex", "sol")
+                self.assert_failure(result, 2)
+                self.assertIn("Codex model cache age", result.stderr)
+                self.assertNotIn("invalid fetched_at", result.stderr)
+        for fraction in ("123456789", "123"):
+            with self.subTest(fraction=fraction):
+                fetched_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "." + fraction + "Z"
+                self.write_cache(catalog, fetched_at=fetched_at)
+                result = self.call("codex", "sol")
+                self.assertEqual((result.returncode, result.stdout), (0, "gpt-6.1-sol\n"), result.stderr)
+
+    def test_codex_verifies_cache_after_cli_refreshes_stale_cache(self):
+        old_catalog = self.write_fixture()
+        self.write_cache(old_catalog, fetched_at="2000-01-01T00:00:00Z")
+        newer = self.models + [{"slug": "gpt-6.3-sol", "visibility": "list",
+                                "supported_reasoning_levels": self.levels("high")}]
+        catalog = self.write_fixture(newer, refresh_cache=True)
+        result = self.call("codex", "sol")
+        self.assertEqual((result.returncode, result.stdout, result.stderr), (0, "gpt-6.3-sol\n", ""))
+
+    def test_codex_version_uses_last_whitespace_token(self):
+        catalog = self.write_fixture(version="0.160.0-alpha.3",
+                                     version_output="codex-cli 0.160.0-alpha.3")
+        self.write_cache(catalog, client_version="0.160.0-alpha.3")
+        result = self.call("codex", "sol")
+        self.assertEqual((result.returncode, result.stdout), (0, "gpt-6.1-sol\n"), result.stderr)
+
+    def test_codex_cache_and_cli_failures_exit_two_without_stdout(self):
+        catalog = self.write_fixture()
+        missing = self.call("codex", "sol")
+        self.assert_failure(missing, 2)
+        self.assertIn(f"no models_cache.json in {self.codex_home}: catalog not refreshed (is codex logged in and online?)", missing.stderr)
+        self.write_cache(catalog, fetched_at="2000-01-01T00:00:00Z")
+        stale = self.call("codex", "sol")
+        self.assert_failure(stale, 2)
+        self.assertRegex(stale.stderr, r"age [0-9.]+s exceeds limit [0-9]+s")
+        self.assertIn("catalog not refreshed (is codex logged in and online?)", stale.stderr)
+        self.write_cache(catalog, client_version="0.1.0")
+        mismatch = self.call("codex", "sol")
+        self.assert_failure(mismatch, 2)
+        self.assertIn("'0.1.0'", mismatch.stderr)
+        self.assertIn("'0.159.0'", mismatch.stderr)
+        self.write_cache(catalog, models=[{"slug": "gpt-6-sol"}])
+        mismatch = self.call("codex", "sol")
+        self.assert_failure(mismatch, 2)
+        self.assertIn("output did not come from the refreshed cache", mismatch.stderr)
+        self.write_cache(catalog)
+        self.write_fixture(catalog["models"], models_exit=7)
+        self.assert_failure(self.call("codex", "sol"), 2)
+        self.write_fixture(catalog["models"], models_output="not json")
+        self.assert_failure(self.call("codex", "sol"), 2)
+        self.write_fixture(catalog["models"], version_exit=1)
+        self.assert_failure(self.call("codex", "sol"), 2)
+        self.write_fixture([], )
+        empty = json.loads(self.fixture.read_text(encoding="utf-8"))["catalog"]
+        self.write_cache(empty)
+        self.assert_failure(self.call("codex", "sol"), 2)
+        self.assert_failure(self.call("codex", "gpt-5.5"), 2)
+        self.assert_failure(self.call("codex", "o3"), 2)
+
+    def test_codex_missing_binary_and_unsupported_effort(self):
+        catalog = self.write_fixture()
+        self.write_cache(catalog)
+        self.assert_failure(self.call("codex", "luna", "--effort", "ultra"), 3)
+        self.assert_failure(self.call("codex", "sol", "--effort", "nonsense"), 3)
+        self.assert_failure(self.call("codex", "sol", env={"PATH": str(self.root / "empty-path")}), 2)
+
+    def test_claude_aliases_and_effort(self):
+        for value, alias in (("opus", "opus"), ("claude-opus-5-5", "opus"),
+                             ("claude-3-5-sonnet-20241022", "sonnet"),
+                             ("claude-haiku-4-5", "haiku"), ("claude-fable-1-0", "fable")):
+            with self.subTest(value=value):
+                result = self.call("claude", value, "--effort", "xhigh")
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout, alias + "\n")
+                self.assertEqual(result.stderr, "" if value == alias else
+                                 f"latest-model: using {alias} (newest {alias}) instead of {value}\n")
+        self.assert_failure(self.call("claude", "claude-opus-sonnet-5"), 2)
+        self.assert_failure(self.call("claude", "codex-model"), 2)
+        self.assert_failure(self.call("claude", "opus", "--effort", "ultra"), 3)
+
+    def test_claude_environment_and_each_settings_location_override(self):
+        env_result = self.call("claude", "sonnet", env={"ANTHROPIC_DEFAULT_SONNET_MODEL": "custom"})
+        self.assert_failure(env_result, 2)
+        self.assertIn("environment", env_result.stderr)
+        paths = [
+            self.root / "managed-settings.json",
+            self.root / "claude-config/settings.json",
+            self.project / ".claude/settings.json",
+            self.project / ".claude/settings.local.json",
+        ]
+        for path in paths:
+            with self.subTest(path=str(path)):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps({"env": {"ANTHROPIC_DEFAULT_OPUS_MODEL": "custom"}}), encoding="utf-8")
+                result = self.call("claude", "opus")
+                self.assert_failure(result, 2)
+                self.assertIn("ANTHROPIC_DEFAULT_OPUS_MODEL", result.stderr)
+                self.assertIn(str(path), result.stderr)
+                path.unlink()
+
+    def test_claude_invalid_settings_file_is_named(self):
+        path = self.project / ".claude/settings.local.json"
+        path.parent.mkdir()
+        path.write_text("not json", encoding="utf-8")
+        result = self.call("claude", "opus")
+        self.assert_failure(result, 2)
+        self.assertIn(str(path), result.stderr)
+
+    def test_latest_model_copies_are_byte_identical_and_executable(self):
+        paths = [ROOT / f"plugins/{name}/scripts/latest-model.py" for name in
+                 ("claude-x-codex", "plan-smith", "harness", "ux-ui")]
+        for path in paths:
+            self.assertTrue(path.is_file(), str(path))
+            self.assertTrue(path.stat().st_mode & 0o111, str(path))
+            self.assertEqual(path.read_bytes(), paths[0].read_bytes(), str(path))
 
 
 if __name__ == "__main__":
