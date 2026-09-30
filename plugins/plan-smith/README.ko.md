@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.6.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.7.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -38,6 +38,26 @@
 긴 세션은 구조적인 이유로 나쁜 플랜을 낳습니다: 당신의 의도를 가장 잘 아는 에이전트가, 동시에 컨텍스트가 가장 오염된 에이전트이기 때문입니다 — 수십 번의 도구 출력, 반복된 파일 덤프, 막다른 시도들. 거기서 플랜을 쓰면 잡음을 통과해 쓰는 것이고, 신선한 서브에이전트에서 쓰면 의도를 잃습니다.
 
 **plan-smith는 일을 쪼개서 이 트레이드오프를 거부합니다.** 메인 에이전트는 자신의 유일한 자산인 세션 컨텍스트를 전부 *의도 증류*에 소진해 구조화된 컨텍스트 패킷을 만듭니다. 깨끗한 컨텍스트의 `plan-writer` 에이전트가 그 패킷으로부터, 실증 검증된 추론 프레임 라이브러리와 두 가지 집필 스타일의 지도를 받아 플랜을 벼립니다. 완성된 플랜은 **요약 없이 원문 그대로** 전달됩니다.
+
+## Codex
+
+Codex CLI 0.158.0 이상이 필요합니다. 설치 후 새 세션을 시작하세요. Claude 명령은 `/plugin:skill`, Codex 명령은 `$plugin:skill`입니다. 공통 스킬과 자료는 이 플러그인 안에 포함됩니다. 자동 동작을 사용하기 전에 `/hooks`에서 함께 설치된 훅을 검토하고 신뢰하세요.
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add plan-smith@bin
+```
+
+`$plan-smith:forge <작업>`을 사용합니다. Codex는 동일한 에이전트 지침·프레임·문체를 사용해 집필, 릴레이 각 패스, 감사, 분할을 새 컨텍스트에서 실행합니다. 자체 질문 도구를 사용하고 메인의 모델·추론 수준을 이어받습니다. Opus/Fable은 문체 이름입니다. 패킷 확인, 독립 집필, 원문 전달 조건을 유지합니다.
+
+### Codex 설정
+
+작업 단계·산출물·검토 기준을 공유합니다. Codex 검토 모델은 설정할 수 있으며, Claude 모델과 결과나 품질이 같다는 뜻은 아닙니다. Codex를 시작하기 전에 아래 환경변수를 지정하세요. 생략한 값은 현재 세션을 따릅니다. 위임된 CLI 프로세스는 `CXC_MODE=off`로 실행하고 메인 모드는 유지합니다.
+
+| 설정 | 동작 |
+|---|---|
+| `PLAN_SMITH_CODEX_MODEL` | 집필자 모델. 기본값: 현재 세션 모델 |
+| `PLAN_SMITH_CODEX_EFFORT` | 집필자 추론 강도. 기본값: 현재 세션 추론 강도 |
 
 ## 무엇을 하는가
 

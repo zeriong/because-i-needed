@@ -12,6 +12,22 @@ version has to move. Release 1.1.1 exists for that reason alone.
 
 ---
 
+## [1.7.0] - 2026-09-29
+
+### Added
+
+- Codex manifest and host adapter for questions, fresh plan writers, relay passes, audits and lossless splits. Both hosts share the original frame/style library and artifact contracts.
+
+- Configurable Codex writer model and reasoning effort, recorded before every isolated pass; delegated CLI writers disable CXC orchestration for that child.
+
+### Why
+
+Codex must dispatch an independent writer without relying on Claude's registered Task agent.
+
+Evidence: z-lab `plan-smith-lab/codex-compat-1.7.0/` (S01, S02). Compatibility checks cover the recorded fixtures, not
+comparative model quality or every browser/device environment.
+Additional setting-parity evidence: z-lab `plan-smith-lab/codex-parity-1.7.0/` (S03).
+
 ## [1.6.0] — 2026-09-28
 
 A plan over 20,000 characters now arrives as an index plus ordered parts. No change to frames,

@@ -25,7 +25,7 @@ This repository is a Claude Code **plugin marketplace** with four independent pl
 
 ## Plugins
 
-### [plan-smith](plugins/plan-smith) · `v1.6.0`
+### [plan-smith](plugins/plan-smith) · `v1.7.0`
 
 **Forge plans through a two-stage pipeline.** The main agent distills the whole conversation into a context packet (goals, hard constraints, rejected alternatives) and confirms it with you; a clean-context `plan-writer` agent then writes the plan with a reasoning-frame library and validated writing styles, and the plan is relayed to you verbatim — no summarization loss, no context contamination.
 

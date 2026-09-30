@@ -4,7 +4,7 @@ Every shared rule in the root `CLAUDE.md` (install boundary, version bumps, five
 It originates in the release statute at `.claude/CLAUDE.md` in `zeriong/plan-smith`. There it was a gitignored, local-only file;
 moving it here, the paths were adjusted. The original statute's Article 6 ("this file is never committed") is repealed — here it is committed.
 
-Contents: the skill `skills/forge/SKILL.md`, four references (`frames.md`, `styles.md`, `packet-template.md`, `split.md`), the script `scripts/split-check.py`, the agent `agents/plan-writer.md`, and `CHANGELOG.md`.
+Contents: the skill `skills/forge/SKILL.md`, five references (`frames.md`, `styles.md`, `packet-template.md`, `split.md`, `host-codex.md`), the script `scripts/split-check.py`, the agent `agents/plan-writer.md`, and `CHANGELOG.md`.
 
 ---
 
@@ -12,7 +12,7 @@ Contents: the skill `skills/forge/SKILL.md`, four references (`frames.md`, `styl
 
 Handle all three in the same commit.
 
-1. **The 12 version strings** — the table in root Rule 2.
+1. **The 13 version strings** — the table in root Rule 2.
 2. **A `CHANGELOG.md` entry** — Keep a Changelog format, sorted into `Added` / `Changed` / `Fixed` / `Removed`, and
    **always with a `Why`** (what changed is recoverable from the diff; why it changed is what you will need later).
    Take version boundaries from git, not memory: `git log -p -- plugins/plan-smith/.claude-plugin/plugin.json`
@@ -72,3 +72,15 @@ so the next person can avoid the same trap. Record only the wins and the library
   unmeasured). Keep the checker command in SKILL.md: `${CLAUDE_PLUGIN_ROOT}` is replaced only in SKILL.md text, not in a
   reference file or the shell, and `split.md` pointing to it ran the script 3/3 (z-lab `plugin-platform-lab/`, V01–V05).
   Breaking one is a design change: agree on it with the maintainer first, and update the README invariant list with it.
+
+## Codex compatibility evidence — 1.7.0
+
+See z-lab `plan-smith-lab/codex-compat-1.7.0/` (S01, S02) and the shared
+`plugin-platform-lab/codex-final-0.158.0/` packaging/installer checks. These records
+cover host wiring and the named fixture paths, not quality improvements. Keep the
+existing workflow invariants when changing an adapter.
+
+Writer settings are `PLAN_SMITH_CODEX_MODEL` and `PLAN_SMITH_CODEX_EFFORT`, defaulting
+to the main session's resolved settings. Apply them to every fresh pass; never derive
+them from a style name. CLI children use `CXC_MODE=off` only for the delegated role.
+See also z-lab `plan-smith-lab/codex-parity-1.7.0/` (S03) for explicit fresh dispatch.

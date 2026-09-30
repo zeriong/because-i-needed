@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.6.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.7.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -38,6 +38,26 @@
 長いセッションが悪いプランを生むのには、構造的な理由があります。あなたの意図を最もよく知っているエージェントは、同時にコンテキストが最も汚染されたエージェントでもあるからです — 何十回ものツール出力、繰り返されたファイルダンプ、行き止まりに終わった試行。そこでプランを書けば、ノイズ越しに書くことになります。新しいサブエージェントで書けば、意図が失われます。
 
 **plan-smith は仕事を分割することで、このトレードオフを拒否します**。メインエージェントは唯一無二の資産であるセッションコンテキストを、すべて*意図の蒸留*に費やし、構造化されたコンテキストパケットを作ります。続いてクリーンなコンテキストの `plan-writer` エージェントが、実戦で鍛えられた推論フレームライブラリと、検証済みの 2 つの執筆スタイルのうちの 1 つに導かれて、パケットからプランを鍛え上げます。完成したプランは**原文のまま**届けられ、要約されることはありません。
+
+## Codex
+
+Codex CLI 0.158.0 以降が必要です。インストール後、新しいセッションを開始してください。Claude は `/plugin:skill`、Codex は `$plugin:skill` を使います。共通のスキルと資料はこのプラグインに同梱されています。自動動作を利用する前に `/hooks` で同梱フックを確認して信頼してください。
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add plan-smith@bin
+```
+
+`$plan-smith:forge <タスク>` を使います。Codex は同じエージェント指示・フレーム・文体で執筆、各リレーパス、監査、分割を新しいコンテキストで実行します。独自の質問ツールを使い、メインのモデルと推論設定を継承します。Opus/Fable は文体名です。パケット確認、独立執筆、原文の引き渡しを維持します。
+
+### Codex 設定
+
+手順・成果物・レビュー基準を共有します。Codex のレビューモデルは設定できますが、Claude と同一の出力や品質を保証するものではありません。Codex 起動前に環境変数を設定し、省略した値は現在のセッションを継承します。委任された CLI は `CXC_MODE=off` で実行され、メインのモードは変わりません。
+
+| 設定 | 動作 |
+|---|---|
+| `PLAN_SMITH_CODEX_MODEL` | 執筆者 モデル。既定: 現在のセッションのモデル |
+| `PLAN_SMITH_CODEX_EFFORT` | 執筆者 推論強度。既定: 現在のセッションの推論強度 |
 
 ## できること
 

@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.6.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.7.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -38,6 +38,26 @@
 长会话写不出好计划，原因是结构性的：最了解你意图的智能体，恰恰也是上下文被污染得最严重的那个——几十次工具输出、反复的文件转储、走进死胡同的尝试。在那里写计划，就得穿过噪声去写；换到一个全新的子智能体里写，意图又丢了。
 
 **plan-smith 通过拆分工作来拒绝这种取舍。** 主智能体把它唯一独有的资产——会话上下文——全部用于*意图提炼*，产出一份结构化的上下文包。随后，一个上下文干净的 `plan-writer` 智能体依据这份上下文包锻造计划，指导它的是一套久经实战检验的推理框架库，以及两种经过验证的写作风格之一。完成的计划会被**原样**转交——绝不做摘要。
+
+## Codex
+
+需要 Codex CLI 0.158.0 或更高版本。安装后请启动新会话。Claude 使用 `/plugin:skill`，Codex 使用 `$plugin:skill`。共享技能和资源均包含在此插件内。依赖自动行为前，请在 `/hooks` 中审核并信任随附的钩子。
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add plan-smith@bin
+```
+
+使用 `$plan-smith:forge <任务>`。Codex 使用相同的代理指令、框架和文风，在全新上下文中执行写作、各轮接力、审计和拆分。使用自己的提问工具并继承主代理的模型和推理设置；Opus/Fable 仍是文风名称。保留确认上下文包、独立写作和原文交付要求。
+
+### Codex 设置
+
+两端共享流程、产物和评审标准。Codex 评审模型可配置，但不代表其输出或质量与 Claude 相同。启动 Codex 前设置以下环境变量，省略的值继承当前会话。委派的 CLI 使用 `CXC_MODE=off`，主会话模式保持不变。
+
+| 设置 | 行为 |
+|---|---|
+| `PLAN_SMITH_CODEX_MODEL` | 撰写者 模型；默认：当前会话模型 |
+| `PLAN_SMITH_CODEX_EFFORT` | 撰写者 推理强度；默认：当前会话推理强度 |
 
 ## 它能做什么
 

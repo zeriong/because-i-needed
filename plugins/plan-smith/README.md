@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.6.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.7.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -38,6 +38,26 @@
 Long sessions produce bad plans for a structural reason: the agent that knows your intent best is also the one whose context is the most polluted — dozens of tool outputs, repeated file dumps, dead ends. Writing a plan there means writing through noise. Writing it in a fresh subagent means losing the intent.
 
 **plan-smith refuses the trade-off by splitting the job.** The main agent spends its one unique asset — session context — entirely on *intent distillation*, producing a structured context packet. A clean-context `plan-writer` agent then forges the plan from the packet, guided by a battle-tested reasoning-frame library and one of two validated writing styles. The finished plan is relayed **verbatim** — never summarized.
+
+## Codex
+
+Requires Codex CLI 0.158.0 or later. Start a new session after installation. Claude commands use `/plugin:skill`; Codex uses `$plugin:skill`. The shared skills and resource files ship inside this plugin. Review and trust bundled hooks with `/hooks` before relying on automatic behavior.
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add plan-smith@bin
+```
+
+Use `$plan-smith:forge <task>`. Codex runs each writer, relay pass, audit and split in a fresh context using the same agent instructions, frames and styles. It uses its own question tool and inherits the main model/effort; Opus/Fable remain style names. The confirmed packet, independent writer and verbatim relay requirements are unchanged.
+
+### Codex settings
+
+The workflow, artifacts and review criteria are shared. Codex reviewer models are configurable; this does not claim identical outputs or quality to Claude models. Set these environment variables before starting Codex; omitted values inherit the current session. Delegated CLI processes use `CXC_MODE=off`, leaving the main mode unchanged.
+
+| Setting | Behavior |
+|---|---|
+| `PLAN_SMITH_CODEX_MODEL` | Writer model; default: current session model |
+| `PLAN_SMITH_CODEX_EFFORT` | Writer reasoning effort; default: current session effort |
 
 ## What it does
 

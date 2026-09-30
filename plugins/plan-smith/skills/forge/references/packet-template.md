@@ -14,11 +14,11 @@ Marking rule: any field inferred rather than confirmed from the conversation car
 <!-- A plan whose producing version and model are unknown cannot be compared to a later one.
      This pipeline's own A/B lost the model version of half its artifacts and had to recover it
      from raw transcripts; two rounds were nearly mislabelled. Fill every line or mark it unknown. -->
-- plan-smith version: <from the plugin's own `.claude-plugin/plugin.json`, sibling of the plugin's `skills/` directory — not from memory; if the file cannot be found, write "unknown" rather than inferring from a path>
+- plan-smith version: <from the active host's `.claude-plugin/plugin.json` or `.codex-plugin/plugin.json`, sibling of the plugin's `skills/` directory — not from memory; if the file cannot be found, write "unknown" rather than inferring from a path>
 - frames.md fingerprint: <line count, or a digest if you can compute one>
 - Main agent model: <resolved id, e.g. claude-opus-5 — an alias like "opus" is NOT a version>
 - plan-writer model: <resolved id of the writing agent; state it if it differs from the main agent>
-- Skill invocation: <interactive `/plan-smith:forge` | batch/scripted — comparability requires the same harness>
+- Skill invocation: <Claude `/plan-smith:forge` | Codex `$plan-smith:forge` | batch/scripted — comparability requires the same harness>
 
 ## Task (one line)
 <what is being planned, in one sentence>

@@ -1,10 +1,23 @@
 ---
 name: forge
-description: Two-stage planning pipeline. The main agent distills the whole conversation into a context packet (goals, hard constraints, rejected alternatives), a clean-context plan-writer agent drafts the plan with a proven reasoning frame + an Opus/Fable-derived writing style, and the main agent relays the plan file verbatim. Trigger on — "write a plan", "plan this", "plan-smith", "설계 플랜", "계획 짜줘", or whenever a non-trivial implementation / business / operations / learning task needs a planning document.
+description: "Two-stage planning pipeline. The main agent distills the whole conversation into a context packet (goals, hard constraints, rejected alternatives), a clean-context plan-writer agent drafts the plan with a proven reasoning frame + an Opus/Fable-derived writing style, and the main agent relays the plan file verbatim. Trigger on — \"write a plan\", \"plan this\", \"plan-smith\", \"설계 플랜\", \"계획 짜줘\", or whenever a non-trivial implementation / business / operations / learning task needs a planning document."
 argument-hint: "[frame=<frame>] [style=opus|fable|relay|auto] <task description>"
 ---
 
 # plan-smith — distill intent, write clean, relay lossless
+
+## Host setup
+
+- Claude Code: invoke `/plan-smith:forge`; use the registered `plan-smith:plan-writer`
+  and AskUserQuestion as described below.
+- Codex: invoke `$plan-smith:forge`. Read [references/host-codex.md](references/host-codex.md)
+  before starting; it maps questions and every writer invocation to Codex while
+  preserving the pipeline below.
+- `<plugin>` is `${CLAUDE_PLUGIN_ROOT}` when expanded by Claude Code, or the absolute
+  path two directories above this SKILL.md's directory on Codex. Resolve it once from
+  the loaded skill path, not the target project's working directory. Scripts stay in
+  `<plugin>/scripts/`; read the active host's `.claude-plugin/plugin.json` or
+  `.codex-plugin/plugin.json` for the run stamp.
 
 When this skill loads, **you (the main agent) do not write the plan yourself.** Your only unique asset is the session context — the user's intent, nuance, and history — and you spend it entirely on intent extraction. The writing happens in a noise-free context owned by the `plan-writer` agent. This division of labor is the whole point:
 
@@ -13,7 +26,7 @@ When this skill loads, **you (the main agent) do not write the plan yourself.** 
 - Delivery that doesn't get mangled requires a **file contract** → Stage 3 (you).
 
 **Global rules (override everything below):**
-1. When a decision is hard or ambiguous, do not guess — **ask the user immediately via AskUserQuestion.** A pipeline with a chance to correct intent always beats a cleanly written plan built on the wrong intent.
+1. When a decision is hard or ambiguous, do not guess — **ask the user immediately via the active host's question tool (or conversation when unavailable).** A pipeline with a chance to correct intent always beats a cleanly written plan built on the wrong intent.
 2. Never delegate writing without a packet. Never relay by summary. The plan-writer never modifies the codebase.
 3. Write the packet and the plan in **the language the user is conversing in** (the pipeline instructions are English; the artifacts belong to the user).
 
@@ -35,14 +48,14 @@ Argument shape: `[frame=<frame>] [style=opus|fable|relay|auto] <task description
    - For relevant files, never give bare paths — add "why it matters + the one-line takeaway". Assume the plan-writer knows nothing about this conversation and must reconstruct context from files alone.
 2b. **Fill the run stamp** (packet's first section) before anything else in the packet: the plugin version read from the plugin's own `plugin.json`, the frames.md fingerprint, and the **resolved model ids** of yourself and of the writer — `opus` / `sonnet` / `fable` are aliases whose meaning changes over time, so an alias is not a version. Also record whether this run is interactive or scripted. A plan that cannot name what produced it is not comparable to the next one.
 3. Save the packet: `plans/<kebab-slug>/packet.md` (slug derived from the task; append `-2` on collision).
-4. **User confirmation gate (never skip):** show the user the packet's essentials (goal / hard constraints / rejected alternatives / **deliverable type and implementer from Gate 0** / frame & style selection with rationale) and confirm via AskUserQuestion: "Here is the intent and constraints I distilled — is this correct?"
+4. **User confirmation gate (never skip):** show the user the packet's essentials (goal / hard constraints / rejected alternatives / **deliverable type and implementer from Gate 0** / frame & style selection with rationale) and confirm via that host question route: "Here is the intent and constraints I distilled — is this correct?"
    - If any `⚠guess` fields exist, turn them into question options and confirm them in the same gate.
    - If the user corrects anything, update the packet file before proceeding.
    - **Rejection path:** if the user rejects the distillation, re-distill from their feedback and re-gate once. If the second gate also fails, stop the pipeline and report what remains unresolved — never invoke plan-writer on an unconfirmed packet. If the user explicitly defers a `⚠guess` ("I don't know either"), demote that field into the packet's "Unknowns & open questions" section (the writer treats it as an assumption/risk, not a fact) and proceed.
 
 ## Stage 2 — Isolated writing (delegate to plan-writer)
 
-Invoke the `plan-writer` agent via the Task tool (use `plan-smith:plan-writer` if your environment requires the namespace). **The delegation prompt must be self-contained** — the plan-writer has not seen this conversation and does not know where this skill lives. The prompt must include:
+Invoke a fresh `plan-writer` through the host setup above (Claude Code: Task/Agent tool, `plan-smith:plan-writer`; Codex: the Codex adapter). **The delegation prompt must be self-contained** — the plan-writer has not seen this conversation and does not know where this skill lives. The prompt must include:
 
 1. The absolute path of the packet file.
 2. The absolute output path: `plans/<slug>/plan.md`.
@@ -101,7 +114,7 @@ If the user is optimizing for speed on a decision document, skip it — that is 
 
 ### Stage 2d — Split a large plan (only over 20,000 characters)
 
-Once the plan is final — Stage 2 done and, for build-outs, the Stage 2c additions made — measure it: `wc -m < plans/<slug>/plan.md`. At 20,000 characters or fewer, skip this stage. Over it, read [references/split.md](references/split.md) and follow its procedure: move `plan.md` to `plan.unsplit.md`, invoke a **fresh** `plan-writer` in split mode with the protocol section copied verbatim, then run the checker `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/split-check.py" plans/<slug>`. The result is an index `plans/<slug>/plan.md` that holds pointers only and ordered parts `plans/<slug>/parts/<category>_<A0–Z99>.md` that hold the whole plan, text unchanged.
+Once the plan is final — Stage 2 done and, for build-outs, the Stage 2c additions made — measure it: `wc -m < plans/<slug>/plan.md`. At 20,000 characters or fewer, skip this stage. Over it, read [references/split.md](references/split.md) and follow its procedure: move `plan.md` to `plan.unsplit.md`, invoke a **fresh** `plan-writer` in split mode with the protocol section copied verbatim, then run the checker `python3 "<plugin>/scripts/split-check.py" plans/<slug>`. The result is an index `plans/<slug>/plan.md` that holds pointers only and ordered parts `plans/<slug>/parts/<category>_<A0–Z99>.md` that hold the whole plan, text unchanged.
 
 - The split moves text; it never rewrites it. The gates and the wiring audit already judged the whole plan, which is why the split comes after them, and the checker proves every line survived in order.
 - Split only the final `plan.md` — never `draft.md`, never divergence variants.

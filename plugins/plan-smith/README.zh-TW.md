@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.6.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.7.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -38,6 +38,26 @@
 冗長的工作階段之所以產出糟糕的計畫，有其結構上的原因：最了解你意圖的代理，同時也是上下文汙染最嚴重的那一個——數十次工具輸出、一再重複傾印的檔案內容、走不通的死路。在那裡寫計畫，等於隔著雜訊寫作；改在全新的子代理中寫，則會失去意圖。
 
 **plan-smith 透過拆分工作，拒絕這種兩難取捨。** 主代理把它唯一獨有的資產——工作階段上下文——全部投入*意圖提煉*，產出結構化的上下文封包。接著由乾淨上下文的 `plan-writer` 代理依據這個封包鍛造計畫，並以久經考驗的推理框架庫，以及兩種經過驗證的寫作風格之一作為指引。完成的計畫會**原封不動地**轉交——絕不摘要。
+
+## Codex
+
+需要 Codex CLI 0.158.0 或更高版本。安裝後請啟動新工作階段。Claude 使用 `/plugin:skill`，Codex 使用 `$plugin:skill`。共用技能和資源均包含在此外掛內。依賴自動行為前，請在 `/hooks` 中審核並信任隨附的掛鉤。
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add plan-smith@bin
+```
+
+使用 `$plan-smith:forge <任務>`。Codex 使用相同的代理指令、框架和文風，在全新上下文中執行寫作、各輪接力、稽核和拆分。使用自己的提問工具並繼承主代理的模型和推理設定；Opus/Fable 仍是文風名稱。保留確認上下文包、獨立寫作和原文交付要求。
+
+### Codex 設定
+
+兩端共用流程、產物與審查標準。Codex 審查模型可以設定，但不代表其輸出或品質與 Claude 相同。啟動 Codex 前設定以下環境變數，省略的值繼承目前工作階段。委派的 CLI 使用 `CXC_MODE=off`，主工作階段模式保持不變。
+
+| 設定 | 行為 |
+|---|---|
+| `PLAN_SMITH_CODEX_MODEL` | 撰寫者 模型；預設：目前工作階段模型 |
+| `PLAN_SMITH_CODEX_EFFORT` | 撰寫者 推理強度；預設：目前工作階段推理強度 |
 
 ## 它能做什麼
 
