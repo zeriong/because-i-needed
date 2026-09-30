@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>因为自己需要而做的 Claude Code 插件——规划、项目 harness、基于实测的 UI。</strong>
+  <strong>因为自己需要而做的 Claude Code 和 Codex 插件——规划、项目 harness、基于实测的 UI。</strong>
 </p>
 
 <p align="center">
@@ -21,7 +21,31 @@
 
 ---
 
-本仓库是一个 Claude Code **插件市场**，包含四个相互独立的插件。按需安装即可。
+本仓库是一个 Claude Code 和 Codex **插件市场**，包含四个相互独立的插件。按需安装即可。
+
+## Codex
+
+这4个插件也支持 Codex CLI 0.158.0 及以上版本。选择需要的插件安装：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only plan-smith,harness,ux-ui,claude-x-codex
+```
+
+也可以直接使用 CLI：
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add plan-smith@bin
+codex plugin add harness@bin
+codex plugin add ux-ui@bin
+codex plugin add claude-x-codex@bin
+```
+
+在新的 Codex 会话中调用 `$plan-smith:forge`、`$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile` 或 `$claude-x-codex:run`。使用 `$claude-x-codex:mode on` 开启自动编排，使用 `$claude-x-codex:audit` 检查上下文。在依赖自动路由和 UI 提交门禁之前，请通过 `/hooks` 审核并信任已安装的钩子。
+
+安装器默认使用 Claude Code；`--host codex` 选择 Codex。Codex 仅支持用户范围：省略 `--scope` 或使用 `--scope user`，project/local 范围会被拒绝。两个宿主共享技能、脚本和工作流程，每个插件另附 Codex 清单。Codex 使用自己的提问工具和独立代理。生成的 harness 使用 `.codex/hooks.json`、`.codex/hooks/`、`.codex/scripts/` 和 `.agents/skills/`，保留现有 Claude 文件。UI 实测仍需要对应的浏览器或移动工具。详情参阅各插件的 Codex 章节。
+
+各插件的 Codex 章节提供配置方法。可分别指定编写者和评审者的模型及推理强度，省略时继承当前会话。harness 可生成 Claude、Codex 或双方配置。CXC 保留原有跨供应商路由。仍需满足浏览器、设备条件及钩子信任要求。
 
 ## 插件
 
@@ -127,7 +151,7 @@ claude plugin install claude-x-codex@bin
 ```
 because-i-needed/
 ├── .claude-plugin/marketplace.json   # 登记四个插件
-├── install.sh                        # 交互式安装脚本（执行 claude plugin install）
+├── install.sh                        # 交互式安装脚本（--host claude|codex）
 └── plugins/
     ├── plan-smith/                   # 技能 + plan-writer 智能体 + 拆分检查器 (+ CHANGELOG.md)
     ├── harness/                      # 技能

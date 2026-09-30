@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# because-i-needed installer — pick plugins, install them with the Claude Code CLI.
+# because-i-needed installer — pick plugins for Claude Code or Codex.
 #
 #   curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash
 #   ./install.sh                      # interactive (↑/↓ or j/k, space, a = all, enter, q)
@@ -8,6 +8,7 @@
 #   ./install.sh --list               # show what's available
 #   ./install.sh --dry-run            # print the commands instead of running them
 #   ./install.sh --scope project      # passed to `claude plugin install` (user|project|local)
+#   ./install.sh --host codex --all   # install with Codex CLI (user scope only)
 #
 # Works with bash 3.2+ (macOS default), Linux, WSL and Git Bash.
 set -uo pipefail
@@ -16,7 +17,7 @@ REPO_URL="${BIN_REPO_URL:-https://github.com/zeriong/because-i-needed.git}"
 RAW_URL="${BIN_RAW_URL:-https://raw.githubusercontent.com/zeriong/because-i-needed/main}"
 TTY_IN="${BIN_TTY:-/dev/tty}"   # override only for testing
 
-mode="interactive"; only=""; scope=""; dry=0
+mode="interactive"; only=""; scope=""; dry=0; host="claude"
 while [ $# -gt 0 ]; do
   case "$1" in
     --all) mode="all" ;;
@@ -25,14 +26,27 @@ while [ $# -gt 0 ]; do
     --list) mode="list" ;;
     --scope) scope="${2:-}"; shift ;;
     --scope=*) scope="${1#--scope=}" ;;
+    --host) [ $# -ge 2 ] || { echo '--host requires claude or codex' >&2; exit 2; }; host="$2"; shift ;;
+    --host=*) host="${1#--host=}" ;;
     --dry-run) dry=1 ;;
-    -h|--help) sed -n '2,11p' "$0" 2>/dev/null | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) cat <<'HELP'
+Usage: install.sh [--host claude|codex] [--all|--only a,b|--list] [--dry-run]
+                  [--scope user|project|local]
+Default host: claude. Codex supports only --scope user (or omit --scope).
+Without a selection option, choose interactively with arrows, space and enter.
+HELP
+      exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
   shift
 done
 
 die() { echo "error: $*" >&2; exit 1; }
+case "$host" in claude|codex) ;; *) die "unknown host: $host (use claude or codex)" ;; esac
+case "$scope" in ""|user|project|local) ;; *) die "unknown scope: $scope" ;; esac
+if [ "$host" = codex ] && [ -n "$scope" ] && [ "$scope" != user ]; then
+  die "Codex plugin installation supports user scope only; omit --scope or use --scope user"
+fi
 
 # ------------------------------------------------------------------ catalog
 # Use the local catalog only when this file itself is on disk (not piped from curl),
@@ -152,17 +166,22 @@ run() {
   if [ $dry = 1 ]; then printf '+ %s\n' "$*"; return 0; fi
   "$@"
 }
-if [ $dry = 0 ]; then command -v claude >/dev/null 2>&1 || die "Claude Code CLI ('claude') not found on PATH"; fi
+if [ $dry = 0 ]; then command -v "$host" >/dev/null 2>&1 || die "$host CLI not found on PATH"; fi
 
 echo ""
 echo "Adding marketplace '$market' ($REPO_URL)"
-run claude plugin marketplace add "$REPO_URL" \
-  || echo "  (already added or failed — continuing; run 'claude plugin marketplace update $market' if plugins look stale)"
+if [ "$host" = codex ]; then
+  run codex plugin marketplace add "$REPO_URL" || die "could not register the Codex marketplace"
+else
+  run claude plugin marketplace add "$REPO_URL" \
+    || echo "  (already added or failed — continuing; run 'claude plugin marketplace update $market' if plugins look stale)"
+fi
 
 failed=0
 for p in "${chosen[@]}"; do
   echo "Installing $p@$market"
-  if [ -n "$scope" ]; then run claude plugin install "$p@$market" --scope "$scope" || failed=$((failed+1))
+  if [ "$host" = codex ]; then run codex plugin add "$p@$market" || failed=$((failed+1))
+  elif [ -n "$scope" ]; then run claude plugin install "$p@$market" --scope "$scope" || failed=$((failed+1))
   else run claude plugin install "$p@$market" || failed=$((failed+1)); fi
 done
 
@@ -171,4 +190,9 @@ if [ $failed -gt 0 ]; then
   echo "$failed plugin(s) failed to install. Re-run with --only <name> after fixing the error above."
   exit 1
 fi
-echo "Done. Start a new Claude Code session (or run /reload-plugins) to load: ${chosen[*]}"
+if [ "$host" = codex ]; then
+  echo "Done. Start a new Codex session to load: ${chosen[*]}"
+  echo 'Use $plugin:skill (for example $plan-smith:forge). Review plugin hooks with /hooks before use.'
+else
+  echo "Done. Start a new Claude Code session (or run /reload-plugins) to load: ${chosen[*]}"
+fi

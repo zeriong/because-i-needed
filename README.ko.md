@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>필요해서 만든 Claude Code 플러그인 모음 — 플래닝, 프로젝트 하네스, 실측 기반 UI.</strong>
+  <strong>필요해서 만든 Claude Code와 Codex 플러그인 모음 — 플래닝, 프로젝트 하네스, 실측 기반 UI.</strong>
 </p>
 
 <p align="center">
@@ -21,7 +21,31 @@
 
 ---
 
-이 레포는 독립된 플러그인 4개를 담은 Claude Code **플러그인 마켓플레이스**입니다. 필요한 것만 골라 설치하면 됩니다.
+이 레포는 독립된 플러그인 4개를 담은 Claude Code와 Codex **플러그인 마켓플레이스**입니다. 필요한 것만 골라 설치하면 됩니다.
+
+## Codex
+
+같은 플러그인 4개를 Codex CLI 0.158.0 이상에서도 사용할 수 있습니다. 필요한 플러그인을 골라 설치하세요:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only plan-smith,harness,ux-ui,claude-x-codex
+```
+
+또는 CLI로 직접 설치합니다:
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add plan-smith@bin
+codex plugin add harness@bin
+codex plugin add ux-ui@bin
+codex plugin add claude-x-codex@bin
+```
+
+새 Codex 세션에서 `$plan-smith:forge`, `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$claude-x-codex:run`을 호출합니다. 자동 오케스트레이션은 `$claude-x-codex:mode on`, 컨텍스트 점검은 `$claude-x-codex:audit`입니다. 자동 라우팅과 UI 커밋 게이트를 사용하기 전에 `/hooks`에서 설치된 훅을 검토하고 신뢰해야 합니다.
+
+설치 스크립트의 기본 대상은 Claude Code이며, `--host codex`로 Codex를 선택합니다. Codex는 사용자 범위로 설치하므로 `--scope`를 생략하거나 `--scope user`를 사용하세요. project/local 범위는 거부합니다. 스킬·스크립트·작업 절차를 공유하고 플러그인별 Codex 명세를 함께 제공합니다. Codex에서는 자체 질문 도구와 독립 에이전트를 사용합니다. 하네스는 `.codex/hooks.json`, `.codex/hooks/`, `.codex/scripts/`, `.agents/skills/`를 생성하며 기존 Claude 파일을 보존합니다. UI 실측에는 해당 브라우저·모바일 도구가 필요합니다. 자세한 내용은 각 플러그인의 Codex 절을 참고하세요.
+
+각 플러그인의 Codex 절에서 설정 방법을 제공합니다. 작성자·검토자별 모델과 추론 강도를 지정할 수 있고, 생략하면 현재 세션을 따릅니다. 하네스는 Claude·Codex·양쪽 구성을 생성할 수 있습니다. CXC는 기존 교차 벤더 모델 라우팅을 유지합니다. 브라우저·기기 요건과 훅 신뢰 설정은 여전히 필요합니다.
 
 ## 플러그인
 
@@ -127,7 +151,7 @@ claude plugin install claude-x-codex@bin
 ```
 because-i-needed/
 ├── .claude-plugin/marketplace.json   # 플러그인 4개 등록
-├── install.sh                        # 대화형 설치 스크립트 (claude plugin install 실행)
+├── install.sh                        # 대화형 설치 스크립트 (--host claude|codex)
 └── plugins/
     ├── plan-smith/                   # 스킬 + plan-writer 에이전트 + 분할 검사기 (+ CHANGELOG.md)
     ├── harness/                      # 스킬

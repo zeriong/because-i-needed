@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>Claude Code plugins I built because I needed them — planning, project harnesses, and measured UI.</strong>
+  <strong>Claude Code and Codex plugins I built because I needed them — planning, project harnesses, and measured UI.</strong>
 </p>
 
 <p align="center">
@@ -21,7 +21,31 @@
 
 ---
 
-This repository is a Claude Code **plugin marketplace** with four independent plugins. Install only the ones you need.
+This repository is a Claude Code and Codex **plugin marketplace** with four independent plugins. Install only the ones you need.
+
+## Codex
+
+The same four plugins also support Codex CLI 0.158.0 or later. Install a chosen subset:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only plan-smith,harness,ux-ui,claude-x-codex
+```
+
+Or use the CLI directly:
+
+```bash
+codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
+codex plugin add plan-smith@bin
+codex plugin add harness@bin
+codex plugin add ux-ui@bin
+codex plugin add claude-x-codex@bin
+```
+
+Start a new Codex session and invoke `$plan-smith:forge`, `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, or `$claude-x-codex:run`. Use `$claude-x-codex:mode on` for automatic orchestration and `$claude-x-codex:audit` to inspect context parity. Review and trust installed hooks with `/hooks` before relying on automatic routing or the UI commit gate.
+
+The installer defaults to Claude Code; `--host codex` selects Codex. Codex installs at user scope: omit `--scope` or use `--scope user`; project/local scope is rejected. Skills, scripts and workflow contracts are shared; each plugin includes a Codex manifest. Codex execution uses its own questions and independent agents. The harness generates `.codex/hooks.json`, `.codex/hooks/`, `.codex/scripts/` and `.agents/skills/`; existing Claude artifacts are preserved. UI measurement still requires the relevant browser/mobile tools. See each plugin's Codex section for details.
+
+Each plugin documents its Codex settings below. Models and effort can be selected per writer/reviewer role; unconfigured roles inherit the active session. The harness can generate Claude, Codex or both layouts. CXC retains its cross-vendor model routing. Browser/device requirements and hook trust still apply.
 
 ## Plugins
 
@@ -127,7 +151,7 @@ Every command reads **subject : action** — `/<plugin>:<skill>`.
 ```
 because-i-needed/
 ├── .claude-plugin/marketplace.json   # lists the four plugins
-├── install.sh                        # interactive installer (runs claude plugin install)
+├── install.sh                        # interactive installer (--host claude|codex)
 └── plugins/
     ├── plan-smith/                   # skill + plan-writer agent + split checker (+ CHANGELOG.md)
     ├── harness/                      # skill

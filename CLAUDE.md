@@ -1,6 +1,6 @@
 # because-i-needed — repository rules
 
-This repository is a Claude Code marketplace holding four plugins (plan-smith, harness, ux-ui, claude-x-codex).
+This repository is a Claude Code and Codex marketplace holding four plugins (plan-smith, harness, ux-ui, claude-x-codex).
 **Shared rules live in this file**; **per-plugin rules live in `plugins/<name>/CLAUDE.md`** (loaded automatically when you read that plugin's files).
 A plugin file does not repeat this file — it holds only what applies to that plugin. If the two conflict, fix both.
 
@@ -15,8 +15,9 @@ Every rule carries its reason. A rule whose reason is forgotten decays into ritu
 - `plugins/<name>/CLAUDE.md` ships in the package but is **not loaded into user sessions**
   (Claude Code reads only the working-directory hierarchy and the user's global CLAUDE.md). These files are for maintainers.
   Instructions meant for installed users go into skills, agents, or hooks.
-- A skill finds its plugin's scripts only through `"${CLAUDE_PLUGIN_ROOT}/…"` written in **SKILL.md** (braced): that text is
-  replaced with the install path when the skill loads. A reference file the skill reads later keeps the variable literal,
+- On Claude Code, `${CLAUDE_PLUGIN_ROOT}` written in **SKILL.md** (braced) is
+  replaced with the install path when the skill loads. Shared skills define `<plugin>` there; on Codex,
+  resolve that alias from the real loaded skill directory (two parents up), never from the target cwd. A reference file the skill reads later keeps the variable literal,
   and the shell does not set it, so a command there runs as `/scripts/…` and fails. Put script commands in SKILL.md; a
   reference points to them or uses a name SKILL.md defines — both ran the script 3/3 (z-lab `plugin-platform-lab/`,
   V01–V06).
@@ -30,11 +31,12 @@ reports the same fact with the warning "CLAUDE.md at the plugin root is not load
 - Plugins are served from a **version-keyed cache**. Editing the source alone never reaches installed clients, while each client
   still reports itself as up to date. Any change that affects behavior must bump the version.
   A delivery-only release — a version bump with no content change — is legitimate.
-- One plugin's version string lives in **12 places**:
+- One plugin's version string lives in **13 places**:
 
   | File | Location |
   |---|---|
   | `plugins/<name>/.claude-plugin/plugin.json` | `"version"` |
+  | `plugins/<name>/.codex-plugin/plugin.json` | `"version"` |
   | `.claude-plugin/marketplace.json` | that plugin entry's `"version"` (the top-level `metadata.version` is the marketplace's own version — separate) |
   | `plugins/<name>/README*.md` (5) | shields.io version badge at the top |
   | `README*.md` (5, root) | `` `vX.Y.Z` `` next to the plugin heading |
@@ -105,7 +107,7 @@ In the naming release (plan-smith 1.5.0, harness 1.1.0, ux-ui 1.2.0), `plugins/h
 
 ## Rule 8 — Naming: `/<plugin>:<skill>` reads "subject : action"
 
-Plugin skills are always invoked as `/<plugin>:<skill>`, and the plugin is the unit of installation. Name both halves this way.
+Plugin skills are invoked as `/<plugin>:<skill>` in Claude Code and `$<plugin>:<skill>` in Codex, and the plugin is the unit of installation. Name both halves this way.
 
 - **Plugin = subject** — what it works on (`harness`, `ux-ui`). An established brand name may stay (`plan-smith`).
 - **Skill = verb** — what it does, chosen only from the shared vocabulary below. A verb means the same thing in every plugin.
@@ -166,3 +168,21 @@ Creating a skill, or changing what a skill, agent, hook or script does, starts a
 found only by running the CLIs, and the first fix for its reviewer made it about nine times more expensive — caught only
 because the lab measured it. A skill written from recall ships what the author believed, not what the tools do.
 
+
+## Rule 10 — Shared workflows, explicit host wiring
+
+- Each plugin ships a `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`. They refer to
+  the same skill/resource tree. The root Claude marketplace remains the single catalog; Codex
+  0.158.0 reads it directly (z-lab `plugin-platform-lab/codex-compat-0.158.0/`, P01).
+- Claude-specific frontmatter (`argument-hint`, `disable-model-invocation`) remains where required
+  for existing behavior. Quote description strings as valid YAML. Codex's mode policy also lives
+  in `agents/openai.yaml`; the runtime loader is authoritative for dual-host discovery.
+- Hooks use the existing `hooks/hooks.json` defaults on Codex. A manifest or script check does not
+  establish runtime activation: Codex requires hook trust, and the runtime must execute the hook.
+- The installer defaults to Claude. Explicit `--host codex` uses Codex plugin commands and rejects
+  unsupported installation scopes. Keep both vendor routes covered by `tests/test_compatibility.py`.
+- Changes to host wiring must retain the plugin's core contracts: isolated plan authors, measured
+  UI reviews, staged-diff approvals, evidence-derived harness rules and bounded review loops.
+
+**Why:** loading a skill does not translate its tool names, agent dispatch or generated paths.
+Host adapters make those choices explicit while keeping each workflow in one shared source.
