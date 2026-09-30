@@ -150,8 +150,9 @@ Creating a skill, or changing what a skill, agent, hook or script does, starts a
 - **Follow the lab's own rules.** `z-lab/CLAUDE.md` governs the experiment work and wins over this file inside the lab:
   one series per plugin (`<plugin>-lab/`, e.g. `plan-smith-lab/`, `claude-x-codex-lab/`), a `SPEC.md` frozen before
   the run, untouched specimens, a generated `METRICS.md`, a `FINDINGS.md` that separates what was measured from what was
-  not, state-aware runners, and an `analyze/` backlog that links every change to its evidence. The lab is public, so
-  keep host details out of what it stores.
+  not, state-aware runners, and an `analyze/` backlog that links every change to its evidence. The lab is public, but
+  host details (local paths, user names, account IDs) may stay in what it stores — redacting them is not required
+  (maintainer decision, 2026-09-30: the git history already carries such details).
 - **What to measure before building or releasing:**
   - every CLI, platform or tool behavior the skill relies on — run it, don't recall it;
   - the new or changed mechanism itself, run with the real agent, skill or script definitions (e.g. `--plugin-dir`,
