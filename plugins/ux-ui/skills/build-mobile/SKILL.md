@@ -15,6 +15,13 @@ conversation for the backend selection and wait for the user's choice.
 `<plugin>` is `${CLAUDE_PLUGIN_ROOT}` when expanded by Claude Code, or the absolute
 path two directories above this skill's directory on Codex. Resolve it from the
 loaded SKILL.md path, never from the target project's working directory.
+The mobile art director runs the newest model of its family, resolved right before every
+dispatch, re-critiques included. Codex: the resolver command in the host reference. Claude
+Code: the agent's `opus` alias is the newest, so first run
+`python3 "<plugin>/scripts/latest-model.py" claude opus --project "<project root>"`; exit 2 means an
+`ANTHROPIC_DEFAULT_OPUS_MODEL` override would silently run an older model. On exit 2 or 3, do
+not dispatch, do not substitute another model, and do not review the render yourself: tell the
+user the resolver's `latest-model:` message and stop that step.
 The commit-target resolver requires Python 3.8+. Check `python3 --version` before
 claiming the commit gate is active. Stage and approve the exact UI diff before a
 separate literal `git commit` call; shell aliases or dynamic command generation

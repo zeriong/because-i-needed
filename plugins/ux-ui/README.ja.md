@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.3.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.4.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -48,15 +48,15 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add ux-ui@bin
 ```
 
-`$ux-ui:build` または `$ux-ui:build-mobile` を使います。Codex は同じ4つの MCP サーバーの実際のツールを検出し、同梱のアートディレクター指示で独立した読み取り専用レビューを実行します。レビュアーはメインのモデル・推論設定を継承し、Claude は引き続き Opus を使います。実測要件、バックエンド選択、3回の反復上限、ステージ済み diff に結び付く承認を共有します。スクリーンショットなしでは承認できません。ゲートには有効で信頼済みのフックが必要です。ブラウザーやモバイル SDK・端末の準備も必要です。
+`$ux-ui:build` または `$ux-ui:build-mobile` を使います。Codex は同じ4つの MCP サーバーの実際のツールを検出し、同梱のアートディレクター指示で独立した読み取り専用レビューを実行します。レビュアーはメインセッションのファミリーの最新モデルと推論設定を使い、Claude は引き続き Opus を使います。実測要件、バックエンド選択、3回の反復上限、ステージ済み diff に結び付く承認を共有します。スクリーンショットなしでは承認できません。ゲートには有効で信頼済みのフックが必要です。ブラウザーやモバイル SDK・端末の準備も必要です。
 
 ### Codex 設定
 
-手順・成果物・レビュー基準を共有します。Codex のレビューモデルは設定できますが、Claude と同一の出力や品質を保証するものではありません。Codex 起動前に環境変数を設定し、省略した値は現在のセッションを継承します。委任された CLI は `CXC_MODE=off` で実行され、メインのモードは変わりません。
+手順・成果物・レビュー基準を共有します。Codex のレビューモデルは設定できますが、Claude と同一の出力や品質を保証するものではありません。Codex 起動前に環境変数を設定してください。モデルを省略すると現在のセッションのファミリーの最新モデルを使います。設定値にはファミリー名またはモデル ID を指定でき、そのファミリーの最新モデルに引き上げられます。委任された CLI は `CXC_MODE=off` で実行され、メインのモードは変わりません。最新モデルを特定できない場合（例: サンドボックス内でカタログを更新できないときは、スキルが先にサンドボックス外で確認を再実行するよう求めます）、フォールバックせず理由を説明してステップを停止します。Codex セッションが自身のモデルまたはファミリーを確認できない場合は、変数の設定を求めます。Claude Code では、`ANTHROPIC_DEFAULT_<FAMILY>_MODEL` エイリアスが別モデルにリダイレクトされている場合もステップを停止します。
 
 | 設定 | 動作 |
 |---|---|
-| `UX_UI_CODEX_REVIEW_MODEL` | Web・モバイルレビュアー モデル。既定: 現在のセッションのモデル |
+| `UX_UI_CODEX_REVIEW_MODEL` | Web・モバイルレビュアー モデル。既定: 現在のセッションのファミリーの最新モデル |
 | `UX_UI_CODEX_REVIEW_EFFORT` | Web・モバイルレビュアー 推論強度。既定: 現在のセッションの推論強度 |
 
 `UX_UI_GLOBS` は両ホストで同じ UI ファイル範囲を指定します。Codex では同梱 MCP を個別に設定でき、以下のように未使用の Flutter を無効にできます。`/hooks` の信頼は別途確認してください。キャプチャや監査ツールがなければ検査完了とは扱いません。
@@ -157,6 +157,7 @@ plugins/ux-ui/
 ├── .claude-plugin/plugin.json          # マニフェスト + 同梱 MCP (chrome-devtools, mobile-mcp, ios-simulator, flutter)
 ├── hooks/hooks.json                    # PreToolUse → コミットゲート
 ├── scripts/
+│   ├── latest-model.py                 # アートディレクター用の最新モデル解決
 │   ├── ui-commit-gate.sh               # ゲート: hash | approve <feature> [dir] | hook-block (Web + モバイルの形式)
 │   └── mobile-snapshot.sh              # CLI スナップショットハーネス: doctor | capture <ios|android> <dir> <label>
 ├── agents/

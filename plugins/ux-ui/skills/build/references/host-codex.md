@@ -24,12 +24,33 @@ with Claude Code.
 
 | Variable | Default | Scope |
 |---|---|---|
-| `UX_UI_CODEX_REVIEW_MODEL` | main session's resolved model | web and mobile directors |
+| `UX_UI_CODEX_REVIEW_MODEL` | newest model of the main session's family | web and mobile directors |
 | `UX_UI_CODEX_REVIEW_EFFORT` | main session's resolved effort | web and mobile directors |
 
-Resolve and record both values before dispatch. Verify effort support when overriding
-the model; do not silently substitute a model or reduce the review criteria. Existing
-`UX_UI_GLOBS` configures the same commit-gate extension set on both hosts.
+The model variable names a family (such as `sol` or `luna`) or a model id, and
+either is resolved to the newest listed model of that family. Resolve right before
+**every** director dispatch, each retry included:
+
+```bash
+python3 "<plugin>/scripts/latest-model.py" codex "<UX_UI_CODEX_REVIEW_MODEL, else the main session's model id>" --effort "<resolved review effort>"
+```
+
+Order: when `UX_UI_CODEX_REVIEW_MODEL` is set, resolve it. Otherwise resolve your own model id; a Codex
+main agent may not see it (probes could not), and then your own family if you know it. If you
+know neither, do not dispatch: ask the user to set `UX_UI_CODEX_REVIEW_MODEL` (a family such as `sol`),
+because guessing would change the role's family.
+
+Pass stdout to `-m` (or to a native reviewer's model field). Exit 2 (the newest cannot be
+determined) and exit 3 (effort not supported) mean: do not dispatch, do not substitute
+another model, and do not review the render yourself. Tell the user the resolver's
+`latest-model:` message, report the missing capability, and stop that step. One exception: when the message says `catalog not refreshed` and your shell
+runs sandboxed without network, first rerun that one resolver command outside the sandbox
+through the host's escalation route — a sandboxed shell cannot refresh Codex's catalog —
+and stop only if that is declined or fails too. Record the
+effort and the id that actually ran with the review; take the id from the run (the Codex
+run header `model:`, or a native reviewer's receipt), never from the reviewer's own
+report. Do not reduce the review criteria. Existing `UX_UI_GLOBS` configures the same
+commit-gate extension set on both hosts.
 
 Enable only needed MCP backends through Codex's plugin MCP settings (plugin id
 `ux-ui@bin` for this marketplace). A disabled backend is distinct from a server that
@@ -46,8 +67,8 @@ For web use `<plugin>/agents/ux-ui-art-director.md`; for mobile use
 frontmatter and give it to a fresh Codex reviewer. Include absolute paths to the
 measurement directory, relevant source, rubric and design-principle references.
 
-Use a fresh read-only reviewer execution route; use the resolved reviewer model/effort
-above instead of passing the Claude `opus` alias. If the host cannot restrict a subagent to
+Use a fresh read-only reviewer execution route; use the id the resolver returned and the
+resolved effort above instead of passing the Claude `opus` alias. If the host cannot restrict a subagent to
 read-only execution, write a self-contained prompt file and start a separate process:
 
 ```bash

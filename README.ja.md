@@ -67,7 +67,7 @@ codex plugin add claude-x-codex@bin
 
 [harness の日本語 README を読む →](plugins/harness/README.ja.md)
 
-### [ux-ui](plugins/ux-ui) · `v1.3.0`
+### [ux-ui](plugins/ux-ui) · `v1.4.0`
 
 **実際のレンダリングを実測しながら Web とモバイルの UI を構築します**。実際のスクリーンショットを撮影し（Web は chrome-devtools、React Native / Flutter / iOS / Android はモバイル MCP または CLI スナップショットハーネス）、アートディレクターエージェントにその実測スナップショットを批評させ、UI が正確かつエレガントになるまで反復し、ステージされた diff そのものが APPROVED されるまで UI の `git commit` をブロックします。
 

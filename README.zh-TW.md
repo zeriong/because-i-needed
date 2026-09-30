@@ -67,7 +67,7 @@ codex plugin add claude-x-codex@bin
 
 [閱讀 harness 繁體中文 README →](plugins/harness/README.zh-TW.md)
 
-### [ux-ui](plugins/ux-ui) · `v1.3.0`
+### [ux-ui](plugins/ux-ui) · `v1.4.0`
 
 **以真實渲染的實測結果打造 Web 與行動 UI。** 它會擷取真實的螢幕截圖（Web 用 chrome-devtools；React Native / Flutter / iOS / Android 則用行動裝置 MCP 或 CLI 快照 harness），讓藝術總監代理評論這些實測快照，反覆迭代直到 UI 既正確又優雅，並在暫存的 diff 本身取得 APPROVED 之前，阻擋 UI 的 `git commit`。
 

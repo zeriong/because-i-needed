@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.3.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.4.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -48,15 +48,15 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add ux-ui@bin
 ```
 
-`$ux-ui:build` 또는 `$ux-ui:build-mobile`을 사용합니다. Codex는 같은 MCP 서버 4개의 실제 도구를 찾아 연결하고, 포함된 아트 디렉터 지침으로 독립 읽기 전용 리뷰를 실행합니다. 리뷰어는 메인의 모델·추론 수준을 이어받으며 Claude 아트 디렉터는 계속 Opus입니다. 실측 조건, 백엔드 선택, 반복 상한 3회, 스테이징 diff에 묶인 승인을 공유합니다. 스크린샷이 없으면 승인할 수 없습니다. 커밋 게이트는 설치된 훅이 활성화되고 신뢰된 경우에 동작합니다. 브라우저·모바일 SDK 및 기기 준비는 별도로 필요합니다.
+`$ux-ui:build` 또는 `$ux-ui:build-mobile`을 사용합니다. Codex는 같은 MCP 서버 4개의 실제 도구를 찾아 연결하고, 포함된 아트 디렉터 지침으로 독립 읽기 전용 리뷰를 실행합니다. 리뷰어는 메인 세션 제품군의 최신 모델과 메인의 추론 수준을 사용하며 Claude 아트 디렉터는 계속 Opus입니다. 실측 조건, 백엔드 선택, 반복 상한 3회, 스테이징 diff에 묶인 승인을 공유합니다. 스크린샷이 없으면 승인할 수 없습니다. 커밋 게이트는 설치된 훅이 활성화되고 신뢰된 경우에 동작합니다. 브라우저·모바일 SDK 및 기기 준비는 별도로 필요합니다.
 
 ### Codex 설정
 
-작업 단계·산출물·검토 기준을 공유합니다. Codex 검토 모델은 설정할 수 있으며, Claude 모델과 결과나 품질이 같다는 뜻은 아닙니다. Codex를 시작하기 전에 아래 환경변수를 지정하세요. 생략한 값은 현재 세션을 따릅니다. 위임된 CLI 프로세스는 `CXC_MODE=off`로 실행하고 메인 모드는 유지합니다.
+작업 단계·산출물·검토 기준을 공유합니다. Codex 검토 모델은 설정할 수 있으며, Claude 모델과 결과나 품질이 같다는 뜻은 아닙니다. Codex를 시작하기 전에 아래 환경변수를 지정하세요. 모델을 생략하면 현재 세션 제품군의 최신 모델을 사용합니다. 설정한 모델 값은 제품군명이나 모델 ID를 지정할 수 있으며 해당 제품군의 최신 모델로 올려집니다. 위임된 CLI 프로세스는 `CXC_MODE=off`로 실행하고 메인 모드는 유지합니다. 최신 모델을 확인할 수 없으면(예: 샌드박스에서 카탈로그를 새로 고칠 수 없는 경우, 스킬이 먼저 샌드박스 밖에서 확인을 다시 실행하라고 요청합니다) 대체 모델로 넘어가지 않고 단계가 이유를 알리며 멈춥니다. Codex 세션이 자신의 모델이나 제품군을 확인할 수 없으면 변수 설정을 요청합니다. Claude Code에서는 `ANTHROPIC_DEFAULT_<FAMILY>_MODEL` 별칭이 다른 모델로 리디렉션된 경우에도 단계가 멈춥니다.
 
 | 설정 | 동작 |
 |---|---|
-| `UX_UI_CODEX_REVIEW_MODEL` | 웹·모바일 검토자 모델. 기본값: 현재 세션 모델 |
+| `UX_UI_CODEX_REVIEW_MODEL` | 웹·모바일 검토자 모델. 기본값: 현재 세션 제품군의 최신 모델 |
 | `UX_UI_CODEX_REVIEW_EFFORT` | 웹·모바일 검토자 추론 강도. 기본값: 현재 세션 추론 강도 |
 
 `UX_UI_GLOBS`는 두 호스트에서 같은 UI 파일 범위를 지정합니다. Codex에서는 번들 MCP 서버를 개별 설정할 수 있습니다. 아래처럼 사용하지 않는 Flutter 도구를 끌 수 있습니다. `/hooks` 신뢰는 별도로 확인하세요. 캡처·감사 도구가 없으면 검사를 완료한 것으로 처리하지 않습니다.
@@ -157,6 +157,7 @@ plugins/ux-ui/
 ├── .claude-plugin/plugin.json          # 매니페스트 + 번들 MCP(chrome-devtools, mobile-mcp, ios-simulator, flutter)
 ├── hooks/hooks.json                    # PreToolUse → 커밋 게이트
 ├── scripts/
+│   ├── latest-model.py                 # 아트 디렉터용 최신 모델 확인기
 │   ├── ui-commit-gate.sh               # 게이트: hash | approve <feature> [dir] | hook-block (웹 + 모바일 유형)
 │   └── mobile-snapshot.sh              # CLI 스냅샷 하네스: doctor | capture <ios|android> <dir> <label>
 ├── agents/

@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.3.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.4.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -48,15 +48,15 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add ux-ui@bin
 ```
 
-使用 `$ux-ui:build` 或 `$ux-ui:build-mobile`。Codex 发现相同四个 MCP 服务器实际提供的工具，并按随附的艺术总监指令执行独立只读评审。评审继承主代理的模型和推理设置，Claude 艺术总监仍使用 Opus。共享实测要求、后端选择、三轮上限及绑定暂存 diff 的批准。没有截图不能批准。提交门禁仅在已安装的钩子启用且受信任时生效；仍需准备浏览器、移动 SDK 和设备。
+使用 `$ux-ui:build` 或 `$ux-ui:build-mobile`。Codex 发现相同四个 MCP 服务器实际提供的工具，并按随附的艺术总监指令执行独立只读评审。评审使用主会话所属系列的最新模型和主会话的推理设置，Claude 艺术总监仍使用 Opus。共享实测要求、后端选择、三轮上限及绑定暂存 diff 的批准。没有截图不能批准。提交门禁仅在已安装的钩子启用且受信任时生效；仍需准备浏览器、移动 SDK 和设备。
 
 ### Codex 设置
 
-两端共享流程、产物和评审标准。Codex 评审模型可配置，但不代表其输出或质量与 Claude 相同。启动 Codex 前设置以下环境变量，省略的值继承当前会话。委派的 CLI 使用 `CXC_MODE=off`，主会话模式保持不变。
+两端共享流程、产物和评审标准。Codex 评审模型可配置，但不代表其输出或质量与 Claude 相同。启动 Codex 前设置以下环境变量。省略模型时使用当前会话所属系列的最新模型；已设置的值可以是系列名或模型 ID，并会提升到该系列的最新模型。委派的 CLI 使用 `CXC_MODE=off`，主会话模式保持不变。如果无法确定最新模型（例如沙箱无法刷新目录时，技能会先请求在沙箱外重新运行检查），该步骤会说明原因并停止，不会回退到其他模型。Codex 会话无法查看自身模型或所属系列时，会请求你设置该变量。在 Claude Code 中，若 `ANTHROPIC_DEFAULT_<FAMILY>_MODEL` 别名被重定向到其他模型，该步骤也会停止。
 
 | 设置 | 行为 |
 |---|---|
-| `UX_UI_CODEX_REVIEW_MODEL` | Web/移动评审者 模型；默认：当前会话模型 |
+| `UX_UI_CODEX_REVIEW_MODEL` | Web/移动评审者 模型；默认：当前会话所属系列的最新模型 |
 | `UX_UI_CODEX_REVIEW_EFFORT` | Web/移动评审者 推理强度；默认：当前会话推理强度 |
 
 `UX_UI_GLOBS` 在两端指定相同的 UI 文件范围。Codex 支持单独配置内置 MCP，例如按下方示例禁用不用的 Flutter。请单独检查 `/hooks` 信任。缺少捕获或审计工具时，不会将检查记为完成。
@@ -157,6 +157,7 @@ plugins/ux-ui/
 ├── .claude-plugin/plugin.json          # 清单 + 内置 MCP (chrome-devtools, mobile-mcp, ios-simulator, flutter)
 ├── hooks/hooks.json                    # PreToolUse → 提交门禁
 ├── scripts/
+│   ├── latest-model.py                 # 艺术总监的最新模型解析器
 │   ├── ui-commit-gate.sh               # 门禁: hash | approve <feature> [dir] | hook-block (Web + 移动端文件类型)
 │   └── mobile-snapshot.sh              # CLI 快照 harness: doctor | capture <ios|android> <dir> <label>
 ├── agents/

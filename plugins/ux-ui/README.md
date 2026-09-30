@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.3.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.4.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -48,15 +48,15 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add ux-ui@bin
 ```
 
-Use `$ux-ui:build` or `$ux-ui:build-mobile`. Codex discovers the actual tools for the same four MCP servers and runs independent read-only reviewers using the bundled art-director instructions. Reviewers inherit the main model/effort; Claude art directors remain Opus. Measurement requirements, backend selection, the three-cycle cap and staged-diff approval are shared. Missing screenshots cannot receive approval. The UI gate works only when the installed hook is active and trusted. Browser and mobile SDK/device prerequisites still apply.
+Use `$ux-ui:build` or `$ux-ui:build-mobile`. Codex discovers the actual tools for the same four MCP servers and runs independent read-only reviewers using the bundled art-director instructions. Reviewers use the newest model of the main session's family and inherit its effort; Claude art directors remain Opus. Measurement requirements, backend selection, the three-cycle cap and staged-diff approval are shared. Missing screenshots cannot receive approval. The UI gate works only when the installed hook is active and trusted. Browser and mobile SDK/device prerequisites still apply.
 
 ### Codex settings
 
-The workflow, artifacts and review criteria are shared. Codex reviewer models are configurable; this does not claim identical outputs or quality to Claude models. Set these environment variables before starting Codex; omitted values inherit the current session. Delegated CLI processes use `CXC_MODE=off`, leaving the main mode unchanged.
+The workflow, artifacts and review criteria are shared. Codex reviewer models are configurable; this does not claim identical outputs or quality to Claude models. Set these environment variables before starting Codex; omitted model values use the newest model of the current session's family. A set model value may name a family or model id and is raised to that family's newest model. Delegated CLI processes use `CXC_MODE=off`, leaving the main mode unchanged. If the newest model cannot be determined (for example, if a sandbox cannot refresh the catalog, the skill first asks to rerun that check outside the sandbox), the step stops and explains why instead of falling back. A Codex session that cannot see its own model or family asks you to set the variable. On Claude Code, a redirected `ANTHROPIC_DEFAULT_<FAMILY>_MODEL` alias also stops the step.
 
 | Setting | Behavior |
 |---|---|
-| `UX_UI_CODEX_REVIEW_MODEL` | Web/mobile reviewer model; default: current session model |
+| `UX_UI_CODEX_REVIEW_MODEL` | Web/mobile reviewer model; default: newest model of the current session's family |
 | `UX_UI_CODEX_REVIEW_EFFORT` | Web/mobile reviewer reasoning effort; default: current session effort |
 
 `UX_UI_GLOBS` controls the same UI file set on both hosts. Configure bundled MCP servers individually in Codex; for example, disable unused Flutter tooling as shown below. Review `/hooks` trust separately. Missing capture or audit tools remain an explicit incomplete check.
@@ -157,6 +157,7 @@ plugins/ux-ui/
 ├── .claude-plugin/plugin.json          # manifest + bundled MCPs (chrome-devtools, mobile-mcp, ios-simulator, flutter)
 ├── hooks/hooks.json                    # PreToolUse → commit gate
 ├── scripts/
+│   ├── latest-model.py                 # newest-model resolver for the art directors
 │   ├── ui-commit-gate.sh               # gate: hash | approve <feature> [dir] | hook-block (web + mobile types)
 │   └── mobile-snapshot.sh              # CLI snapshot harness: doctor | capture <ios|android> <dir> <label>
 ├── agents/

@@ -67,7 +67,7 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the harness README →](plugins/harness)
 
-### [ux-ui](plugins/ux-ui) · `v1.3.0`
+### [ux-ui](plugins/ux-ui) · `v1.4.0`
 
 **Build web and mobile UI measured on the real render.** It captures real screenshots (chrome-devtools for web; a mobile MCP or CLI snapshot harness for React Native / Flutter / iOS / Android), has an art-director agent critique those measured snapshots, iterates until the UI is correct and elegant, and blocks `git commit` of UI until the exact staged diff is APPROVED.
 

@@ -76,6 +76,28 @@ If you changed the extensions, run it once more with a file of that extension.
   CLI reviewers use `CXC_MODE=off`; native reviewers receive the same delegated role.
   Missing or disabled MCP backends must remain visible in the measurement report.
 
+## Rule 6 — Every art director runs the newest model of its family
+
+Web and mobile directors run the newest model of their family that the installed CLI and account offer, resolved right
+before each dispatch (each retry too) with `scripts/latest-model.py` (byte-identical in every plugin). The maintainer
+upgrades the CLIs; the plugin only chooses the newest available model.
+
+- Codex: `UX_UI_CODEX_REVIEW_MODEL` names a family or an id and is resolved to its family's newest; unset, the main
+  session's model id is used. The command lives in `skills/build/references/host-codex.md`.
+- Claude Code: the agents keep `model: opus`; both SKILL.md files run the resolver's `claude` mode first, because an
+  `ANTHROPIC_DEFAULT_OPUS_MODEL` override would silently run an older model.
+- Exit 2 or 3 stops the step: no fallback model, and the main agent never reviews the render itself.
+- Write no versioned model id in a skill, reference, agent or script — use placeholders (`<resolved id>`); a pin-scan test fails on one.
+- Record the id that ran with the review, taken from the run (Codex run header `model:`, a native reviewer's receipt), never from the reviewer's report.
+
+**Why:** measured in z-lab `plugin-platform-lab/latest-model-0.159.0/` (L01–L07) and
+`latest-model-r2-0.159.0/`, `-r3-`, `-r4-` (L04r–L09, L02x; L08/L08i: a sandboxed shell cannot refresh the catalog,
+so a sandboxed main reruns the resolver outside the sandbox before stopping): the live Codex catalog listed a newer model than the
+bundled one, `-m <resolved id>` ran it, an `ANTHROPIC_DEFAULT_SONNET_MODEL` override made the `sonnet` alias run Haiku (measured for
+`sonnet` only; the resolver applies the same check to `opus`), and a Codex agent's
+statement of its own model was wrong (plan-smith-lab N03). Wired skill: z-lab `ux-ui-lab/latest-model-1.4.0/` (R01, R02; R01: from a sandboxed Codex main the separate `codex exec`
+director route could not start).
+
 ## Codex compatibility evidence — 1.3.0
 
 See z-lab `ux-ui-lab/codex-compat-1.3.0/` and `codex-compat-1.3.0-full-access/` (U01–U03) and the shared

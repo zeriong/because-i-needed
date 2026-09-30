@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.3.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.4.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -48,15 +48,15 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add ux-ui@bin
 ```
 
-使用 `$ux-ui:build` 或 `$ux-ui:build-mobile`。Codex 發現相同四個 MCP 伺服器實際提供的工具，並按隨附的藝術總監指令執行獨立唯讀評審。評審繼承主代理的模型和推理設定，Claude 藝術總監仍使用 Opus。共用實測要求、後端選擇、三輪上限及綁定暫存 diff 的批准。沒有截圖不能批准。提交閘門僅在已安裝的掛鉤啟用且受信任時生效；仍需準備瀏覽器、行動 SDK 和裝置。
+使用 `$ux-ui:build` 或 `$ux-ui:build-mobile`。Codex 發現相同四個 MCP 伺服器實際提供的工具，並按隨附的藝術總監指令執行獨立唯讀評審。評審使用主工作階段所屬系列的最新模型和主工作階段的推理設定，Claude 藝術總監仍使用 Opus。共用實測要求、後端選擇、三輪上限及綁定暫存 diff 的批准。沒有截圖不能批准。提交閘門僅在已安裝的掛鉤啟用且受信任時生效；仍需準備瀏覽器、行動 SDK 和裝置。
 
 ### Codex 設定
 
-兩端共用流程、產物與審查標準。Codex 審查模型可以設定，但不代表其輸出或品質與 Claude 相同。啟動 Codex 前設定以下環境變數，省略的值繼承目前工作階段。委派的 CLI 使用 `CXC_MODE=off`，主工作階段模式保持不變。
+兩端共用流程、產物與審查標準。Codex 審查模型可以設定，但不代表其輸出或品質與 Claude 相同。啟動 Codex 前設定以下環境變數。省略模型時使用目前工作階段所屬系列的最新模型；已設定的值可以是系列名稱或模型 ID，並會提升至該系列的最新模型。委派的 CLI 使用 `CXC_MODE=off`，主工作階段模式保持不變。若無法判定最新模型（例如沙箱無法重新整理目錄時，技能會先要求在沙箱外重新執行檢查），該步驟會說明原因並停止，不會改用其他模型。Codex 工作階段無法查看自身模型或所屬系列時，會要求你設定該變數。在 Claude Code 中，若 `ANTHROPIC_DEFAULT_<FAMILY>_MODEL` 別名被重新導向至其他模型，該步驟也會停止。
 
 | 設定 | 行為 |
 |---|---|
-| `UX_UI_CODEX_REVIEW_MODEL` | Web/行動評審者 模型；預設：目前工作階段模型 |
+| `UX_UI_CODEX_REVIEW_MODEL` | Web/行動評審者 模型；預設：目前工作階段所屬系列的最新模型 |
 | `UX_UI_CODEX_REVIEW_EFFORT` | Web/行動評審者 推理強度；預設：目前工作階段推理強度 |
 
 `UX_UI_GLOBS` 在兩端指定相同的 UI 檔案範圍。Codex 支援個別設定內建 MCP，例如依下方範例停用未使用的 Flutter。請另行確認 `/hooks` 信任。缺少擷取或稽核工具時，不會將檢查記為完成。
@@ -157,6 +157,7 @@ plugins/ux-ui/
 ├── .claude-plugin/plugin.json          # manifest + 隨附的 MCP（chrome-devtools、mobile-mcp、ios-simulator、flutter）
 ├── hooks/hooks.json                    # PreToolUse → 提交閘門
 ├── scripts/
+│   ├── latest-model.py                 # 藝術總監的最新模型解析器
 │   ├── ui-commit-gate.sh               # 閘門：hash | approve <feature> [dir] | hook-block（Web + 行動裝置類型）
 │   └── mobile-snapshot.sh              # CLI 快照 harness：doctor | capture <ios|android> <dir> <label>
 ├── agents/
