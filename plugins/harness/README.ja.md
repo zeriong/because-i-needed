@@ -2,6 +2,8 @@
   <strong>harness</strong>
 </p>
 
+<p align="center"><strong>Claude Code</strong> と <strong>Codex CLI</strong> でのみ動作します。</p>
+
 <p align="center">
   <strong>プロジェクトに合わせた Claude Code ハーネスを構築します — テンプレートではなく、事実に基づく分析から。</strong>
 </p>

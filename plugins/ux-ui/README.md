@@ -2,6 +2,8 @@
   <strong>ux-ui</strong>
 </p>
 
+<p align="center">Works only with <strong>Claude Code</strong> and <strong>Codex CLI</strong>.</p>
+
 <p align="center">
   <strong>Build web and mobile UI the way a studio ships it — measured on the real render, critiqued by an art director, gated at commit.</strong>
 </p>

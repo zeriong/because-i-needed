@@ -2,6 +2,8 @@
   <strong>ux-ui</strong>
 </p>
 
+<p align="center">僅適用於 <strong>Claude Code</strong> 和 <strong>Codex CLI</strong>。</p>
+
 <p align="center">
   <strong>像設計工作室交付作品那樣打造 Web 與行動 UI——以真實渲染實測、由藝術總監評論、在提交時把關。</strong>
 </p>

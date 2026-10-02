@@ -1,5 +1,7 @@
 <p align="center"><strong>free-hands</strong></p>
 
+<p align="center">僅適用於 <strong>Claude Code</strong> 和 <strong>Codex CLI</strong>。</p>
+
 <p align="center"><strong>交給代理一個有限目標，它就會不提問、不停止地完成清單。</strong></p>
 
 <p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="授權：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 外掛"></a></p>

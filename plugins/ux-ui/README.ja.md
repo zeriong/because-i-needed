@@ -2,6 +2,8 @@
   <strong>ux-ui</strong>
 </p>
 
+<p align="center"><strong>Claude Code</strong> と <strong>Codex CLI</strong> でのみ動作します。</p>
+
 <p align="center">
   <strong>スタジオが出荷するように Web とモバイルの UI を作ります — 実際のレンダリングで計測し、アートディレクターが批評し、コミット時にゲートで守ります。</strong>
 </p>

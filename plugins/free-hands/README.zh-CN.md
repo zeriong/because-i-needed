@@ -1,5 +1,7 @@
 <p align="center"><strong>free-hands</strong></p>
 
+<p align="center">仅适用于 <strong>Claude Code</strong> 和 <strong>Codex CLI</strong>。</p>
+
 <p align="center"><strong>给智能体一个有限目标，它就会不提问、不停下地完成清单。</strong></p>
 
 <p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="许可证：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 插件"></a></p>

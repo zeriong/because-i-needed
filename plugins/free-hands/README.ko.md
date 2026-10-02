@@ -1,5 +1,7 @@
 <p align="center"><strong>free-hands</strong></p>
 
+<p align="center"><strong>Claude Code</strong>와 <strong>Codex CLI</strong>에서만 동작합니다.</p>
+
 <p align="center"><strong>에이전트에게 유한한 목표를 주면 체크리스트를 질문하거나 멈추지 않고 처리합니다.</strong></p>
 
 <p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="버전"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="라이선스: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 플러그인"></a></p>
