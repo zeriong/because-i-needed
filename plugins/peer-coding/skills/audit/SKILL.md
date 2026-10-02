@@ -1,13 +1,13 @@
 ---
 name: audit
-description: "Read-only check of whether Claude and Codex would start from the same project context in this repo — instruction files (CLAUDE.md / AGENTS.md), hooks that bind only one vendor, uncommitted context missing from worktrees, and tools configured for one side only. Use when the user asks to audit or check claude-x-codex readiness, cross-vendor context, or \"why does Codex not follow our rules\", or runs /claude-x-codex:audit. Changes nothing; proposes fixes."
+description: "Read-only check of whether Claude and Codex would start from the same project context in this repo — instruction files (CLAUDE.md / AGENTS.md), hooks that bind only one vendor, uncommitted context missing from worktrees, and tools configured for one side only. Use when the user asks to audit or check peer-coding readiness, cross-vendor context, or \"why does Codex not follow our rules\", or runs /peer-coding:audit. Changes nothing; proposes fixes."
 argument-hint: "[path to repo — defaults to the current one]"
 ---
 
-# claude-x-codex: audit
+# peer-coding: audit
 
-Claude Code invokes `/claude-x-codex:audit`; Codex invokes
-`$claude-x-codex:audit`. `<plugin>` is `${CLAUDE_PLUGIN_ROOT}` when
+Claude Code invokes `/peer-coding:audit`; Codex invokes
+`$peer-coding:audit`. `<plugin>` is `${CLAUDE_PLUGIN_ROOT}` when
 expanded by Claude Code, or the absolute path two directories above this skill's
 directory on Codex. Resolve it from the loaded SKILL.md path, not the working directory.
 
@@ -68,4 +68,4 @@ before interpreting results.
      smallest fix for each.
 
 Ask which proposals to apply. Apply nothing in this skill; approved fixes are made
-by the user or by `claude-x-codex:run` at its plan-approval step.
+by the user or by `peer-coding:run` at its plan-approval step.

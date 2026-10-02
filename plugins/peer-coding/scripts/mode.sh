@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# claude-x-codex mode flag: one line, `mode=on` or `mode=off`.
+# peer-coding mode flag: one line, `mode=on` or `mode=off`.
 #
 # Resolution order (first match wins):
 #   1. CXC_MODE env var            (on|off) — per-shell override
@@ -53,7 +53,7 @@ case "$cmd" in
     ;;
   status)
     read -r value source <<<"$(resolve)"
-    echo "claude-x-codex mode: $value (source: $source)"
+    echo "peer-coding mode: $value (source: $source)"
     echo '  invoke skills with / in Claude Code or $ in Codex'
     g="$(read_flag "$USER_FILE")"; p="$(read_flag "$PROJECT_FILE")"
     echo "  project: ${p:-unset}   global: ${g:-unset}"
@@ -61,15 +61,15 @@ case "$cmd" in
       env:*)
         echo "  hint: CXC_MODE overrides both files — unset it in this shell to use them" ;;
       "$PROJECT_FILE")
-        echo "  hint: this project overrides global — 'claude-x-codex:mode clear' to follow global" ;;
+        echo "  hint: this project overrides global — 'peer-coding:mode clear' to follow global" ;;
       "$USER_FILE")
         if [ "$value" = "on" ]; then
-          echo "  hint: disable everywhere: 'claude-x-codex:mode off --global'  ·  this project only: 'claude-x-codex:mode off'"
+          echo "  hint: disable everywhere: 'peer-coding:mode off --global'  ·  this project only: 'peer-coding:mode off'"
         else
-          echo "  hint: enable everywhere: 'claude-x-codex:mode on --global'  ·  this project only: 'claude-x-codex:mode on'"
+          echo "  hint: enable everywhere: 'peer-coding:mode on --global'  ·  this project only: 'peer-coding:mode on'"
         fi ;;
       default)
-        echo "  hint: 'claude-x-codex:mode on' for this project, '--global' for every project" ;;
+        echo "  hint: 'peer-coding:mode on' for this project, '--global' for every project" ;;
     esac
     ;;
   on|off)
@@ -78,16 +78,16 @@ case "$cmd" in
     echo "mode=$cmd" > "$file"
     [ "$file" = "$PROJECT_FILE" ] && exclude_state_dir
     read -r value source <<<"$(resolve)"
-    echo "claude-x-codex mode: set $cmd in $file → effective: $value (source: $source)"
+    echo "peer-coding mode: set $cmd in $file → effective: $value (source: $source)"
     if [ "$file" = "$USER_FILE" ] && [ "$value" != "$cmd" ]; then
-      echo "  note: still $value here because $source overrides global — 'claude-x-codex:mode clear' to follow global"
+      echo "  note: still $value here because $source overrides global — 'peer-coding:mode clear' to follow global"
     fi
     ;;
   clear)
     file="$(target_file "${1:-}")"
     rm -f "$file"
     read -r value source <<<"$(resolve)"
-    echo "claude-x-codex mode: cleared $file → effective: $value (source: $source)"
+    echo "peer-coding mode: cleared $file → effective: $value (source: $source)"
     ;;
   *)
     echo "usage: mode.sh get | status | on|off [--global] | clear [--global]" >&2

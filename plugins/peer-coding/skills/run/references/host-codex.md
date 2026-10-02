@@ -2,7 +2,7 @@
 
 You are a Codex model. Your vendor is OpenAI.
 
-Invoke `$claude-x-codex:run` on Codex. The three sibling skills and shared scripts
+Invoke `$peer-coding:run` on Codex. The three sibling skills and shared scripts
 ship together; resolve `<plugin>` from the loaded skill path as defined in SKILL.md.
 The mode hook uses the shared `hooks/hooks.json`; review/trust it with `/hooks` for
 automatic routing. Explicit `run` works independently of the prompt hook.

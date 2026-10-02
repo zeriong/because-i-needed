@@ -129,7 +129,7 @@ suggest registering it for the other vendor too — as a proposal to the user.
 
 ## When to run the audit
 
-The user can run it on its own with `/claude-x-codex:audit`; `run` also runs it:
+The user can run it on its own with `/peer-coding:audit`; `run` also runs it:
 
 - on the first run in a repo, and whenever `plan.md` is created for a new feature;
 - after the host changes (Claude Code ↔ Codex), since which side is "native" flips.

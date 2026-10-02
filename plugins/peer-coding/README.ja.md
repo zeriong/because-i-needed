@@ -1,13 +1,15 @@
 <p align="center">
-  <strong>claude-x-codex</strong>
+  <strong>peer-coding</strong>
 </p>
+
+<p align="center"><strong>Claude Code</strong> と <strong>Codex CLI</strong> でのみ動作します。</p>
 
 <p align="center">
   <strong>Claude × Codex のピアオーケストレーション — 2 つのエージェントが同僚として、互いの計画・実装・レビューを担います。</strong>
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.1-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.0.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -34,9 +36,9 @@
 
 ---
 
-**C**laude **×** **C**odex のピアオーケストレーションです。土台の異なる 2 つのエージェントは異なる形で間違えるため、それぞれが相手の作業をレビューします — メインエージェント自身の計画も例外ではありません。意見が分かれたときに判定するのは、役割ではなくテストです。
+Claude × Codex のピアオーケストレーションです。土台の異なる 2 つのエージェントは異なる形で間違えるため、それぞれが相手の作業をレビューします — メインエージェント自身の計画も例外ではありません。意見が分かれたときに判定するのは、役割ではなくテストです。
 
-claude-x-codex は非公式のコミュニティプラグインです。Anthropic や OpenAI が作成・保証・サポートしているものではありません。
+peer-coding は非公式のコミュニティプラグインです。Anthropic や OpenAI が作成・保証・サポートしているものではありません。
 
 ## Codex
 
@@ -44,10 +46,10 @@ Codex CLI 0.158.0 以降が必要です。インストール後、新しいセ�
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add claude-x-codex@because-i-needed
+codex plugin add peer-coding@because-i-needed
 ```
 
-`$claude-x-codex:run`、`$claude-x-codex:mode on|off|status|clear`、`$claude-x-codex:audit` を使います。モード操作は両ホストともユーザーの明示的な要求が必要です。Codex をメインにでき、既存の Codex アダプターがベンダー間レビューを維持します。監査は `.codex/hooks.json` と未コミットの `.codex/`、`.agents/` も対象です。自動モードには UserPromptSubmit フックの信頼が必要ですが、明示的な run はフックに依存しません。Codex がメインの場合、ベンダー間作業には Claude CLI が必要で、なければ既存の単一ベンダー経路を使います。
+`$peer-coding:run`、`$peer-coding:mode on|off|status|clear`、`$peer-coding:audit` を使います。モード操作は両ホストともユーザーの明示的な要求が必要です。Codex をメインにでき、既存の Codex アダプターがベンダー間レビューを維持します。監査は `.codex/hooks.json` と未コミットの `.codex/`、`.agents/` も対象です。自動モードには UserPromptSubmit フックの信頼が必要ですが、明示的な run はフックに依存しません。Codex がメインの場合、ベンダー間作業には Claude CLI が必要で、なければ既存の単一ベンダー経路を使います。
 
 ### Codex 設定
 
@@ -59,9 +61,9 @@ codex plugin add claude-x-codex@because-i-needed
 
 | コマンド | 内容 |
 |---|---|
-| `/claude-x-codex:run` | タスクをオーケストレーションします。メインエージェントが計画してすべてのゲートを判断し、作業を `claude-fast` / `codex-bulk` / `main` のレーンに振り分け、各ベンダーに相手ベンダーの作業をレビューさせます |
-| `/claude-x-codex:mode on\|off\|status\|clear [--global]` | 自動オーケストレーションをオン / オフする 1 行のスイッチです。ユーザー専用で、モデルは切り替えられません |
-| `/claude-x-codex:audit` | 両ベンダーが同じプロジェクトの文脈から始められるかを読み取り専用で点検します。修正案を提案するだけで、何も変更しません |
+| `/peer-coding:run` | タスクをオーケストレーションします。メインエージェントが計画してすべてのゲートを判断し、作業を `claude-fast` / `codex-bulk` / `main` のレーンに振り分け、各ベンダーに相手ベンダーの作業をレビューさせます |
+| `/peer-coding:mode on\|off\|status\|clear [--global]` | 自動オーケストレーションをオン / オフする 1 行のスイッチです。ユーザー専用で、モデルは切り替えられません |
+| `/peer-coding:audit` | 両ベンダーが同じプロジェクトの文脈から始められるかを読み取り専用で点検します。修正案を提案するだけで、何も変更しません |
 
 `on`・`off` はこのプロジェクトのフラグ（`.claude-x-codex/mode`、git から除外）を書き込み、`--global` はすべてのプロジェクトに適用される既定値（`~/.config/claude-x-codex/mode`）を書き込みます。`clear` はプロジェクトのフラグを削除し、`CXC_MODE=on|off` は 1 つのシェルで両方より優先されます。モードがオフのとき、`run` は依頼されたときだけ開始します。
 
@@ -72,13 +74,13 @@ codex plugin add claude-x-codex@because-i-needed
 1. Claude Code で `/plugin` を実行します。
 2. Marketplaces → Add Marketplace。
 3. URL を入力します: `https://github.com/zeriong/because-i-needed.git`（またはこのリポジトリのローカルパス）。
-4. `claude-x-codex` をインストールします。
+4. `peer-coding` をインストールします。
 
 ### または CLI から
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git   # またはローカルパス
-claude plugin install claude-x-codex@because-i-needed
+claude plugin install peer-coding@because-i-needed
 ```
 
 ### または `~/.claude/settings.json` に直接記述
@@ -90,7 +92,7 @@ claude plugin install claude-x-codex@because-i-needed
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "claude-x-codex@because-i-needed": true }
+  "enabledPlugins": { "peer-coding@because-i-needed": true }
 }
 ```
 

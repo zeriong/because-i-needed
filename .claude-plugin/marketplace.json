@@ -4,8 +4,8 @@
     "name": "zeriong"
   },
   "metadata": {
-    "description": "Claude Code plugins built because I needed them — harness, ux-ui, claude-x-codex, free-hands",
-    "version": "3.1.0"
+    "description": "Claude Code plugins built because I needed them — harness, ux-ui, peer-coding, free-hands",
+    "version": "4.0.0"
   },
   "plugins": [
     {
@@ -51,10 +51,10 @@
       "category": "development"
     },
     {
-      "name": "claude-x-codex",
-      "source": "./plugins/claude-x-codex",
+      "name": "peer-coding",
+      "source": "./plugins/peer-coding",
       "description": "Claude × Codex peer orchestration: the two plan, build, and review each other's work as peers, with evidence-based triage, a rebuttal round, and shared project context across both vendors. Unofficial community plugin. (adds a UserPromptSubmit hook; silent when mode is off)",
-      "version": "0.3.1",
+      "version": "1.0.0",
       "author": {
         "name": "zeriong"
       },

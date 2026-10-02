@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.0.0] - 2026-10-02
+
+### Changed
+
+- Renamed from `claude-x-codex` to `peer-coding`. Commands are now `/peer-coding:run`, `/peer-coding:mode` and
+  `/peer-coding:audit` (Codex `$peer-coding:…`), the install id is `peer-coding@because-i-needed`, and the mode note
+  reads `[peer-coding: ON]`. Behavior is unchanged.
+- Kept under the old name, because existing setups already use them: the state folder `.claude-x-codex/`, the user flag
+  `~/.config/claude-x-codex/mode`, and the `CXC_*` variables. An existing mode setting still applies.
+
+### Why
+
+Claude Code 2.1.287 rejects plugin names that start with `claude-` ("Plugin name \"claude-x-codex\" is reserved"), so
+the marketplace no longer validated. MAJOR because the install id and every command change. Existing installs move by
+updating the marketplace, uninstalling the old plugin and installing the new one:
+
+```bash
+claude plugin marketplace update because-i-needed
+claude plugin uninstall claude-x-codex@because-i-needed
+claude plugin install peer-coding@because-i-needed
+# Codex
+codex plugin marketplace upgrade
+codex plugin remove claude-x-codex@because-i-needed
+codex plugin add peer-coding@because-i-needed
+```
+
+No experiment: a rename is a packaging change (root Rule 9).
+
 ## [0.3.1] - 2026-09-30
 
 ### Changed

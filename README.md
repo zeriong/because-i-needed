@@ -2,6 +2,8 @@
   <strong>because-i-needed</strong>
 </p>
 
+<p align="center">Works only with <strong>Claude Code</strong> and <strong>Codex CLI</strong>.</p>
+
 <p align="center">
   <strong>Claude Code and Codex plugins I built because I needed them — project harnesses, measured UI, Claude × Codex orchestration, and autonomous goal runs.</strong>
 </p>
@@ -28,7 +30,7 @@ This repository is a Claude Code and Codex **plugin marketplace** with four inde
 The same four plugins also support Codex CLI 0.158.0 or later. Install a chosen subset:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,claude-x-codex,free-hands
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands
 ```
 
 Or use the CLI directly:
@@ -37,11 +39,11 @@ Or use the CLI directly:
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add harness@because-i-needed
 codex plugin add ux-ui@because-i-needed
-codex plugin add claude-x-codex@because-i-needed
+codex plugin add peer-coding@because-i-needed
 codex plugin add free-hands@because-i-needed
 ```
 
-Start a new Codex session and invoke `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$claude-x-codex:run`, or `$free-hands:run`. Use `$claude-x-codex:mode on` for automatic orchestration and `$claude-x-codex:audit` to inspect context parity. Review and trust installed hooks with `/hooks` before relying on automatic routing, the UI commit gate, or free-hands enforcement.
+Start a new Codex session and invoke `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$peer-coding:run`, or `$free-hands:run`. Use `$peer-coding:mode on` for automatic orchestration and `$peer-coding:audit` to inspect context parity. Review and trust installed hooks with `/hooks` before relying on automatic routing, the UI commit gate, or free-hands enforcement.
 
 The installer defaults to Claude Code; `--host codex` selects Codex. Codex installs at user scope: omit `--scope` or use `--scope user`; project/local scope is rejected. Skills, scripts and workflow contracts are shared; each plugin includes a Codex manifest. Codex execution uses its own questions and independent agents. The harness generates `.codex/hooks.json`, `.codex/hooks/`, `.codex/scripts/review-gate.sh`, `.codex/scripts/latest-model.py` and `.agents/skills/`; existing Claude artifacts are preserved. UI measurement still requires the relevant browser/mobile tools. See each plugin's Codex section for details.
 
@@ -68,15 +70,15 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the ux-ui README →](plugins/ux-ui)
 
-### [claude-x-codex](plugins/claude-x-codex) · `v0.3.1`
+### [peer-coding](plugins/peer-coding) · `v1.0.0`
 
 **Claude × Codex peer orchestration.** The main agent plans and owns every gate, routes work to fast Claude or bulk Codex workers, and the two vendors review each other's work — the main agent's own plan included — with one rebuttal round and evidence, not role, deciding. An audit makes sure both vendors start from the same project instructions. Unofficial community plugin.
 
 - **Use it when** you have both Claude Code and Codex and want a second vendor's review on every phase of a feature.
-- **Entry:** `/claude-x-codex:run`, or turn on `/claude-x-codex:mode on` so implementation requests go through it
+- **Entry:** `/peer-coding:run`, or turn on `/peer-coding:mode on` so implementation requests go through it
 - **Heads-up:** installing it registers a `UserPromptSubmit` hook (runs on every prompt, prints nothing while the mode is off).
 
-[Read the claude-x-codex README →](plugins/claude-x-codex)
+[Read the peer-coding README →](plugins/peer-coding)
 
 ### [free-hands](plugins/free-hands) · `v0.1.0`
 
@@ -115,7 +117,7 @@ Or add the marketplace yourself, then install the plugins you want:
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
 claude plugin install harness@because-i-needed
 claude plugin install ux-ui@because-i-needed
-claude plugin install claude-x-codex@because-i-needed
+claude plugin install peer-coding@because-i-needed
 claude plugin install free-hands@because-i-needed
 ```
 
@@ -133,7 +135,7 @@ Or wire it directly in `~/.claude/settings.json`:
   "enabledPlugins": {
     "harness@because-i-needed": true,
     "ux-ui@because-i-needed": true,
-    "claude-x-codex@because-i-needed": true,
+    "peer-coding@because-i-needed": true,
     "free-hands@because-i-needed": true
   }
 }
@@ -154,6 +156,20 @@ codex plugin marketplace remove bin
 ```
 
 Settings keyed by the old id (`<plugin>@bin`) do not carry over.
+
+### Installed claude-x-codex before?
+
+The plugin `claude-x-codex` is now `peer-coding` (1.0.0): Claude Code reserves plugin names that start with `claude-`. Commands change from `/claude-x-codex:…` to `/peer-coding:…` (Codex `$peer-coding:…`). Update the marketplace, uninstall the old plugin, then install `peer-coding` as above:
+
+```bash
+claude plugin marketplace update because-i-needed
+claude plugin uninstall claude-x-codex@because-i-needed
+# Codex
+codex plugin marketplace upgrade
+codex plugin remove claude-x-codex@because-i-needed
+```
+
+The mode flag (`.claude-x-codex/mode`, `~/.config/claude-x-codex/mode`) and the `CXC_*` variables keep their names, so an existing setting still applies. In a project's `.claude/settings.json`, rename `claude-x-codex@because-i-needed` to `peer-coding@because-i-needed`; a run in `.claude-x-codex/<feature>/` resumes with `/peer-coding:run`.
 
 ## Naming
 
@@ -183,7 +199,7 @@ because-i-needed/
 └── plugins/
     ├── harness/                      # skill
     ├── ux-ui/                        # 2 skills + 2 agents + commit-gate hook + 4 MCPs
-    ├── claude-x-codex/               # 3 skills + prompt hook + 3 scripts
+    ├── peer-coding/                  # 3 skills + prompt hook + 3 scripts
     └── free-hands/                   # 1 skill + 5 agents + 4 hooks + 3 scripts
 ```
 

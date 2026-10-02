@@ -95,7 +95,7 @@ class HarnessResolverInstallTests(unittest.TestCase):
 class CodexAdapterWiringTests(unittest.TestCase):
     def test_each_plugin_ships_the_same_resolver(self):
         expected = RESOLVER.read_bytes()
-        for name in ("ux-ui", "harness", "claude-x-codex"):
+        for name in ("ux-ui", "harness", "peer-coding"):
             self.assertEqual((ROOT / "plugins" / name / "scripts/latest-model.py").read_bytes(), expected, name)
 
     def test_adapters_resolve_the_newest_model_before_dispatch(self):
@@ -160,12 +160,12 @@ class PluginPathQuotingTests(unittest.TestCase):
 
     def test_documented_resolver_line_runs_from_a_path_with_spaces(self):
         root = Path(__file__).resolve().parents[1]
-        doc = (root / "plugins/claude-x-codex/skills/run/references/transport-standalone.md").read_text()
+        doc = (root / "plugins/peer-coding/skills/run/references/transport-standalone.md").read_text()
         line = next(l for l in doc.splitlines() if 'latest-model.py" claude "${CXC_CLAUDE_WORKER' in l)
         with tempfile.TemporaryDirectory(prefix="plugin root ") as temp:
-            plugin = Path(temp) / "Application Support" / "claude-x-codex"
+            plugin = Path(temp) / "Application Support" / "peer-coding"
             (plugin / "scripts").mkdir(parents=True)
-            shutil.copy2(root / "plugins/claude-x-codex/scripts/latest-model.py", plugin / "scripts")
+            shutil.copy2(root / "plugins/peer-coding/scripts/latest-model.py", plugin / "scripts")
             env = {k: v for k, v in os.environ.items() if not k.startswith(("ANTHROPIC_DEFAULT_", "CXC_"))}
             env.update(HOME=temp, CLAUDE_CONFIG_DIR=str(Path(temp) / "cfg"),
                        LATEST_MODEL_MANAGED_SETTINGS=str(Path(temp) / "managed.json"))

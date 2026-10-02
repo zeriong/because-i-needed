@@ -1,13 +1,15 @@
 <p align="center">
-  <strong>claude-x-codex</strong>
+  <strong>peer-coding</strong>
 </p>
+
+<p align="center">僅適用於 <strong>Claude Code</strong> 和 <strong>Codex CLI</strong>。</p>
 
 <p align="center">
   <strong>Claude × Codex 同儕編排——兩個代理以同儕身分互相規劃、實作與審查彼此的工作。</strong>
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.1-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.0.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -34,9 +36,9 @@
 
 ---
 
-**C**laude **×** **C**odex 同儕編排。基礎不同的兩個代理會以不同的方式出錯，所以它們互相審查對方的工作——主代理自己的計畫也不例外。兩者意見分歧時，由測試而不是角色來裁定。
+Claude × Codex 同儕編排。基礎不同的兩個代理會以不同的方式出錯，所以它們互相審查對方的工作——主代理自己的計畫也不例外。兩者意見分歧時，由測試而不是角色來裁定。
 
-claude-x-codex 是非官方的社群外掛，並非由 Anthropic 或 OpenAI 製作、認可或提供支援。
+peer-coding 是非官方的社群外掛，並非由 Anthropic 或 OpenAI 製作、認可或提供支援。
 
 ## Codex
 
@@ -44,10 +46,10 @@ claude-x-codex 是非官方的社群外掛，並非由 Anthropic 或 OpenAI 製�
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add claude-x-codex@because-i-needed
+codex plugin add peer-coding@because-i-needed
 ```
 
-使用 `$claude-x-codex:run`、`$claude-x-codex:mode on|off|status|clear` 和 `$claude-x-codex:audit`。兩個宿主的模式操作都需要使用者明確要求。Codex 可以擔任主代理，既有 Codex 配接器保持跨廠商評審。稽核包含 `.codex/hooks.json` 及未提交的 `.codex/`、`.agents/` 上下文。自動模式需要信任 UserPromptSubmit 掛鉤，明確呼叫 run 不依賴它。Codex 為主代理時，跨廠商工作需要 Claude CLI；缺少時使用既有單廠商備用路徑。
+使用 `$peer-coding:run`、`$peer-coding:mode on|off|status|clear` 和 `$peer-coding:audit`。兩個宿主的模式操作都需要使用者明確要求。Codex 可以擔任主代理，既有 Codex 配接器保持跨廠商評審。稽核包含 `.codex/hooks.json` 及未提交的 `.codex/`、`.agents/` 上下文。自動模式需要信任 UserPromptSubmit 掛鉤，明確呼叫 run 不依賴它。Codex 為主代理時，跨廠商工作需要 Claude CLI；缺少時使用既有單廠商備用路徑。
 
 ### Codex 設定
 
@@ -59,9 +61,9 @@ codex plugin add claude-x-codex@because-i-needed
 
 | 命令 | 作用 |
 |---|---|
-| `/claude-x-codex:run` | 編排一項任務：主代理負責規劃並做出每個關卡的決定，把工作分派到 `claude-fast` / `codex-bulk` / `main` 通道，並讓每個廠商審查另一個廠商的工作 |
-| `/claude-x-codex:mode on\|off\|status\|clear [--global]` | 開啟或關閉自動編排的一行開關。僅限使用者操作，模型無法切換 |
-| `/claude-x-codex:audit` | 以唯讀方式檢查兩個廠商是否從相同的專案脈絡出發；只提出修正建議，不做任何變更 |
+| `/peer-coding:run` | 編排一項任務：主代理負責規劃並做出每個關卡的決定，把工作分派到 `claude-fast` / `codex-bulk` / `main` 通道，並讓每個廠商審查另一個廠商的工作 |
+| `/peer-coding:mode on\|off\|status\|clear [--global]` | 開啟或關閉自動編排的一行開關。僅限使用者操作，模型無法切換 |
+| `/peer-coding:audit` | 以唯讀方式檢查兩個廠商是否從相同的專案脈絡出發；只提出修正建議，不做任何變更 |
 
 `on`、`off` 會寫入本專案的旗標（`.claude-x-codex/mode`，已排除在 git 之外）；`--global` 會寫入對所有專案生效的預設值（`~/.config/claude-x-codex/mode`）；`clear` 會刪除專案旗標；`CXC_MODE=on|off` 在單一 shell 中優先於兩者。模式關閉時，`run` 只在你明確要求時才啟動。
 
@@ -72,13 +74,13 @@ codex plugin add claude-x-codex@because-i-needed
 1. 在 Claude Code 中執行 `/plugin`。
 2. Marketplaces → Add Marketplace。
 3. 輸入 URL：`https://github.com/zeriong/because-i-needed.git`（或本儲存庫的本機路徑）。
-4. 安裝 `claude-x-codex`。
+4. 安裝 `peer-coding`。
 
 ### 或透過 CLI
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git   # 或本機路徑
-claude plugin install claude-x-codex@because-i-needed
+claude plugin install peer-coding@because-i-needed
 ```
 
 ### 或直接寫入 `~/.claude/settings.json`
@@ -90,7 +92,7 @@ claude plugin install claude-x-codex@because-i-needed
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "claude-x-codex@because-i-needed": true }
+  "enabledPlugins": { "peer-coding@because-i-needed": true }
 }
 ```
 

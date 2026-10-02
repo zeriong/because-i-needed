@@ -2,6 +2,7 @@
 
 import json
 import re
+import shutil
 import subprocess
 import unittest
 from pathlib import Path
@@ -209,6 +210,66 @@ class MarketplaceNameTests(unittest.TestCase):
         self.assertFalse(any(hit.startswith(".claude-x-codex/") for hit in hits), hits)
         self.assertFalse(any("marked." in hit for hit in hits), hits)
 
+
+
+def reserved_plugin_name(name):
+    """Mirror of Claude Code's reserved-name check (2.1.287), compared on alphanumeric tokens (case and separators
+    ignored): the name's tokens may not start with a reserved run followed by more tokens, may not spell an exact
+    reserved name, and `official` may not touch `claude`/`anthropic` once separators are dropped (`officialclaude`,
+    `my-claudeofficial`). `official-tools-for-claude` only warns."""
+    tokens = [token for token in re.split(r"[^a-z0-9]+", name.lower()) if token]
+    if "".join(tokens) in {"claude", "anthropic", "anthropics", "claudecode", "claudemods"}:
+        return True
+    for i in range(1, len(tokens)):
+        if "".join(tokens[:i]) in {"claude", "anthropic", "anthropics", "ccplugin"}:
+            return True
+    flat = "".join(tokens)
+    return any(word in flat for word in ("officialclaude", "claudeofficial", "officialanthropic", "anthropicofficial"))
+
+
+class ReservedPluginNameTest(unittest.TestCase):
+    """Claude Code 2.1.287 rejects plugin names that pass as Anthropic's own (claude-x-codex had to be renamed)."""
+
+    REJECTED = ("claude-x-codex", "CLAUDE-tools", "claude_tools", "cc_plugin_tools", "cc-plugin-x", "official-claude",
+                "claude-official", "official-anthropic-x", "anthropic-helper", "anthropics-x", "claude-code",
+                "claude-mods", "claude", "c.l.a.u.d.e-tools", "c.c.plugin-tools", "officialclaude", "my-claudeofficial",
+                "my-officialanthropic", "x-officialclaude-y")
+    ALLOWED = ("peer-coding", "harness", "ux-ui", "free-hands", "cc-peer", "c-c-peer", "claudetools", "cc-plugin",
+               "anthropicsx", "my-claude", "official-tools-for-claude", "officialtools", "my-claude-tools")
+    # Checked against `claude plugin validate` on Claude Code 2.1.287 (review F1, F2); the last one only warns.
+
+    def test_mirror_classifies_known_names(self):
+        for name in self.REJECTED:
+            self.assertTrue(reserved_plugin_name(name), name)
+        for name in self.ALLOWED:
+            self.assertFalse(reserved_plugin_name(name), name)
+
+    def test_no_marketplace_plugin_uses_a_reserved_name(self):
+        catalog = json.loads((ROOT / ".claude-plugin/marketplace.json").read_text())
+        for entry in catalog["plugins"]:
+            self.assertFalse(reserved_plugin_name(entry["name"]), entry["name"])
+            for manifest in (".claude-plugin/plugin.json", ".codex-plugin/plugin.json"):
+                data = json.loads((ROOT / entry["source"] / manifest).read_text())
+                self.assertFalse(reserved_plugin_name(data["name"]), (entry["name"], manifest))
+
+    @unittest.skipUnless(shutil.which("claude"), "claude CLI not installed")
+    def test_mirror_agrees_with_the_real_validator(self):
+        with TemporaryDirectory() as temp:
+            for name in ("c.l.a.u.d.e-tools", "c.c.plugin-tools", "claude_tools", "official-anthropic-x", "claudetools",
+                         "cc-plugin", "official-tools-for-claude", "officialclaude", "my-claudeofficial", "peer-coding"):
+                plugin = Path(temp) / name
+                (plugin / ".claude-plugin").mkdir(parents=True)
+                (plugin / "skills" / "run").mkdir(parents=True)
+                (plugin / ".claude-plugin" / "plugin.json").write_text(json.dumps(
+                    {"name": name, "version": "1.0.0", "description": "probe", "author": {"name": "lab"}}))
+                (plugin / "skills" / "run" / "SKILL.md").write_text('---\nname: run\ndescription: "probe"\n---\nx\n')
+                result = subprocess.run(["claude", "plugin", "validate", str(plugin)], capture_output=True, text=True)
+                self.assertEqual(result.returncode != 0, reserved_plugin_name(name), (name, result.stdout[-300:]))
+
+    @unittest.skipUnless(shutil.which("claude"), "claude CLI not installed")
+    def test_the_marketplace_passes_the_real_validator(self):
+        result = subprocess.run(["claude", "plugin", "validate", str(ROOT)], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout[-600:])
 
 if __name__ == "__main__":
     unittest.main()

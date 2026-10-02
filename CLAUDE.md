@@ -1,6 +1,6 @@
 # because-i-needed — repository rules
 
-This repository is a Claude Code and Codex marketplace holding four plugins (harness, ux-ui, claude-x-codex, free-hands).
+This repository is a Claude Code and Codex marketplace holding four plugins (harness, ux-ui, peer-coding, free-hands).
 **Shared rules live in this file**; **per-plugin rules live in `plugins/<name>/CLAUDE.md`** (loaded automatically when you read that plugin's files).
 A plugin file does not repeat this file — it holds only what applies to that plugin. If the two conflict, fix both.
 
@@ -107,6 +107,8 @@ In the naming release (plan-smith 1.5.0, harness 1.1.0, ux-ui 1.2.0), `plugins/h
 plan-smith was retired on 2026-09-30 (marketplace 2.0.0): z-lab `plan-smith-lab/real-skill-tco-1.6.0/` measured the shipped
 pipeline as a net cost where the same model plans and implements, and `plan-smith-lab/analyze/` records the decision. Its
 last source is `plugins/plan-smith/` at `82d8018` and the original repository `zeriong/plan-smith`.
+claude-x-codex was renamed peer-coding on 2026-10-02 (1.0.0, marketplace 4.0.0): `plugins/claude-x-codex` moved to
+`plugins/peer-coding`, and its z-lab series keeps the name `claude-x-codex-lab/`.
 
 ## Rule 8 — Naming: `/<plugin>:<skill>` reads "subject : action"
 
@@ -133,13 +135,19 @@ Plugin skills are invoked as `/<plugin>:<skill>` in Claude Code and `$<plugin>:<
   Keep the two identical.
 - Never rename what a plugin has already written into users' projects (harness's generated `project-rules`, `review-gate.sh`,
   `harness-engineering`; ux-ui's `.ux-ui/`). If one must change, add a fallback that still reads the old name.
+- Claude Code reserves names that pass as Anthropic's own. Compared on alphanumeric tokens, case and separators ignored,
+  a plugin name may not begin with `claude`, `anthropic`, `anthropics` or `cc plugin` followed by more tokens, may not be
+  `claude`, `anthropic`, `anthropics`, `claude code` or `claude mods`, and may not put `official` right next to `claude`
+  or `anthropic`, even joined (`officialclaude`, `my-claudeofficial`) (2.1.287: `claudetools`, `cc-plugin` and
+  `official-tools-for-claude` pass; `tests/test_marketplace_name.py` mirrors and checks it).
 - The plugin name is an ingredient of other identifiers — MCP tool names `mcp__plugin_<plugin>_<server-key>` (ux-ui Rule 1),
   the install cache path, `enabledPlugins` keys. Renaming a plugin means fixing those references in the same commit.
 
 **Why:** before the naming release each plugin and its skill shared one name, so commands repeated themselves across the colon
 (`/harness-builder:harness-builder`); the maintainer decided the rename on 2026-09-28. A rename breaks existing installs — after a
 marketplace update the client keeps the old registration name, and a renamed plugin shows `failed to load` (2.1.283, checked with a
-directory source). So name things right the first time. The naming release shipped as MINOR only because the marketplace had no
+directory source). So name things right the first time. claude-x-codex had to be renamed after release anyway (2026-10-02): Claude Code
+2.1.287 began rejecting names that start with `claude-`. The naming release shipped as MINOR only because the marketplace had no
 users yet; once it does, a rename is MAJOR (Rule 2).
 
 ## Rule 9 — Skills are built and released from measurements in z-lab

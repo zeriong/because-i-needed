@@ -2,6 +2,8 @@
   <strong>because-i-needed</strong>
 </p>
 
+<p align="center">僅適用於 <strong>Claude Code</strong> 和 <strong>Codex CLI</strong>。</p>
+
 <p align="center">
   <strong>因為需要才自己做的 Claude Code 與 Codex 外掛——專案 harness、實測驅動的 UI、Claude × Codex 協作編排與自主目標執行。</strong>
 </p>
@@ -28,7 +30,7 @@
 這4個外掛也支援 Codex CLI 0.158.0 及以上版本。選擇需要的外掛安裝：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,claude-x-codex,free-hands
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands
 ```
 
 也可以直接使用 CLI：
@@ -37,11 +39,11 @@ curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/insta
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add harness@because-i-needed
 codex plugin add ux-ui@because-i-needed
-codex plugin add claude-x-codex@because-i-needed
+codex plugin add peer-coding@because-i-needed
 codex plugin add free-hands@because-i-needed
 ```
 
-在新的 Codex 工作階段中呼叫 `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$claude-x-codex:run` 或 `$free-hands:run`。使用 `$claude-x-codex:mode on` 開啟自動協作，使用 `$claude-x-codex:audit` 檢查上下文。在依賴自動路由、UI 提交閘門和 free-hands 強制執行之前，請透過 `/hooks` 審核並信任已安裝的掛鉤。
+在新的 Codex 工作階段中呼叫 `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$peer-coding:run` 或 `$free-hands:run`。使用 `$peer-coding:mode on` 開啟自動協作，使用 `$peer-coding:audit` 檢查上下文。在依賴自動路由、UI 提交閘門和 free-hands 強制執行之前，請透過 `/hooks` 審核並信任已安裝的掛鉤。
 
 安裝器預設使用 Claude Code；`--host codex` 選擇 Codex。Codex 僅支援使用者範圍：省略 `--scope` 或使用 `--scope user`，project/local 範圍會被拒絕。兩個宿主共用技能、腳本和工作流程，每個外掛另附 Codex 清單。Codex 使用自己的提問工具和獨立代理。產生的 harness 使用 `.codex/hooks.json`、`.codex/hooks/`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py` 和 `.agents/skills/`，保留現有 Claude 檔案。UI 實測仍需要對應的瀏覽器或行動工具。詳情參閱各外掛的 Codex 章節。
 
@@ -68,15 +70,15 @@ codex plugin add free-hands@because-i-needed
 
 [閱讀 ux-ui 繁體中文 README →](plugins/ux-ui/README.zh-TW.md)
 
-### [claude-x-codex](plugins/claude-x-codex) · `v0.3.1`
+### [peer-coding](plugins/peer-coding) · `v1.0.0`
 
 **Claude × Codex 同儕編排。** 主代理負責規劃並做出每個關卡的決定，把工作分派給快速的 Claude 工作者或批次處理的 Codex 工作者，兩個廠商互相審查對方的工作——包括主代理自己的計畫。反駁只有一輪，裁定依據的是證據而不是角色。稽核功能確保兩個廠商從相同的專案指示出發。非官方社群外掛。
 
 - **適用時機：** 同時使用 Claude Code 與 Codex，並希望功能的每個階段都經過另一個廠商審查時。
-- **進入點：** `/claude-x-codex:run`，或以 `/claude-x-codex:mode on` 開啟後，實作類請求都會走這個流程
+- **進入點：** `/peer-coding:run`，或以 `/peer-coding:mode on` 開啟後，實作類請求都會走這個流程
 - **注意：** 安裝後會註冊一個 `UserPromptSubmit` hook（在每則提示時執行，模式關閉時不輸出任何內容）。
 
-[閱讀 claude-x-codex 繁體中文 README →](plugins/claude-x-codex/README.zh-TW.md)
+[閱讀 peer-coding 繁體中文 README →](plugins/peer-coding/README.zh-TW.md)
 
 ### [free-hands](plugins/free-hands) · `v0.1.0`
 
@@ -115,7 +117,7 @@ curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/insta
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
 claude plugin install harness@because-i-needed
 claude plugin install ux-ui@because-i-needed
-claude plugin install claude-x-codex@because-i-needed
+claude plugin install peer-coding@because-i-needed
 claude plugin install free-hands@because-i-needed
 ```
 
@@ -133,7 +135,7 @@ claude plugin install free-hands@because-i-needed
   "enabledPlugins": {
     "harness@because-i-needed": true,
     "ux-ui@because-i-needed": true,
-    "claude-x-codex@because-i-needed": true,
+    "peer-coding@because-i-needed": true,
     "free-hands@because-i-needed": true
   }
 }
@@ -154,6 +156,20 @@ codex plugin marketplace remove bin
 ```
 
 綁定舊 ID（`<plugin>@bin`）的設定不會遷移。
+
+### 以前安裝過 claude-x-codex？
+
+外掛現已從 `claude-x-codex` 更名為 `peer-coding`（1.0.0）：Claude Code 會保留以 `claude-` 開頭的外掛名稱。命令從 `/claude-x-codex:…` 改為 `/peer-coding:…`（Codex 使用 `$peer-coding:…`）。請更新市集、解除安裝舊外掛，然後依照上文安裝 `peer-coding`：
+
+```bash
+claude plugin marketplace update because-i-needed
+claude plugin uninstall claude-x-codex@because-i-needed
+# Codex
+codex plugin marketplace upgrade
+codex plugin remove claude-x-codex@because-i-needed
+```
+
+模式旗標（`.claude-x-codex/mode`、`~/.config/claude-x-codex/mode`）和 `CXC_*` 變數仍使用原名稱，因此既有設定仍會套用。若專案的 `.claude/settings.json` 中有 `claude-x-codex@because-i-needed`，請改為 `peer-coding@because-i-needed`。`.claude-x-codex/<feature>/` 中進行中的工作可用 `/peer-coding:run` 繼續。
 
 ## 命名規則
 
@@ -183,7 +199,7 @@ because-i-needed/
 └── plugins/
     ├── harness/                      # 技能
     ├── ux-ui/                        # 2 個技能 + 2 個代理 + 提交閘門 hook + 4 個 MCP
-    ├── claude-x-codex/               # 3 個技能 + 提示 hook + 3 個腳本
+    ├── peer-coding/                  # 3 個技能 + 提示 hook + 3 個腳本
     └── free-hands/                   # 1 個技能 + 5 個代理 + 4 個 hooks + 3 個腳本
 ```
 

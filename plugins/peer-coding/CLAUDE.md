@@ -1,6 +1,12 @@
-# claude-x-codex — development rules
+# peer-coding — development rules
 
-Every shared rule in the root `CLAUDE.md` applies. This file holds only what is specific to claude-x-codex.
+Every shared rule in the root `CLAUDE.md` applies. This file holds only what is specific to peer-coding.
+
+peer-coding was named claude-x-codex until 1.0.0 (2026-10-02; Claude Code 2.1.287 reserves names that start with
+`claude-`). These names keep the old spelling on purpose, because the plugin has already written them into users'
+projects and machines (root Rule 8): the state folder `.claude-x-codex/` (mode flag, context manifest, run state),
+the user flag `~/.config/claude-x-codex/mode`, the `CXC_*` variables (`CXC_MODE` is also set by ux-ui and
+free-hands), and the z-lab series `claude-x-codex-lab/`.
 
 Contents: three skills (`skills/run` with six references and `review.schema.json`, `skills/mode`, `skills/audit`),
 the hook `hooks/hooks.json` (UserPromptSubmit → `hooks/mode-context.sh`), and three scripts in `scripts/` shared by
@@ -91,7 +97,7 @@ with `CODEX_HOME` and `XDG_CONFIG_HOME` pointed at temp directories so the real 
 At minimum:
 
 ```bash
-AP="$PWD/plugins/claude-x-codex"
+AP="$PWD/plugins/peer-coding"
 T=$(mktemp -d) && git -C "$T" init -q
 (cd "$T" && XDG_CONFIG_HOME="$T/cfg" bash "$AP/scripts/mode.sh" on >/dev/null)
 echo '{"prompt":"x"}' | (cd "$T" && XDG_CONFIG_HOME="$T/cfg" CLAUDE_PLUGIN_ROOT="$AP" bash "$AP/hooks/mode-context.sh"); echo "exit=$?"  # note, 0

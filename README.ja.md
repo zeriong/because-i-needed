@@ -2,6 +2,8 @@
   <strong>because-i-needed</strong>
 </p>
 
+<p align="center"><strong>Claude Code</strong> と <strong>Codex CLI</strong> でのみ動作します。</p>
+
 <p align="center">
   <strong>必要だから作った Claude Code と Codex プラグイン集 — プロジェクトハーネス、実測ベースの UI、Claude × Codex のオーケストレーション、自律ゴール実行。</strong>
 </p>
@@ -28,7 +30,7 @@
 同じ4つのプラグインを Codex CLI 0.158.0 以降でも使用できます。必要なものを選んでインストールします。
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,claude-x-codex,free-hands
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands
 ```
 
 CLI から直接インストールすることもできます。
@@ -37,11 +39,11 @@ CLI から直接インストールすることもできます。
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add harness@because-i-needed
 codex plugin add ux-ui@because-i-needed
-codex plugin add claude-x-codex@because-i-needed
+codex plugin add peer-coding@because-i-needed
 codex plugin add free-hands@because-i-needed
 ```
 
-新しい Codex セッションで `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$claude-x-codex:run`、`$free-hands:run` を呼び出します。自動オーケストレーションは `$claude-x-codex:mode on`、コンテキスト点検は `$claude-x-codex:audit` です。自動ルーティング、UI コミットゲート、free-hands の強制動作を使う前に、`/hooks` でフックを確認して信頼してください。
+新しい Codex セッションで `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$peer-coding:run`、`$free-hands:run` を呼び出します。自動オーケストレーションは `$peer-coding:mode on`、コンテキスト点検は `$peer-coding:audit` です。自動ルーティング、UI コミットゲート、free-hands の強制動作を使う前に、`/hooks` でフックを確認して信頼してください。
 
 インストーラーの既定は Claude Code です。`--host codex` で Codex を選択します。Codex はユーザースコープのみで、`--scope` を省略するか `--scope user` を指定します。project/local は拒否されます。スキル、スクリプト、作業手順は共有し、各プラグインに Codex マニフェストを同梱します。Codex では独自の質問ツールと独立したエージェントを使用します。ハーネスは `.codex/hooks.json`、`.codex/hooks/`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py`、`.agents/skills/` を生成し、既存の Claude ファイルを保持します。UI の実測には対応するブラウザー・モバイルツールが必要です。詳細は各プラグインの Codex 節を参照してください。
 
@@ -68,15 +70,15 @@ codex plugin add free-hands@because-i-needed
 
 [ux-ui の日本語 README を読む →](plugins/ux-ui/README.ja.md)
 
-### [claude-x-codex](plugins/claude-x-codex) · `v0.3.1`
+### [peer-coding](plugins/peer-coding) · `v1.0.0`
 
 **Claude × Codex のピアオーケストレーション**。メインエージェントが計画してすべてのゲートを判断し、作業を高速な Claude ワーカーか大量処理向けの Codex ワーカーに振り分け、2 つのベンダーが互いの作業をレビューします — メインエージェント自身の計画も含みます。反論は 1 回で、判定するのは役割ではなく証拠です。監査機能が、両ベンダーが同じプロジェクトの指示から始められるかを確認します。非公式のコミュニティプラグインです。
 
 - **使いどころ:** Claude Code と Codex の両方を使っていて、機能のすべての段階で別ベンダーのレビューを受けたいとき。
-- **エントリーポイント:** `/claude-x-codex:run`、または `/claude-x-codex:mode on` でオンにすると実装の依頼がこの流れを通ります
+- **エントリーポイント:** `/peer-coding:run`、または `/peer-coding:mode on` でオンにすると実装の依頼がこの流れを通ります
 - **注意:** インストールすると `UserPromptSubmit` フックが登録されます（すべてのプロンプトで実行され、モードがオフの間は何も出力しません）。
 
-[claude-x-codex の日本語 README を読む →](plugins/claude-x-codex/README.ja.md)
+[peer-coding の日本語 README を読む →](plugins/peer-coding/README.ja.md)
 
 ### [free-hands](plugins/free-hands) · `v0.1.0`
 
@@ -115,7 +117,7 @@ curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/insta
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
 claude plugin install harness@because-i-needed
 claude plugin install ux-ui@because-i-needed
-claude plugin install claude-x-codex@because-i-needed
+claude plugin install peer-coding@because-i-needed
 claude plugin install free-hands@because-i-needed
 ```
 
@@ -133,7 +135,7 @@ claude plugin install free-hands@because-i-needed
   "enabledPlugins": {
     "harness@because-i-needed": true,
     "ux-ui@because-i-needed": true,
-    "claude-x-codex@because-i-needed": true,
+    "peer-coding@because-i-needed": true,
     "free-hands@because-i-needed": true
   }
 }
@@ -154,6 +156,20 @@ codex plugin marketplace remove bin
 ```
 
 古い ID（`<plugin>@bin`）に紐づく設定は引き継がれません。
+
+### 以前 claude-x-codex をインストールした場合
+
+プラグイン名が `claude-x-codex` から `peer-coding`（1.0.0）に変わりました。Claude Code が `claude-` で始まるプラグイン名を予約しているためです。コマンドは `/claude-x-codex:…` から `/peer-coding:…` に変わります（Codex は `$peer-coding:…`）。マーケットプレイスを更新し、旧プラグインをアンインストールしてから、上の手順で `peer-coding` をインストールしてください：
+
+```bash
+claude plugin marketplace update because-i-needed
+claude plugin uninstall claude-x-codex@because-i-needed
+# Codex
+codex plugin marketplace upgrade
+codex plugin remove claude-x-codex@because-i-needed
+```
+
+モードフラグ（`.claude-x-codex/mode`、`~/.config/claude-x-codex/mode`）と `CXC_*` 変数名は変わらないため、既存の設定はそのまま適用されます。プロジェクトの `.claude/settings.json` にある `claude-x-codex@because-i-needed` は `peer-coding@because-i-needed` に書き換えてください。`.claude-x-codex/<feature>/` の作業は `/peer-coding:run` で再開できます。
 
 ## 命名規則
 
@@ -183,7 +199,7 @@ because-i-needed/
 └── plugins/
     ├── harness/                      # スキル
     ├── ux-ui/                        # スキル 2 + エージェント 2 + コミットゲートフック + MCP 4
-    ├── claude-x-codex/               # スキル 3 + プロンプトフック + スクリプト 3
+    ├── peer-coding/                  # スキル 3 + プロンプトフック + スクリプト 3
     └── free-hands/                   # スキル 1 + エージェント 5 + フック 4 + スクリプト 3
 ```
 

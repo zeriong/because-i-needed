@@ -1,18 +1,18 @@
 ---
 name: mode
-description: "Turn claude-x-codex orchestration mode on or off, or show its current status. Use only when the user asks to enable, disable, reset, or check the mode — e.g. \"/claude-x-codex:mode on\", \"claude-x-codex mode status\", \"오케스트레이션 모드 켜줘/꺼줘\"."
+description: "Turn peer-coding orchestration mode on or off, or show its current status. Use only when the user asks to enable, disable, reset, or check the mode — e.g. \"/peer-coding:mode on\", \"peer-coding mode status\", \"오케스트레이션 모드 켜줘/꺼줘\"."
 disable-model-invocation: true
 argument-hint: "on | off | status | clear  [--global]"
 ---
 
-# claude-x-codex: mode
+# peer-coding: mode
 
-Claude Code invokes `/claude-x-codex:mode`; Codex invokes
-`$claude-x-codex:mode`. `<plugin>` is `${CLAUDE_PLUGIN_ROOT}` when
+Claude Code invokes `/peer-coding:mode`; Codex invokes
+`$peer-coding:mode`. `<plugin>` is `${CLAUDE_PLUGIN_ROOT}` when
 expanded by Claude Code, or the absolute path two directories above this skill's
 directory on Codex. Resolve it from the loaded SKILL.md path, not the working directory.
 
-A one-line switch for `claude-x-codex:run`.
+A one-line switch for `peer-coding:run`.
 
 - **on** — every implementation task in this project goes through `run`
   (trivial requests excepted; see that skill's "Mode gate").
@@ -34,8 +34,8 @@ skill's directory.
 
 Do nothing else in this turn — don't start, stop, or resume an orchestration run.
 Turning the mode off mid-run leaves the run's state in `.claude-x-codex/<feature>/`;
-tell the user it can be resumed with `/claude-x-codex:run` on Claude Code or
-`$claude-x-codex:run` on Codex.
+tell the user it can be resumed with `/peer-coding:run` on Claude Code or
+`$peer-coding:run` on Codex.
 
 ## Scopes
 
@@ -68,7 +68,7 @@ copy files without git, convert line endings to LF.
 
 - **Claude Code and Codex**: the plugin's `UserPromptSubmit` hook runs `mode.sh get` on every
   prompt and, when the mode is on, adds a short context note telling the main agent to
-  route implementation work through `claude-x-codex:run`. When off, it adds nothing, so
+  route implementation work through `peer-coding:run`. When off, it adds nothing, so
   normal sessions pay no token cost. On Codex, review and trust the installed hook
   in `/hooks`; installing the plugin alone does not trust it. Report whether this
   automatic route is active before describing mode as automatic.
@@ -77,7 +77,7 @@ copy files without git, convert line endings to LF.
 
   ```markdown
   Before starting any implementation task, run `<plugin>/scripts/mode.sh get`.
-  If it prints `on`, use the `claude-x-codex:run` skill for that task.
+  If it prints `on`, use the `peer-coding:run` skill for that task.
   ```
 
   This is weaker than the hook — it relies on the agent remembering to check — so

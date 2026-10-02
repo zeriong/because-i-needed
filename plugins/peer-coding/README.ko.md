@@ -1,13 +1,15 @@
 <p align="center">
-  <strong>claude-x-codex</strong>
+  <strong>peer-coding</strong>
 </p>
+
+<p align="center"><strong>Claude Code</strong>와 <strong>Codex CLI</strong>에서만 동작합니다.</p>
 
 <p align="center">
   <strong>Claude × Codex 동료 오케스트레이션 — 두 에이전트가 동료로서 서로의 계획·구현·리뷰를 주고받습니다.</strong>
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.1-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.0.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -34,9 +36,9 @@
 
 ---
 
-**C**laude **×** **C**odex 동료 오케스트레이션입니다. 바탕이 다른 두 에이전트는 서로 다른 방식으로 실수하므로, 각자가 상대의 작업을 리뷰합니다 — 메인 에이전트의 계획도 예외가 아닙니다. 둘의 의견이 갈리면 역할이 아니라 테스트가 판정합니다.
+Claude × Codex 동료 오케스트레이션입니다. 바탕이 다른 두 에이전트는 서로 다른 방식으로 실수하므로, 각자가 상대의 작업을 리뷰합니다 — 메인 에이전트의 계획도 예외가 아닙니다. 둘의 의견이 갈리면 역할이 아니라 테스트가 판정합니다.
 
-claude-x-codex는 비공식 커뮤니티 플러그인입니다. Anthropic이나 OpenAI가 만들거나 보증하거나 지원하는 도구가 아닙니다.
+peer-coding은 비공식 커뮤니티 플러그인입니다. Anthropic이나 OpenAI가 만들거나 보증하거나 지원하는 도구가 아닙니다.
 
 ## Codex
 
@@ -44,10 +46,10 @@ Codex CLI 0.158.0 이상이 필요합니다. 설치 후 새 세션을 시작하�
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add claude-x-codex@because-i-needed
+codex plugin add peer-coding@because-i-needed
 ```
 
-`$claude-x-codex:run`, `$claude-x-codex:mode on|off|status|clear`, `$claude-x-codex:audit`을 사용합니다. 모드 변경은 두 호스트 모두 사용자의 명시적인 요청이 필요합니다. Codex가 메인이 될 수 있으며 기존 Codex 실행 지침에 따라 벤더 간 리뷰를 유지합니다. 감사에는 `.codex/hooks.json`과 커밋되지 않은 `.codex/`, `.agents/` 맥락이 포함됩니다. 자동 모드는 UserPromptSubmit 훅 신뢰가 필요하고, 명시적인 run 호출은 훅 없이도 시작할 수 있습니다. Codex가 메인일 때 교차 벤더 작업에는 Claude CLI가 필요하며, 없으면 기존 단일 벤더 대체 경로를 사용합니다.
+`$peer-coding:run`, `$peer-coding:mode on|off|status|clear`, `$peer-coding:audit`을 사용합니다. 모드 변경은 두 호스트 모두 사용자의 명시적인 요청이 필요합니다. Codex가 메인이 될 수 있으며 기존 Codex 실행 지침에 따라 벤더 간 리뷰를 유지합니다. 감사에는 `.codex/hooks.json`과 커밋되지 않은 `.codex/`, `.agents/` 맥락이 포함됩니다. 자동 모드는 UserPromptSubmit 훅 신뢰가 필요하고, 명시적인 run 호출은 훅 없이도 시작할 수 있습니다. Codex가 메인일 때 교차 벤더 작업에는 Claude CLI가 필요하며, 없으면 기존 단일 벤더 대체 경로를 사용합니다.
 
 ### Codex 설정
 
@@ -59,9 +61,9 @@ codex plugin add claude-x-codex@because-i-needed
 
 | 명령 | 하는 일 |
 |---|---|
-| `/claude-x-codex:run` | 작업을 오케스트레이션합니다: 메인 에이전트가 계획하고 모든 관문을 판단하며, 작업을 `claude-fast` / `codex-bulk` / `main` 레인으로 보내고, 각 벤더가 상대 벤더의 작업을 리뷰하게 합니다 |
-| `/claude-x-codex:mode on\|off\|status\|clear [--global]` | 자동 오케스트레이션을 켜고 끄는 한 줄 스위치입니다. 사용자 전용이라 모델은 바꿀 수 없습니다 |
-| `/claude-x-codex:audit` | 두 벤더가 같은 프로젝트 맥락에서 출발하는지 읽기 전용으로 점검합니다. 수정안만 제안하고 아무것도 바꾸지 않습니다 |
+| `/peer-coding:run` | 작업을 오케스트레이션합니다: 메인 에이전트가 계획하고 모든 관문을 판단하며, 작업을 `claude-fast` / `codex-bulk` / `main` 레인으로 보내고, 각 벤더가 상대 벤더의 작업을 리뷰하게 합니다 |
+| `/peer-coding:mode on\|off\|status\|clear [--global]` | 자동 오케스트레이션을 켜고 끄는 한 줄 스위치입니다. 사용자 전용이라 모델은 바꿀 수 없습니다 |
+| `/peer-coding:audit` | 두 벤더가 같은 프로젝트 맥락에서 출발하는지 읽기 전용으로 점검합니다. 수정안만 제안하고 아무것도 바꾸지 않습니다 |
 
 `on`·`off` 는 이 프로젝트의 플래그(`.claude-x-codex/mode`, git 제외)를 쓰고, `--global` 은 모든 프로젝트에 적용되는 기본값(`~/.config/claude-x-codex/mode`)을 씁니다. `clear` 는 프로젝트 플래그를 지우고, `CXC_MODE=on|off` 는 셸 하나에서 둘 다보다 우선합니다. 모드가 꺼져 있으면 `run` 은 요청할 때만 시작합니다.
 
@@ -72,13 +74,13 @@ codex plugin add claude-x-codex@because-i-needed
 1. Claude Code에서 `/plugin` 을 실행합니다.
 2. Marketplaces → Add Marketplace.
 3. URL 입력: `https://github.com/zeriong/because-i-needed.git` (또는 이 레포의 로컬 경로).
-4. `claude-x-codex` 를 설치합니다.
+4. `peer-coding` 을 설치합니다.
 
 ### 또는 CLI로
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git   # 또는 로컬 경로
-claude plugin install claude-x-codex@because-i-needed
+claude plugin install peer-coding@because-i-needed
 ```
 
 ### 또는 `~/.claude/settings.json`에 직접 연결
@@ -90,7 +92,7 @@ claude plugin install claude-x-codex@because-i-needed
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "claude-x-codex@because-i-needed": true }
+  "enabledPlugins": { "peer-coding@because-i-needed": true }
 }
 ```
 

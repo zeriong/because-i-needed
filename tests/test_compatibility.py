@@ -65,7 +65,7 @@ class CompatibilityTests(unittest.TestCase):
         result = run(installer + ["--host=codex", "--all", "--dry-run"], self.repo)
         self.assertEqual(result.returncode, 0)
         self.assertEqual(result.stdout.count("+ codex plugin add "), 4)
-        for name in ("harness", "ux-ui", "claude-x-codex", "free-hands"):
+        for name in ("harness", "ux-ui", "peer-coding", "free-hands"):
             self.assertIn(f"+ codex plugin add {name}@", result.stdout)
         self.assertNotIn("plan-smith", result.stdout)
         self.assertNotIn("+ claude", result.stdout)
@@ -190,7 +190,7 @@ class CompatibilityTests(unittest.TestCase):
             self.assertEqual(run(["bash", str(dest)], nested, payload="invalid").returncode, 0)
 
     def test_mode_prompt_hook_and_context_audit(self):
-        plugin = ROOT / "plugins/claude-x-codex"
+        plugin = ROOT / "plugins/peer-coding"
         mode_env = {"XDG_CONFIG_HOME": str(Path(self.temp.name) / "config"), "CXC_MODE": ""}
         for state in ("on", "off"):
             result = run(["bash", str(plugin / "scripts/mode.sh"), state], self.repo, env=mode_env)
@@ -201,16 +201,20 @@ class CompatibilityTests(unittest.TestCase):
             result = run(["bash", str(plugin / "hooks/mode-context.sh")], self.repo,
                          payload='{"prompt":"implement"}', env={"CXC_MODE": mode, "CLAUDE_PLUGIN_ROOT": str(plugin)})
             self.assertEqual(result.returncode, 0)
-            self.assertEqual("[claude-x-codex: ON]" in result.stdout, mode == "on")
+            self.assertEqual("[peer-coding: ON]" in result.stdout, mode == "on")
             if mode == "on":
                 context = json.loads(result.stdout)["hookSpecificOutput"]
                 self.assertEqual(context["hookEventName"], "UserPromptSubmit")
-                self.assertIn("[claude-x-codex: ON]", context["additionalContext"])
+                self.assertIn("[peer-coding: ON]", context["additionalContext"])
+                self.assertIn("peer-coding:run", context["additionalContext"])
+                self.assertIn("peer-coding:mode", context["additionalContext"])
             else:
                 self.assertEqual(result.stdout, "")
-        result = run(["bash", str(plugin / "hooks/mode-context.sh")], self.repo,
-                     payload='{"prompt":"$claude-x-codex:mode off"}', env={"CXC_MODE": "on", "CLAUDE_PLUGIN_ROOT": str(plugin)})
-        self.assertEqual(result.stdout, "")
+        for invocation in ("/peer-coding:mode off", "$peer-coding:mode off"):
+            result = run(["bash", str(plugin / "hooks/mode-context.sh")], self.repo,
+                         payload=json.dumps({"prompt": invocation}),
+                         env={"CXC_MODE": "on", "CLAUDE_PLUGIN_ROOT": str(plugin)})
+            self.assertEqual(result.stdout, "", invocation)
         for name in (".claude/settings.json", ".codex/hooks.json"):
             p = self.repo / name
             p.parent.mkdir(exist_ok=True)
@@ -310,7 +314,7 @@ class CompatibilityTests(unittest.TestCase):
         run(["git", "clone", "-q", "--no-hardlinks", "--no-checkout", str(ROOT), str(main)], self.repo).check_returncode()
         run(["git", "worktree", "add", "-q", "--detach", str(linked), "HEAD"], main).check_returncode()
         self.assertTrue((linked / ".git").is_file())
-        mode = ROOT / "plugins/claude-x-codex/scripts/mode.sh"
+        mode = ROOT / "plugins/peer-coding/scripts/mode.sh"
         args = ["bash", str(mode), "on"]
         env = {"CXC_MODE": "", "XDG_CONFIG_HOME": str(Path(self.temp.name) / "config")}
         self.assertEqual(run(args, linked, env=env).returncode, 0)
@@ -321,7 +325,7 @@ class CompatibilityTests(unittest.TestCase):
         (self.repo / "AGENTS.override.md").write_text("Different rule\n")
         (self.repo / ".codex").mkdir()
         (self.repo / ".codex/hooks.json").write_text('{"hooks":{"UserPromptSubmit":[42]}}')
-        audit = ROOT / "plugins/claude-x-codex/scripts/context-audit.sh"
+        audit = ROOT / "plugins/peer-coding/scripts/context-audit.sh"
         before = {p: p.read_bytes() for p in self.repo.rglob("*") if p.is_file()}
         result = run(["bash", str(audit)], self.repo)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -386,7 +390,7 @@ class LatestModelTests(unittest.TestCase):
             "ANTHROPIC_DEFAULT_FABLE_MODEL": "",
         }
         (self.root / "claude-config").mkdir()
-        self.script = ROOT / "plugins/claude-x-codex/scripts/latest-model.py"
+        self.script = ROOT / "plugins/peer-coding/scripts/latest-model.py"
 
     @staticmethod
     def levels(*names):
@@ -578,7 +582,7 @@ class LatestModelTests(unittest.TestCase):
 
     def test_latest_model_copies_are_byte_identical_and_executable(self):
         paths = [ROOT / f"plugins/{name}/scripts/latest-model.py" for name in
-                 ("claude-x-codex", "free-hands", "harness", "ux-ui")]
+                 ("peer-coding", "free-hands", "harness", "ux-ui")]
         for path in paths:
             self.assertTrue(path.is_file(), str(path))
             self.assertTrue(path.stat().st_mode & 0o111, str(path))

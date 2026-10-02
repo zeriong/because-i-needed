@@ -1,10 +1,10 @@
 ---
 name: run
-description: "Cross-vendor multi-agent orchestration for coding work. The main agent plans and owns every gate decision, work is routed to fast Claude (Sonnet) or bulk Codex (Luna) workers by task type, and Claude and Codex review each other as peers — including the main agent's own plan and triage decisions, with a rebuttal round when findings are rejected. Runs from either Claude Code or Codex as the main agent, and uses Orca's orchestration runtime when available (two-way worker communication, gates) or falls back to one-way subagent/CLI calls. Use this skill when the user explicitly asks for it — names it, runs /claude-x-codex:run, or asks to orchestrate, parallelize, fan out, or run agents on a task (\"오케스트레이션으로 진행해줘\") — or when an [claude-x-codex: ON] context note is present and the request is implementation work. When the mode is off and the user hasn't asked for it, do not use this skill."
+description: "Cross-vendor multi-agent orchestration for coding work. The main agent plans and owns every gate decision, work is routed to fast Claude (Sonnet) or bulk Codex (Luna) workers by task type, and Claude and Codex review each other as peers — including the main agent's own plan and triage decisions, with a rebuttal round when findings are rejected. Runs from either Claude Code or Codex as the main agent, and uses Orca's orchestration runtime when available (two-way worker communication, gates) or falls back to one-way subagent/CLI calls. Use this skill when the user explicitly asks for it — names it, runs /peer-coding:run, or asks to orchestrate, parallelize, fan out, or run agents on a task (\"오케스트레이션으로 진행해줘\") — or when an [peer-coding: ON] context note is present and the request is implementation work. When the mode is off and the user hasn't asked for it, do not use this skill."
 compatibility: Main agent in Claude Code or Codex. Git worktrees. Optional — the other vendor's CLI (`codex` or `claude`), and Orca (desktop runtime with orchestration enabled).
 ---
 
-# claude-x-codex: run
+# peer-coding: run
 
 Speed lives in the work lanes, quality lives in the gates.
 
@@ -19,16 +19,16 @@ you to.
 ## Mode gate (before anything else)
 
 Orchestration has a one-line on/off switch managed by the `mode` skill of this plugin
-(`/claude-x-codex:mode`).
+(`/peer-coding:mode`).
 
 1. **A dispatched worker or reviewer never orchestrates.** If your prompt is a
    delegation or review prompt from this skill (it starts with `# Task <id>` or
-   `You are reviewing`), do exactly that task, even if an `[claude-x-codex: ON]` note
+   `You are reviewing`), do exactly that task, even if an `[peer-coding: ON]` note
    is present. Main starts every CLI worker and reviewer with `CXC_MODE=off` so the
    note never appears there; this rule covers workers that can't take an env var.
 2. **Explicit request → always run.** If the user named this skill or asked for
    orchestration in this prompt, skip the flag and continue to Setup.
-3. **Otherwise read the flag**: `<plugin>/scripts/mode.sh get` (an `[claude-x-codex: ON]` context note means it's on).
+3. **Otherwise read the flag**: `<plugin>/scripts/mode.sh get` (an `[peer-coding: ON]` context note means it's on).
    - **off** → don't orchestrate. Do the task yourself as the single agent in this
      terminal, and don't mention orchestration.
    - **on** → orchestrate implementation work. Handle these directly instead, with a
@@ -54,7 +54,7 @@ Orchestration has a one-line on/off switch managed by the `mode` skill of this p
    the diff. Tell the user this mode is active — it's weaker than cross-vendor review.
 4. **Bridge context both ways.** Load `references/context-bridge.md` and run the audit
    (`<plugin>/scripts/context-audit.sh`); save its output to `.claude-x-codex/context-audit.md`.
-   If the user already ran `/claude-x-codex:audit` in this repo, reuse that result unless
+   If the user already ran `/peer-coding:audit` in this repo, reuse that result unless
    the host changed. Fix
    what you can without repo changes (Codex fallback instruction files, context manifest,
    context packs) and collect the rest — pointer files, gate scripts — as proposals for

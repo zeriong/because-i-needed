@@ -1,11 +1,11 @@
 {
-  "name": "claude-x-codex",
+  "name": "peer-coding",
   "description": "Claude × Codex peer orchestration: the two plan, build, and review each other's work as peers, with shared project context and a one-line on/off switch. Unofficial community plugin.",
-  "version": "0.3.1",
+  "version": "1.0.0",
   "author": {
     "name": "zeriong"
   },
-  "homepage": "https://github.com/zeriong/because-i-needed/tree/main/plugins/claude-x-codex",
+  "homepage": "https://github.com/zeriong/because-i-needed/tree/main/plugins/peer-coding",
   "repository": "https://github.com/zeriong/because-i-needed",
   "keywords": [
     "orchestration",

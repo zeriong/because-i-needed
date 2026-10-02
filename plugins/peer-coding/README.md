@@ -1,13 +1,15 @@
 <p align="center">
-  <strong>claude-x-codex</strong>
+  <strong>peer-coding</strong>
 </p>
+
+<p align="center">Works only with <strong>Claude Code</strong> and <strong>Codex CLI</strong>.</p>
 
 <p align="center">
   <strong>Claude × Codex peer orchestration — the two plan, build, and review each other's work as peers.</strong>
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.1-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.0.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -34,9 +36,9 @@
 
 ---
 
-**C**laude **×** **C**odex peer orchestration. Two agents built on different foundations fail in different ways, so each one reviews the other's work — including the main agent's own plan — and a test, not a role, settles their disagreements.
+Claude × Codex peer orchestration. Two agents built on different foundations fail in different ways, so each one reviews the other's work — including the main agent's own plan — and a test, not a role, settles their disagreements.
 
-claude-x-codex is an unofficial community plugin. It is not made, endorsed, or supported by Anthropic or OpenAI.
+peer-coding is an unofficial community plugin. It is not made, endorsed, or supported by Anthropic or OpenAI.
 
 ## Codex
 
@@ -44,10 +46,10 @@ Requires Codex CLI 0.158.0 or later. Start a new session after installation. Cla
 
 ```bash
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
-codex plugin add claude-x-codex@because-i-needed
+codex plugin add peer-coding@because-i-needed
 ```
 
-Use `$claude-x-codex:run`, `$claude-x-codex:mode on|off|status|clear`, and `$claude-x-codex:audit`. The mode skill requires an explicit user request on both hosts. Codex can be the main agent; the existing Codex host adapter keeps review routing across vendors. The audit includes `.codex/hooks.json` and uncommitted `.codex/` and `.agents/` context. For automatic mode, trust the UserPromptSubmit hook; explicit run does not depend on it. Claude CLI is needed for cross-vendor work when Codex is main; without it, the documented single-vendor fallback applies.
+Use `$peer-coding:run`, `$peer-coding:mode on|off|status|clear`, and `$peer-coding:audit`. The mode skill requires an explicit user request on both hosts. Codex can be the main agent; the existing Codex host adapter keeps review routing across vendors. The audit includes `.codex/hooks.json` and uncommitted `.codex/` and `.agents/` context. For automatic mode, trust the UserPromptSubmit hook; explicit run does not depend on it. Claude CLI is needed for cross-vendor work when Codex is main; without it, the documented single-vendor fallback applies.
 
 ### Codex settings
 
@@ -59,9 +61,9 @@ Host routing uses the configured CXC reviewer model and effort; names in parenth
 
 | Command | What it does |
 |---|---|
-| `/claude-x-codex:run` | Orchestrate a task: the main agent plans and owns every gate decision, routes work to the `claude-fast` / `codex-bulk` / `main` lanes, and has each vendor review the other's work |
-| `/claude-x-codex:mode on\|off\|status\|clear [--global]` | One-line switch for automatic orchestration. User-only: the model cannot flip it |
-| `/claude-x-codex:audit` | Read-only check that both vendors start from the same project context; proposes fixes, changes nothing |
+| `/peer-coding:run` | Orchestrate a task: the main agent plans and owns every gate decision, routes work to the `claude-fast` / `codex-bulk` / `main` lanes, and has each vendor review the other's work |
+| `/peer-coding:mode on\|off\|status\|clear [--global]` | One-line switch for automatic orchestration. User-only: the model cannot flip it |
+| `/peer-coding:audit` | Read-only check that both vendors start from the same project context; proposes fixes, changes nothing |
 
 `on` and `off` write this project's flag (`.claude-x-codex/mode`, git-excluded); `--global` writes your default for every project (`~/.config/claude-x-codex/mode`); `clear` drops the project flag; `CXC_MODE=on|off` overrides both for one shell. With the mode off, `run` starts only when you ask for it.
 
@@ -72,13 +74,13 @@ Host routing uses the configured CXC reviewer model and effort; names in parenth
 1. In Claude Code, run `/plugin`.
 2. Marketplaces → Add Marketplace.
 3. Enter the URL: `https://github.com/zeriong/because-i-needed.git` (or a local path to this repo).
-4. Install `claude-x-codex`.
+4. Install `peer-coding`.
 
 ### Or via CLI
 
 ```bash
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git   # or a local path
-claude plugin install claude-x-codex@because-i-needed
+claude plugin install peer-coding@because-i-needed
 ```
 
 ### Or wire it directly in `~/.claude/settings.json`
@@ -90,7 +92,7 @@ claude plugin install claude-x-codex@because-i-needed
       "source": { "source": "git", "url": "https://github.com/zeriong/because-i-needed.git" }
     }
   },
-  "enabledPlugins": { "claude-x-codex@because-i-needed": true }
+  "enabledPlugins": { "peer-coding@because-i-needed": true }
 }
 ```
 

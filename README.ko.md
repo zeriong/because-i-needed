@@ -2,6 +2,8 @@
   <strong>because-i-needed</strong>
 </p>
 
+<p align="center"><strong>Claude Code</strong>와 <strong>Codex CLI</strong>에서만 동작합니다.</p>
+
 <p align="center">
   <strong>필요해서 만든 Claude Code와 Codex 플러그인 모음 — 프로젝트 하네스, 실측 기반 UI, Claude × Codex 오케스트레이션, 자율 목표 실행.</strong>
 </p>
@@ -28,7 +30,7 @@
 같은 플러그인 4개를 Codex CLI 0.158.0 이상에서도 사용할 수 있습니다. 필요한 플러그인을 골라 설치하세요:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,claude-x-codex,free-hands
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands
 ```
 
 또는 CLI로 직접 설치합니다:
@@ -37,11 +39,11 @@ curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/insta
 codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add harness@because-i-needed
 codex plugin add ux-ui@because-i-needed
-codex plugin add claude-x-codex@because-i-needed
+codex plugin add peer-coding@because-i-needed
 codex plugin add free-hands@because-i-needed
 ```
 
-새 Codex 세션에서 `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$claude-x-codex:run`, `$free-hands:run`을 호출합니다. 자동 오케스트레이션은 `$claude-x-codex:mode on`, 컨텍스트 점검은 `$claude-x-codex:audit`입니다. 자동 라우팅, UI 커밋 게이트, free-hands 강제를 사용하기 전에 `/hooks`에서 설치된 훅을 검토하고 신뢰해야 합니다.
+새 Codex 세션에서 `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$peer-coding:run`, `$free-hands:run`을 호출합니다. 자동 오케스트레이션은 `$peer-coding:mode on`, 컨텍스트 점검은 `$peer-coding:audit`입니다. 자동 라우팅, UI 커밋 게이트, free-hands 강제를 사용하기 전에 `/hooks`에서 설치된 훅을 검토하고 신뢰해야 합니다.
 
 설치 스크립트의 기본 대상은 Claude Code이며, `--host codex`로 Codex를 선택합니다. Codex는 사용자 범위로 설치하므로 `--scope`를 생략하거나 `--scope user`를 사용하세요. project/local 범위는 거부합니다. 스킬·스크립트·작업 절차를 공유하고 플러그인별 Codex 명세를 함께 제공합니다. Codex에서는 자체 질문 도구와 독립 에이전트를 사용합니다. 하네스는 `.codex/hooks.json`, `.codex/hooks/`, `.codex/scripts/review-gate.sh`, `.codex/scripts/latest-model.py`, `.agents/skills/`를 생성하며 기존 Claude 파일을 보존합니다. UI 실측에는 해당 브라우저·모바일 도구가 필요합니다. 자세한 내용은 각 플러그인의 Codex 절을 참고하세요.
 
@@ -68,15 +70,15 @@ codex plugin add free-hands@because-i-needed
 
 [ux-ui 한국어 README 보기 →](plugins/ux-ui/README.ko.md)
 
-### [claude-x-codex](plugins/claude-x-codex) · `v0.3.1`
+### [peer-coding](plugins/peer-coding) · `v1.0.0`
 
 **Claude × Codex 동료 오케스트레이션.** 메인 에이전트가 계획하고 모든 관문을 판단하며, 작업을 빠른 Claude 워커나 대량 처리용 Codex 워커에 보내고, 두 벤더가 서로의 작업을 리뷰합니다 — 메인 에이전트 자신의 계획도 포함됩니다. 반론은 한 번이고, 판정은 역할이 아니라 증거가 합니다. 감사 기능이 두 벤더가 같은 프로젝트 지침에서 출발하는지 확인합니다. 비공식 커뮤니티 플러그인입니다.
 
 - **이럴 때** Claude Code와 Codex를 모두 쓰고, 기능의 모든 단계에서 다른 벤더의 리뷰를 받고 싶을 때.
-- **진입점:** `/claude-x-codex:run`, 또는 `/claude-x-codex:mode on` 으로 켜 두면 구현 요청이 이 흐름을 거칩니다
+- **진입점:** `/peer-coding:run`, 또는 `/peer-coding:mode on` 으로 켜 두면 구현 요청이 이 흐름을 거칩니다
 - **참고:** 설치하면 `UserPromptSubmit` 훅이 등록됩니다(모든 프롬프트마다 실행되며, 모드가 꺼져 있으면 아무것도 출력하지 않음).
 
-[claude-x-codex 한국어 README 보기 →](plugins/claude-x-codex/README.ko.md)
+[peer-coding 한국어 README 보기 →](plugins/peer-coding/README.ko.md)
 
 ### [free-hands](plugins/free-hands) · `v0.1.0`
 
@@ -115,7 +117,7 @@ curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/insta
 claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
 claude plugin install harness@because-i-needed
 claude plugin install ux-ui@because-i-needed
-claude plugin install claude-x-codex@because-i-needed
+claude plugin install peer-coding@because-i-needed
 claude plugin install free-hands@because-i-needed
 ```
 
@@ -133,7 +135,7 @@ claude plugin install free-hands@because-i-needed
   "enabledPlugins": {
     "harness@because-i-needed": true,
     "ux-ui@because-i-needed": true,
-    "claude-x-codex@because-i-needed": true,
+    "peer-coding@because-i-needed": true,
     "free-hands@because-i-needed": true
   }
 }
@@ -154,6 +156,20 @@ codex plugin marketplace remove bin
 ```
 
 예전 ID(`<plugin>@bin`)에 묶인 설정은 옮겨지지 않습니다.
+
+### 예전에 claude-x-codex를 설치했다면
+
+플러그인 이름이 `claude-x-codex`에서 `peer-coding`(1.0.0)으로 바뀌었습니다. Claude Code가 `claude-`로 시작하는 플러그인 이름을 예약하기 때문입니다. 명령은 `/claude-x-codex:…`에서 `/peer-coding:…`으로 바뀝니다(Codex는 `$peer-coding:…`). 마켓플레이스를 업데이트하고 이전 플러그인을 제거한 다음, 위와 같이 `peer-coding`을 설치하세요:
+
+```bash
+claude plugin marketplace update because-i-needed
+claude plugin uninstall claude-x-codex@because-i-needed
+# Codex
+codex plugin marketplace upgrade
+codex plugin remove claude-x-codex@because-i-needed
+```
+
+모드 플래그(`.claude-x-codex/mode`, `~/.config/claude-x-codex/mode`)와 `CXC_*` 변수 이름은 유지되므로 기존 설정이 계속 적용됩니다. 프로젝트의 `.claude/settings.json`에 `claude-x-codex@because-i-needed`가 있으면 `peer-coding@because-i-needed`로 바꾸세요. `.claude-x-codex/<feature>/`에서 진행하던 작업은 `/peer-coding:run`으로 이어집니다.
 
 ## 네이밍
 
@@ -183,7 +199,7 @@ because-i-needed/
 └── plugins/
     ├── harness/                      # 스킬
     ├── ux-ui/                        # 스킬 2 + 에이전트 2 + 커밋 게이트 훅 + MCP 4
-    ├── claude-x-codex/               # 스킬 3 + 프롬프트 훅 + 스크립트 3
+    ├── peer-coding/                  # 스킬 3 + 프롬프트 훅 + 스크립트 3
     └── free-hands/                   # 스킬 1 + 에이전트 5 + 훅 4 + 스크립트 3
 ```
 
