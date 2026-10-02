@@ -1,0 +1,7 @@
+interface:
+  display_name: "free-hands"
+  short_description: "Run a goal to the end without asking; a brainstorming panel decides"
+  default_prompt: "Use $free-hands:run to finish this goal without asking."
+
+policy:
+  allow_implicit_invocation: false

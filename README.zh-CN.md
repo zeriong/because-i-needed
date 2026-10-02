@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>因为自己需要而做的 Claude Code 和 Codex 插件——项目 harness、基于实测的 UI、Claude × Codex 编排。</strong>
+  <strong>因为自己需要而做的 Claude Code 和 Codex 插件——项目 harness、基于实测的 UI、Claude × Codex 编排和自主目标执行。</strong>
 </p>
 
 <p align="center">
@@ -21,14 +21,14 @@
 
 ---
 
-本仓库是一个 Claude Code 和 Codex **插件市场**，包含三个相互独立的插件。按需安装即可。
+本仓库是一个 Claude Code 和 Codex **插件市场**，包含四个相互独立的插件。按需安装即可。
 
 ## Codex
 
-这3个插件也支持 Codex CLI 0.158.0 及以上版本。选择需要的插件安装：
+这4个插件也支持 Codex CLI 0.158.0 及以上版本。选择需要的插件安装：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,claude-x-codex
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,claude-x-codex,free-hands
 ```
 
 也可以直接使用 CLI：
@@ -38,9 +38,10 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add harness@because-i-needed
 codex plugin add ux-ui@because-i-needed
 codex plugin add claude-x-codex@because-i-needed
+codex plugin add free-hands@because-i-needed
 ```
 
-在新的 Codex 会话中调用 `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile` 或 `$claude-x-codex:run`。使用 `$claude-x-codex:mode on` 开启自动编排，使用 `$claude-x-codex:audit` 检查上下文。在依赖自动路由和 UI 提交门禁之前，请通过 `/hooks` 审核并信任已安装的钩子。
+在新的 Codex 会话中调用 `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$claude-x-codex:run` 或 `$free-hands:run`。使用 `$claude-x-codex:mode on` 开启自动编排，使用 `$claude-x-codex:audit` 检查上下文。在依赖自动路由、UI 提交门禁和 free-hands 强制执行之前，请通过 `/hooks` 审核并信任已安装的钩子。
 
 安装器默认使用 Claude Code；`--host codex` 选择 Codex。Codex 仅支持用户范围：省略 `--scope` 或使用 `--scope user`，project/local 范围会被拒绝。两个宿主共享技能、脚本和工作流程，每个插件另附 Codex 清单。Codex 使用自己的提问工具和独立代理。生成的 harness 使用 `.codex/hooks.json`、`.codex/hooks/`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py` 和 `.agents/skills/`，保留现有 Claude 文件。UI 实测仍需要对应的浏览器或移动工具。详情参阅各插件的 Codex 章节。
 
@@ -77,6 +78,16 @@ codex plugin add claude-x-codex@because-i-needed
 
 [查看 claude-x-codex 简体中文 README →](plugins/claude-x-codex/README.zh-CN.md)
 
+### [free-hands](plugins/free-hands) · `v0.1.0`
+
+**将有限目标的清单逐项完成，不提问、不停下。** 遇到原本需要用户决定的问题时，由五角色讨论面板提供建议，主智能体依据证据作决定。
+
+- **适用场景：** 希望智能体完成范围明确的目标、记录决策，并能在中断后恢复时。
+- **入口：** `/free-hands:run <目标>`（Claude Code）· `$free-hands:run <目标>`（Codex），也可在提示中写“free-hands”以先收到一次开始确认
+- **注意：** 钩子会在每次提示、会话开始、提问和停止时运行。没有活动目标时保持静默，只有提示中出现“free-hands”时会发送一次开始问题。有未完成事项时，Stop 最多让当前轮继续40次。
+
+[查看 free-hands 简体中文 README →](plugins/free-hands/README.zh-CN.md)
+
 ## 已退役的插件
 
 ### plan-smith — 于 2026-09-30 退役（最后版本 1.8.0）
@@ -105,6 +116,7 @@ claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
 claude plugin install harness@because-i-needed
 claude plugin install ux-ui@because-i-needed
 claude plugin install claude-x-codex@because-i-needed
+claude plugin install free-hands@because-i-needed
 ```
 
 或者在 Claude Code 中：`/plugin` → Marketplaces → Add Marketplace → 输入 `https://github.com/zeriong/because-i-needed.git`，然后从列表中安装。
@@ -121,7 +133,8 @@ claude plugin install claude-x-codex@because-i-needed
   "enabledPlugins": {
     "harness@because-i-needed": true,
     "ux-ui@because-i-needed": true,
-    "claude-x-codex@because-i-needed": true
+    "claude-x-codex@because-i-needed": true,
+    "free-hands@because-i-needed": true
   }
 }
 ```
@@ -165,12 +178,13 @@ codex plugin marketplace remove bin
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # 登记三个插件
+├── .claude-plugin/marketplace.json   # 登记四个插件
 ├── install.sh                        # 交互式安装脚本（--host claude|codex）
 └── plugins/
     ├── harness/                      # 技能
     ├── ux-ui/                        # 2 个技能 + 2 个智能体 + 提交门禁钩子 + 4 个 MCP
-    └── claude-x-codex/               # 3 个技能 + 提示钩子 + 3 个脚本
+    ├── claude-x-codex/               # 3 个技能 + 提示钩子 + 3 个脚本
+    └── free-hands/                   # 1 个技能 + 5 个智能体 + 4 个钩子 + 3 个脚本
 ```
 
 每个插件目录都是自包含的：它的 README、清单文件以及随插件发布的所有内容都位于 `plugins/<名称>/` 下。

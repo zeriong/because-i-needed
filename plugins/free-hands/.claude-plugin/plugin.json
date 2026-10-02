@@ -1,0 +1,18 @@
+{
+  "name": "free-hands",
+  "description": "Autonomous mode: fixes a goal as a finite checklist and works through every item without asking or stopping; decisions that would go to the user are settled by a five-role brainstorming panel.",
+  "version": "0.1.0",
+  "author": {
+    "name": "zeriong"
+  },
+  "homepage": "https://github.com/zeriong/because-i-needed/tree/main/plugins/free-hands",
+  "repository": "https://github.com/zeriong/because-i-needed",
+  "keywords": [
+    "autonomous",
+    "brainstorming",
+    "multi-agent",
+    "codex",
+    "goal"
+  ],
+  "hooks": "./hooks/hooks.json"
+}

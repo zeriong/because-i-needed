@@ -4,8 +4,8 @@
     "name": "zeriong"
   },
   "metadata": {
-    "description": "Claude Code plugins built because I needed them — harness, ux-ui, claude-x-codex",
-    "version": "3.0.0"
+    "description": "Claude Code plugins built because I needed them — harness, ux-ui, claude-x-codex, free-hands",
+    "version": "3.1.0"
   },
   "plugins": [
     {
@@ -66,6 +66,23 @@
         "orca"
       ],
       "category": "development"
+    },
+    {
+      "name": "free-hands",
+      "source": "./plugins/free-hands",
+      "description": "Autonomous mode that works through a finite goal checklist without asking or stopping; user-level decisions go to a five-role brainstorming panel. (adds UserPromptSubmit, SessionStart, PreToolUse and Stop hooks)",
+      "version": "0.1.0",
+      "author": {
+        "name": "zeriong"
+      },
+      "keywords": [
+        "autonomous",
+        "brainstorming",
+        "multi-agent",
+        "codex",
+        "goal"
+      ],
+      "category": "productivity"
     }
   ]
 }

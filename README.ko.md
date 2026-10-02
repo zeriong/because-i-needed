@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>필요해서 만든 Claude Code와 Codex 플러그인 모음 — 프로젝트 하네스, 실측 기반 UI, Claude × Codex 오케스트레이션.</strong>
+  <strong>필요해서 만든 Claude Code와 Codex 플러그인 모음 — 프로젝트 하네스, 실측 기반 UI, Claude × Codex 오케스트레이션, 자율 목표 실행.</strong>
 </p>
 
 <p align="center">
@@ -21,14 +21,14 @@
 
 ---
 
-이 레포는 독립된 플러그인 3개를 담은 Claude Code와 Codex **플러그인 마켓플레이스**입니다. 필요한 것만 골라 설치하면 됩니다.
+이 레포는 독립된 플러그인 4개를 담은 Claude Code와 Codex **플러그인 마켓플레이스**입니다. 필요한 것만 골라 설치하면 됩니다.
 
 ## Codex
 
-같은 플러그인 3개를 Codex CLI 0.158.0 이상에서도 사용할 수 있습니다. 필요한 플러그인을 골라 설치하세요:
+같은 플러그인 4개를 Codex CLI 0.158.0 이상에서도 사용할 수 있습니다. 필요한 플러그인을 골라 설치하세요:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,claude-x-codex
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,claude-x-codex,free-hands
 ```
 
 또는 CLI로 직접 설치합니다:
@@ -38,9 +38,10 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add harness@because-i-needed
 codex plugin add ux-ui@because-i-needed
 codex plugin add claude-x-codex@because-i-needed
+codex plugin add free-hands@because-i-needed
 ```
 
-새 Codex 세션에서 `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$claude-x-codex:run`을 호출합니다. 자동 오케스트레이션은 `$claude-x-codex:mode on`, 컨텍스트 점검은 `$claude-x-codex:audit`입니다. 자동 라우팅과 UI 커밋 게이트를 사용하기 전에 `/hooks`에서 설치된 훅을 검토하고 신뢰해야 합니다.
+새 Codex 세션에서 `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$claude-x-codex:run`, `$free-hands:run`을 호출합니다. 자동 오케스트레이션은 `$claude-x-codex:mode on`, 컨텍스트 점검은 `$claude-x-codex:audit`입니다. 자동 라우팅, UI 커밋 게이트, free-hands 강제를 사용하기 전에 `/hooks`에서 설치된 훅을 검토하고 신뢰해야 합니다.
 
 설치 스크립트의 기본 대상은 Claude Code이며, `--host codex`로 Codex를 선택합니다. Codex는 사용자 범위로 설치하므로 `--scope`를 생략하거나 `--scope user`를 사용하세요. project/local 범위는 거부합니다. 스킬·스크립트·작업 절차를 공유하고 플러그인별 Codex 명세를 함께 제공합니다. Codex에서는 자체 질문 도구와 독립 에이전트를 사용합니다. 하네스는 `.codex/hooks.json`, `.codex/hooks/`, `.codex/scripts/review-gate.sh`, `.codex/scripts/latest-model.py`, `.agents/skills/`를 생성하며 기존 Claude 파일을 보존합니다. UI 실측에는 해당 브라우저·모바일 도구가 필요합니다. 자세한 내용은 각 플러그인의 Codex 절을 참고하세요.
 
@@ -77,6 +78,16 @@ codex plugin add claude-x-codex@because-i-needed
 
 [claude-x-codex 한국어 README 보기 →](plugins/claude-x-codex/README.ko.md)
 
+### [free-hands](plugins/free-hands) · `v0.1.0`
+
+**유한한 목표를 질문이나 중단 없이 체크리스트 끝까지 처리합니다.** 사용자가 결정할 사안은 다섯 역할 패널이 검토하고 메인 에이전트가 증거를 바탕으로 결정합니다.
+
+- **이럴 때** 결정 기록을 남기며 중단 후에도 재개할 수 있는 범위가 정해진 목표를 맡기고 싶을 때.
+- **진입점:** `/free-hands:run <목표>`(Claude Code) · `$free-hands:run <목표>`(Codex), 또는 프롬프트에 “free-hands”를 넣어 진입 질문 하나 받기
+- **참고:** 프롬프트·세션 시작·질문·중단 때 훅이 실행됩니다. 활성 목표가 없으면 프롬프트에 “free-hands”가 있을 때 한 번의 진입 질문을 내는 경우 외에는 조용합니다. 미완료 항목이 있으면 Stop이 최대 40회까지 차례를 이어갑니다.
+
+[free-hands 한국어 README 보기 →](plugins/free-hands/README.ko.md)
+
 ## 은퇴한 플러그인
 
 ### plan-smith — 2026-09-30 은퇴 (마지막 버전 1.8.0)
@@ -105,6 +116,7 @@ claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
 claude plugin install harness@because-i-needed
 claude plugin install ux-ui@because-i-needed
 claude plugin install claude-x-codex@because-i-needed
+claude plugin install free-hands@because-i-needed
 ```
 
 또는 Claude Code에서: `/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git` 입력 후 목록에서 설치.
@@ -121,7 +133,8 @@ claude plugin install claude-x-codex@because-i-needed
   "enabledPlugins": {
     "harness@because-i-needed": true,
     "ux-ui@because-i-needed": true,
-    "claude-x-codex@because-i-needed": true
+    "claude-x-codex@because-i-needed": true,
+    "free-hands@because-i-needed": true
   }
 }
 ```
@@ -165,12 +178,13 @@ codex plugin marketplace remove bin
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # 플러그인 3개 등록
+├── .claude-plugin/marketplace.json   # 플러그인 4개 등록
 ├── install.sh                        # 대화형 설치 스크립트 (--host claude|codex)
 └── plugins/
     ├── harness/                      # 스킬
     ├── ux-ui/                        # 스킬 2 + 에이전트 2 + 커밋 게이트 훅 + MCP 4
-    └── claude-x-codex/               # 스킬 3 + 프롬프트 훅 + 스크립트 3
+    ├── claude-x-codex/               # 스킬 3 + 프롬프트 훅 + 스크립트 3
+    └── free-hands/                   # 스킬 1 + 에이전트 5 + 훅 4 + 스크립트 3
 ```
 
 각 플러그인 폴더는 자기완결적입니다: README, 매니페스트, 배포되는 모든 파일이 `plugins/<이름>/` 아래에 있습니다.

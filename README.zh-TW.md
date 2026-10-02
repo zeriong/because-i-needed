@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>因為需要才自己做的 Claude Code 與 Codex 外掛——專案 harness、實測驅動的 UI，以及 Claude × Codex 協作編排。</strong>
+  <strong>因為需要才自己做的 Claude Code 與 Codex 外掛——專案 harness、實測驅動的 UI、Claude × Codex 協作編排與自主目標執行。</strong>
 </p>
 
 <p align="center">
@@ -21,14 +21,14 @@
 
 ---
 
-本儲存庫是一個 Claude Code 與 Codex **外掛市集**，收錄三個彼此獨立的外掛。只要安裝你需要的即可。
+本儲存庫是一個 Claude Code 與 Codex **外掛市集**，收錄四個彼此獨立的外掛。只要安裝你需要的即可。
 
 ## Codex
 
-這3個外掛也支援 Codex CLI 0.158.0 及以上版本。選擇需要的外掛安裝：
+這4個外掛也支援 Codex CLI 0.158.0 及以上版本。選擇需要的外掛安裝：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,claude-x-codex
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,claude-x-codex,free-hands
 ```
 
 也可以直接使用 CLI：
@@ -38,9 +38,10 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add harness@because-i-needed
 codex plugin add ux-ui@because-i-needed
 codex plugin add claude-x-codex@because-i-needed
+codex plugin add free-hands@because-i-needed
 ```
 
-在新的 Codex 工作階段中呼叫 `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile` 或 `$claude-x-codex:run`。使用 `$claude-x-codex:mode on` 開啟自動協作，使用 `$claude-x-codex:audit` 檢查上下文。在依賴自動路由和 UI 提交閘門之前，請透過 `/hooks` 審核並信任已安裝的掛鉤。
+在新的 Codex 工作階段中呼叫 `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$claude-x-codex:run` 或 `$free-hands:run`。使用 `$claude-x-codex:mode on` 開啟自動協作，使用 `$claude-x-codex:audit` 檢查上下文。在依賴自動路由、UI 提交閘門和 free-hands 強制執行之前，請透過 `/hooks` 審核並信任已安裝的掛鉤。
 
 安裝器預設使用 Claude Code；`--host codex` 選擇 Codex。Codex 僅支援使用者範圍：省略 `--scope` 或使用 `--scope user`，project/local 範圍會被拒絕。兩個宿主共用技能、腳本和工作流程，每個外掛另附 Codex 清單。Codex 使用自己的提問工具和獨立代理。產生的 harness 使用 `.codex/hooks.json`、`.codex/hooks/`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py` 和 `.agents/skills/`，保留現有 Claude 檔案。UI 實測仍需要對應的瀏覽器或行動工具。詳情參閱各外掛的 Codex 章節。
 
@@ -77,6 +78,16 @@ codex plugin add claude-x-codex@because-i-needed
 
 [閱讀 claude-x-codex 繁體中文 README →](plugins/claude-x-codex/README.zh-TW.md)
 
+### [free-hands](plugins/free-hands) · `v0.1.0`
+
+**將有限目標的清單逐項完成，不提問、不停止。** 遇到原本需要使用者決定的問題時，由五角色討論面板提供建議，主代理依據證據做決定。
+
+- **適用時機：** 想交付範圍明確的目標，並記錄決定、在中斷後繼續處理時。
+- **進入點：** `/free-hands:run <目標>`（Claude Code）· `$free-hands:run <目標>`（Codex），也可在提示中寫「free-hands」以先收到一次開始確認
+- **注意：** hook 會在每次提示、工作階段開始、提問和停止時執行。沒有啟用中的目標時保持安靜，只有提示中出現「free-hands」時會送出一次開始問題。有未完成項目時，Stop 最多讓目前回合延續40次。
+
+[閱讀 free-hands 繁體中文 README →](plugins/free-hands/README.zh-TW.md)
+
 ## 已退役的外掛
 
 ### plan-smith — 於 2026-09-30 退役（最後版本 1.8.0）
@@ -105,6 +116,7 @@ claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
 claude plugin install harness@because-i-needed
 claude plugin install ux-ui@because-i-needed
 claude plugin install claude-x-codex@because-i-needed
+claude plugin install free-hands@because-i-needed
 ```
 
 或在 Claude Code 中：`/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git`，然後從清單中安裝。
@@ -121,7 +133,8 @@ claude plugin install claude-x-codex@because-i-needed
   "enabledPlugins": {
     "harness@because-i-needed": true,
     "ux-ui@because-i-needed": true,
-    "claude-x-codex@because-i-needed": true
+    "claude-x-codex@because-i-needed": true,
+    "free-hands@because-i-needed": true
   }
 }
 ```
@@ -165,12 +178,13 @@ codex plugin marketplace remove bin
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # 列出三個外掛
+├── .claude-plugin/marketplace.json   # 列出四個外掛
 ├── install.sh                        # 互動式安裝腳本（--host claude|codex）
 └── plugins/
     ├── harness/                      # 技能
     ├── ux-ui/                        # 2 個技能 + 2 個代理 + 提交閘門 hook + 4 個 MCP
-    └── claude-x-codex/               # 3 個技能 + 提示 hook + 3 個腳本
+    ├── claude-x-codex/               # 3 個技能 + 提示 hook + 3 個腳本
+    └── free-hands/                   # 1 個技能 + 5 個代理 + 4 個 hooks + 3 個腳本
 ```
 
 每個外掛資料夾都是自給自足的：它的 README、manifest，以及所有隨附的內容，都放在 `plugins/<name>/` 之下。

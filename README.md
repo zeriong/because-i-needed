@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>Claude Code and Codex plugins I built because I needed them — project harnesses, measured UI, and Claude × Codex orchestration.</strong>
+  <strong>Claude Code and Codex plugins I built because I needed them — project harnesses, measured UI, Claude × Codex orchestration, and autonomous goal runs.</strong>
 </p>
 
 <p align="center">
@@ -21,14 +21,14 @@
 
 ---
 
-This repository is a Claude Code and Codex **plugin marketplace** with three independent plugins. Install only the ones you need.
+This repository is a Claude Code and Codex **plugin marketplace** with four independent plugins. Install only the ones you need.
 
 ## Codex
 
-The same three plugins also support Codex CLI 0.158.0 or later. Install a chosen subset:
+The same four plugins also support Codex CLI 0.158.0 or later. Install a chosen subset:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,claude-x-codex
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,claude-x-codex,free-hands
 ```
 
 Or use the CLI directly:
@@ -38,9 +38,10 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add harness@because-i-needed
 codex plugin add ux-ui@because-i-needed
 codex plugin add claude-x-codex@because-i-needed
+codex plugin add free-hands@because-i-needed
 ```
 
-Start a new Codex session and invoke `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, or `$claude-x-codex:run`. Use `$claude-x-codex:mode on` for automatic orchestration and `$claude-x-codex:audit` to inspect context parity. Review and trust installed hooks with `/hooks` before relying on automatic routing or the UI commit gate.
+Start a new Codex session and invoke `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$claude-x-codex:run`, or `$free-hands:run`. Use `$claude-x-codex:mode on` for automatic orchestration and `$claude-x-codex:audit` to inspect context parity. Review and trust installed hooks with `/hooks` before relying on automatic routing, the UI commit gate, or free-hands enforcement.
 
 The installer defaults to Claude Code; `--host codex` selects Codex. Codex installs at user scope: omit `--scope` or use `--scope user`; project/local scope is rejected. Skills, scripts and workflow contracts are shared; each plugin includes a Codex manifest. Codex execution uses its own questions and independent agents. The harness generates `.codex/hooks.json`, `.codex/hooks/`, `.codex/scripts/review-gate.sh`, `.codex/scripts/latest-model.py` and `.agents/skills/`; existing Claude artifacts are preserved. UI measurement still requires the relevant browser/mobile tools. See each plugin's Codex section for details.
 
@@ -77,6 +78,16 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the claude-x-codex README →](plugins/claude-x-codex)
 
+### [free-hands](plugins/free-hands) · `v0.1.0`
+
+**Carry a finite goal through its checklist without asking or stopping.** When a decision would normally go to you, a five-role panel advises and the main agent decides from evidence.
+
+- **Use it when** you want an agent to work through a bounded goal while recording decisions and resuming across interruptions.
+- **Entry:** `/free-hands:run <goal>` (Claude Code) · `$free-hands:run <goal>` (Codex), or include “free-hands” in a prompt to get one entry question
+- **Heads-up:** hooks run on every prompt, session start, ask and stop; with no active goal they are silent except for a one-question entry note when a prompt says “free-hands”. While items are open, Stop keeps the turn going up to 40 times.
+
+[Read the free-hands README →](plugins/free-hands)
+
 ## Retired plugins
 
 ### plan-smith — retired 2026-09-30 (last version 1.8.0)
@@ -105,6 +116,7 @@ claude plugin marketplace add https://github.com/zeriong/because-i-needed.git
 claude plugin install harness@because-i-needed
 claude plugin install ux-ui@because-i-needed
 claude plugin install claude-x-codex@because-i-needed
+claude plugin install free-hands@because-i-needed
 ```
 
 Or in Claude Code: `/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git`, then install from the list.
@@ -121,7 +133,8 @@ Or wire it directly in `~/.claude/settings.json`:
   "enabledPlugins": {
     "harness@because-i-needed": true,
     "ux-ui@because-i-needed": true,
-    "claude-x-codex@because-i-needed": true
+    "claude-x-codex@because-i-needed": true,
+    "free-hands@because-i-needed": true
   }
 }
 ```
@@ -165,12 +178,13 @@ Every command reads **subject : action** — `/<plugin>:<skill>`.
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # lists the three plugins
+├── .claude-plugin/marketplace.json   # lists the four plugins
 ├── install.sh                        # interactive installer (--host claude|codex)
 └── plugins/
     ├── harness/                      # skill
     ├── ux-ui/                        # 2 skills + 2 agents + commit-gate hook + 4 MCPs
-    └── claude-x-codex/               # 3 skills + prompt hook + 3 scripts
+    ├── claude-x-codex/               # 3 skills + prompt hook + 3 scripts
+    └── free-hands/                   # 1 skill + 5 agents + 4 hooks + 3 scripts
 ```
 
 Each plugin folder is self-contained: its README, manifest, and everything it ships live under `plugins/<name>/`.

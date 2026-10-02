@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["option", "new_option", "reasons", "evidence", "risks", "confidence", "would_change_if"],
+  "properties": {
+    "option": { "type": "string" },
+    "new_option": { "type": "string" },
+    "reasons": { "type": "array", "items": { "type": "string" } },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claim", "source"],
+        "properties": {
+          "claim": { "type": "string" },
+          "source": { "type": "string" }
+        }
+      }
+    },
+    "risks": { "type": "array", "items": { "type": "string" } },
+    "confidence": { "type": "string", "enum": ["low", "medium", "high"] },
+    "would_change_if": { "type": "string" }
+  }
+}
