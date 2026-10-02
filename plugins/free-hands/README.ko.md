@@ -4,7 +4,7 @@
 
 <p align="center"><strong>에이전트에게 유한한 목표를 주면 체크리스트를 질문하거나 멈추지 않고 처리합니다.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="버전"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="라이선스: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 플러그인"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="버전"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="라이선스: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 플러그인"></a></p>
 
 <p align="center"><a href="#시작하기">시작하기</a> &bull; <a href="#목표-파일">목표 파일</a> &bull; <a href="#묻지-않기">묻지 않기</a> &bull; <a href="#훅">훅</a> &bull; <a href="#패널">패널</a> &bull; <a href="#누적-pr">누적 PR</a> &bull; <a href="#한계와-상태">한계와 상태</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#요구사항">요구사항</a> &bull; <a href="#설치">설치</a></p>
 
@@ -43,13 +43,14 @@ iterations: 0
 
 ## 묻지 않기
 
-목표가 활성 상태인 동안 스킬은 사용자에게 묻지 않습니다. 프로젝트와 다른 스킬의 질문 규칙, claude-x-codex 같은 워크플로의 승인 게이트도 이 규칙으로 덮어씁니다. 에이전트는 묻지 않고 브랜치를 푸시하고 PR을 생성합니다. 실패한 테스트·게이트·훅·리뷰는 수정하거나 사용자 처리가 필요하다고 `- [-]`로 표시하며, 통과한 것으로 바꾸지 않습니다. 다른 플러그인의 훅은 계속 동작합니다.
+목표가 활성 상태인 동안 스킬은 사용자에게 묻지 않습니다. 프로젝트와 다른 스킬의 질문 규칙, peer-coding 같은 워크플로의 승인 게이트도 이 규칙으로 덮어씁니다. 에이전트는 묻지 않고 브랜치를 푸시하고 PR을 생성합니다. 실패한 테스트·게이트·훅·리뷰는 수정하거나 사용자 처리가 필요하다고 `- [-]`로 표시하며, 통과한 것으로 바꾸지 않습니다. 다른 플러그인의 훅은 계속 동작합니다.
 
 ## 훅
 
 훅마다 동작 조건이 다릅니다.
 
 - `## Checklist` 아래에 있으면서 코드 블록 밖에 있는 `- [ ]` 줄만 미완료 항목으로 셉니다.
+- 셸 가드(`Bash`의 `PreToolUse`)는 목표가 `active`이거나, 미완료 항목이 남은 `done`/`waiting`일 때 동작합니다. `[ ]` 항목이 더 이상 없거나 `max_iterations`에 도달해도 마찬가지입니다. [한계와 상태](#한계와-상태)에 설명된 하드 리밋 명령을 거부합니다.
 - 질문·중단 가드는 목표에 미완료 `[ ]` 항목이 있고 `max_iterations` 미만이며, 상태가 `active`이거나 미완료 항목이 남은 `done`/`waiting`일 때 동작합니다. 질문 가드는 질문 도구를 거부합니다. 한도에서는 질문이 허용됩니다. Stop 훅은 중단을 막기 전에 반복 횟수를 디스크에 기록하며 최대 40회까지 이어갑니다.
 - 복원 메모(`UserPromptSubmit`, 압축 후를 포함한 `SessionStart`)는 목표가 `active`(미완료 `[ ]` 항목이 없어도)인 동안 또는 미완료 항목이 남은 `done`/`waiting` 상태에서 전달됩니다.
 - 진입 메모는 활성 상태의 올바른 목표가 없고 프롬프트에 “free-hands”가 있을 때 전달됩니다. 백그라운드 작업 알림은 프롬프트로 취급하지 않습니다. 프롬프트 안에 인용된 알림은 무시하고 나머지 프롬프트는 읽습니다.
@@ -86,13 +87,17 @@ iterations: 0
 
 측정하지 않은 항목: `AskUserQuestion` 거부(headless Claude Code에는 해당 도구가 없음)와 Codex의 `request_user_input` 거부(에이전트가 호출하지 않음); 런타임의 `max_iterations`에서의 해제 및 카운터 쓰기 실패(단위 테스트만 수행); 2라운드(모든 패널이 동의함); 역할의 쓰기 시도 차단(시도한 역할 없음); 대화형 `/hooks` 신뢰; 누적 PR. 네 번의 실행에서 에이전트가 직접 `iterations`를 다시 썼으므로(F04, G03), 에이전트가 카운터를 그대로 둘 때만 한도가 유지됩니다.
 
-다음은 스킬과 복원 메모가 에이전트에게 주는 규칙입니다. 어떤 훅도 해당 명령을 막지 않습니다.
+스킬과 복원 메모는 에이전트에게 다음 하드 리밋을 둡니다.
 
 - PR을 병합하거나 기본 브랜치에 무엇이든 병합하지 않습니다.
 - 저장소 밖 파일, 데이터, 원격 브랜치, 데이터베이스를 되돌릴 수 없게 삭제하지 않습니다.
 - 배포, 공개, 외부 전송(릴리스·패키지 공개·이메일·메시지 포함)을 하지 않습니다.
 
-해당 항목은 사유와 함께 `- [-]`로 표시하고 다른 작업을 계속합니다. 이미 푸시한 브랜치의 강제 푸시는 한 줄로 알린 뒤 허용됩니다.
+해당 항목은 사유와 함께 `- [-]`로 표시하고 다른 작업을 계속합니다. 이미 푸시한 브랜치의 강제 푸시는 한 줄로 알린 뒤 허용됩니다. 브랜치 푸시, 이슈와 PR 생성, 이에 대한 댓글 작성은 허용됩니다.
+
+0.2.0부터는 목표가 활성 상태일 때 셸 훅도 이를 위반하는 일반 명령을 거부합니다. `gh pr merge`; 기본 브랜치를 업데이트하는 푸시와 병합(목표 파일의 `default_branch:`, 없으면 푸시 원격의 HEAD, 그것도 없으면 `main`과 `master`); `gh api`를 통한 병합과 릴리스 생성; 원격 삭제(`git push --delete`, `:ref`, `--prune`, `--mirror`, `gh repo delete`, `gh release delete`); 그리고 `npm`/`pnpm`/`yarn publish`, `cargo publish`, `twine upload`, `gem push`, `docker push`, `docker buildx build --push`, `gh release create`, `vercel` 배포, `netlify deploy`, `fly deploy`, `firebase deploy`, `terraform apply`, `kubectl apply`, `helm install`/`upgrade`, `sendmail`, `mail`, `mutt`입니다. `--help`/`-h`는 `sendmail`·`mail`·`mutt`과 `terraform`을 제외한 목록의 모든 CLI에서 통과합니다. `sendmail`·`mail`·`mutt`은 항상 거부되고, `terraform`의 도움말 플래그는 `-help`입니다. `--dry-run`은 `git push`, `npm`/`pnpm`/`yarn publish`, `cargo publish`, `kubectl`, `helm`에서 통과합니다. 두 호스트에서 훅은 실행 전에 `gh pr merge 1`, `npm publish`, `git push origin HEAD:main`을 거부했고, 거부 결과는 에이전트에 전달됐습니다([z-lab `run-0.2.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.2.0), P01–P04).
+
+이 훅은 협조적인 에이전트가 사용하는 일반 명령에 대한 보완 장치이며, 의도적인 우회를 막는 방어 수단은 아닙니다. 규칙상 우회는 금지됩니다. `rm`, 데이터베이스 명령, heredoc 본문, 스크립트(`npm run deploy`), 대화형 세션에 입력한 명령, 다른 CLI 및 HTTP 호출(`curl`)은 읽지 않습니다.
 
 “pause”, “stop” 또는 **“일시정지”**라고 말하면 일시정지합니다. 목표에 `paused`를 기록하고 명령을 다시 실행하면 재개합니다.
 

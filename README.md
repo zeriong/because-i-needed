@@ -80,13 +80,13 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the peer-coding README →](plugins/peer-coding)
 
-### [free-hands](plugins/free-hands) · `v0.1.0`
+### [free-hands](plugins/free-hands) · `v0.2.0`
 
 **Carry a finite goal through its checklist without asking or stopping.** When a decision would normally go to you, a five-role panel advises and the main agent decides from evidence.
 
 - **Use it when** you want an agent to work through a bounded goal while recording decisions and resuming across interruptions.
 - **Entry:** `/free-hands:run <goal>` (Claude Code) · `$free-hands:run <goal>` (Codex), or include “free-hands” in a prompt to get one entry question
-- **Heads-up:** hooks run on every prompt, session start, ask and stop; with no active goal they are silent except for a one-question entry note when a prompt says “free-hands”. While items are open, Stop keeps the turn going up to 40 times.
+- **Heads-up:** hooks run on every prompt, session start, ask, shell command and stop; with no active goal they are silent except for a one-question entry note when a prompt says “free-hands”. While items are open, Stop keeps the turn going up to 40 times; while a goal is active, a backstop hook denies the listed shell commands that merge into the default branch, delete remotely, deploy or publish (see the plugin README).
 
 [Read the free-hands README →](plugins/free-hands)
 
@@ -200,7 +200,7 @@ because-i-needed/
     ├── harness/                      # skill
     ├── ux-ui/                        # 2 skills + 2 agents + commit-gate hook + 4 MCPs
     ├── peer-coding/                  # 3 skills + prompt hook + 3 scripts
-    └── free-hands/                   # 1 skill + 5 agents + 4 hooks + 3 scripts
+    └── free-hands/                   # 1 skill + 5 agents + 4 hooks + 4 scripts
 ```
 
 Each plugin folder is self-contained: its README, manifest, and everything it ships live under `plugins/<name>/`.

@@ -4,7 +4,7 @@
 
 <p align="center"><strong>Give an agent a finite goal; it works through the checklist without asking or stopping.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#start">Start</a> &bull; <a href="#goal-file">Goal file</a> &bull; <a href="#never-ask">Never ask</a> &bull; <a href="#hooks">Hooks</a> &bull; <a href="#the-panel">The panel</a> &bull; <a href="#stacked-prs">Stacked PRs</a> &bull; <a href="#limits-and-status">Limits and status</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#requirements">Requirements</a> &bull; <a href="#installation">Installation</a></p>
 
@@ -43,13 +43,14 @@ Marks are `- [ ]` open, `- [x]` done, and `- [-] … — needs the user` for wor
 
 ## Never ask
 
-The skill does not ask the user during an active goal. This overrides project and other skill instructions to ask, including approval gates in workflows such as claude-x-codex. The agent pushes branches and creates PRs without asking. A failed test, gate, hook, or review is fixed or marked `- [-]` as needing the user; it is never reported as passed. Other plugins’ hooks continue to run.
+The skill does not ask the user during an active goal. This overrides project and other skill instructions to ask, including approval gates in workflows such as peer-coding. The agent pushes branches and creates PRs without asking. A failed test, gate, hook, or review is fixed or marked `- [-]` as needing the user; it is never reported as passed. Other plugins’ hooks continue to run.
 
 ## Hooks
 
 The hooks have different conditions:
 
 - Only `- [ ]` lines under `## Checklist`, outside code blocks, count as open items.
+- The shell guard (`PreToolUse` on `Bash`) acts while the goal is `active`, or `done`/`waiting` with items still open — also when no `[ ]` item is left and at `max_iterations`. It denies the hard-limit commands described under [Limits and status](#limits-and-status).
 - The ask and stop guards act when the goal has open `[ ]` items, is below `max_iterations`, and is `active` — or `done`/`waiting` with items still open. The ask guard denies asking tools. At the limit, asking is allowed. The Stop hook blocks stopping and increments the counter on disk first, up to 40 continuations.
 - The restore note (`UserPromptSubmit`, and `SessionStart` including after a compaction) is emitted while the goal is `active` (also when no `[ ]` items remain) or `done`/`waiting` with items still open.
 - The entry note is emitted when there is no active, well-formed goal and a prompt mentions “free-hands”. Background-task notifications are not treated as prompts; a notification quoted inside a prompt is ignored and the rest of the prompt is read.
@@ -86,13 +87,17 @@ The panel deciding better than one agent is a **hypothesis, not a measured resul
 
 Not measured: the denial of `AskUserQuestion` (headless Claude Code has no such tool) and of Codex's `request_user_input` (the agent never called it); the release at `max_iterations` and a failed counter write at runtime (unit tests only); round 2 (every panel agreed); a role's write attempt being blocked (none tried); interactive `/hooks` trust; stacked PRs. Agents rewrote `iterations` themselves in four runs (F04, G03), so the limit holds only while the agent leaves the counter alone.
 
-The following are rules that the skill and restore note give the agent. No hook blocks these commands:
+The skill and restore note give the agent these hard limits:
 
 - Never merge a PR or merge anything into the default branch.
 - Never irreversibly delete files outside the repository, data, remote branches, or databases.
 - Never deploy, publish, or send anything outside (such as a release, package, email, or message).
 
-Mark such checklist items `- [-]` with the reason and continue with other items. Force-pushing a branch that was already pushed is allowed after a one-line notice.
+Mark such checklist items `- [-]` with the reason and continue with other items. Force-pushing a branch that was already pushed is allowed after a one-line notice. Pushing branches, opening issues and PRs, and commenting on them are allowed.
+
+Since 0.2.0 a shell hook also denies the ordinary commands that break them while a goal is active: `gh pr merge`; pushes and merges that update the default branch (`default_branch:` in the goal file, else the push remote's HEAD, else `main` and `master`); `gh api` merges and release creation; remote deletions (`git push --delete`, `:ref`, `--prune`, `--mirror`, `gh repo delete`, `gh release delete`); and `npm`/`pnpm`/`yarn publish`, `cargo publish`, `twine upload`, `gem push`, `docker push`, `docker buildx build --push`, `gh release create`, `vercel` deploys, `netlify deploy`, `fly deploy`, `firebase deploy`, `terraform apply`, `kubectl apply`, `helm install`/`upgrade`, `sendmail`, `mail` and `mutt`. `--help`/`-h` passes for every listed CLI except `sendmail`, `mail` and `mutt`, which are always denied, and `terraform`, whose help flag is `-help`; `--dry-run` passes for `git push`, `npm`/`pnpm`/`yarn publish`, `cargo publish`, `kubectl` and `helm`. On both hosts the hook denied `gh pr merge 1`, `npm publish` and `git push origin HEAD:main` before they ran, and the denial reached the agent ([z-lab `run-0.2.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.2.0), P01–P04).
+
+The hook is a backstop for a cooperative agent's ordinary commands, not a defense against deliberate evasion — the rules forbid evasion. It does not read `rm`, database commands, heredoc bodies, scripts (`npm run deploy`), commands typed into an interactive session, or other CLIs and HTTP calls (`curl`).
 
 To pause, say **“pause”**, **“stop”**, or **“일시정지”**. The goal is recorded as `paused`; invoke the command again to resume.
 

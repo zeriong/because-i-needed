@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.2.0] - 2026-10-02
+
+### Added
+
+- A `PreToolUse` hook on shell commands (`scripts/guard.py shell`, `scripts/shellguard.py`) denies, while a goal is
+  active, the ordinary commands that break the hard limits: merging into the default branch (`gh pr merge`, pushes and
+  merges that update it, `gh api` merges), remote deletion (`git push --delete`/`:ref`/`--prune`/`--mirror`, `gh repo
+  delete`, `gh release delete`), and deploy/publish/send (`npm|pnpm|yarn publish`, `docker push`, `gh release create`,
+  `vercel`, `terraform apply`, `kubectl apply`, `helm install`, `sendmail`, …). The denial reaches the agent with the
+  instruction to mark the item `[-]`. The goal file gains `default_branch:`.
+
+### Changed
+
+- SKILL.md: a denial is final; never route a limited action through a script, an interactive shell or another tool.
+  Pushing branches, opening issues and PRs and commenting are allowed. The examples name peer-coding (formerly
+  claude-x-codex).
+
+### Why
+
+The hard limits were instructions only (0.1.0 review FH-26). The hook is a backstop for a cooperative agent's ordinary
+commands, not a defense against deliberate evasion; `rm`, database commands, heredoc bodies, scripts, interactive input
+and other CLIs are not read (user decision, core scope).
+
+Evidence: z-lab `free-hands-lab/run-0.2.0` (P01–P05) on Claude Code 2.1.287 and Codex 0.160.0, one run per case: the
+hook denied `gh pr merge 1`, `npm publish` and `git push origin HEAD:main` before they ran on both hosts, an allowed
+`gh pr view 1` ran, and without the hook the agents did run `gh pr merge 1` and `npm publish` (Claude reached the
+fakes; on Codex the real binaries ran and failed — no credentials, exit 4; npm EPERM, exit 255). The full skill marked limited items `[-]` without
+needing the hook (P05). The command list itself is covered by 206 unit cases. Not measured: Codex with hooks trusted
+through `/hooks`, interactive sessions, commands outside the list.
+
 ## [0.1.0] - 2026-10-01
 
 ### Added

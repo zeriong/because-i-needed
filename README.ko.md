@@ -80,13 +80,13 @@ codex plugin add free-hands@because-i-needed
 
 [peer-coding 한국어 README 보기 →](plugins/peer-coding/README.ko.md)
 
-### [free-hands](plugins/free-hands) · `v0.1.0`
+### [free-hands](plugins/free-hands) · `v0.2.0`
 
 **유한한 목표를 질문이나 중단 없이 체크리스트 끝까지 처리합니다.** 사용자가 결정할 사안은 다섯 역할 패널이 검토하고 메인 에이전트가 증거를 바탕으로 결정합니다.
 
 - **이럴 때** 결정 기록을 남기며 중단 후에도 재개할 수 있는 범위가 정해진 목표를 맡기고 싶을 때.
 - **진입점:** `/free-hands:run <목표>`(Claude Code) · `$free-hands:run <목표>`(Codex), 또는 프롬프트에 “free-hands”를 넣어 진입 질문 하나 받기
-- **참고:** 프롬프트·세션 시작·질문·중단 때 훅이 실행됩니다. 활성 목표가 없으면 프롬프트에 “free-hands”가 있을 때 한 번의 진입 질문을 내는 경우 외에는 조용합니다. 미완료 항목이 있으면 Stop이 최대 40회까지 차례를 이어갑니다.
+- **참고:** 프롬프트·세션 시작·질문·셸 명령·중단 때 훅이 실행됩니다. 활성 목표가 없으면 프롬프트에 “free-hands”가 있을 때 한 번의 진입 질문을 내는 경우 외에는 조용합니다. 미완료 항목이 있으면 Stop이 최대 40회까지 차례를 이어가고, 목표가 활성인 동안 보조 훅이 기본 브랜치 병합·원격 삭제·배포·공개를 하는 목록의 셸 명령을 거부합니다(플러그인 README 참고).
 
 [free-hands 한국어 README 보기 →](plugins/free-hands/README.ko.md)
 
@@ -200,7 +200,7 @@ because-i-needed/
     ├── harness/                      # 스킬
     ├── ux-ui/                        # 스킬 2 + 에이전트 2 + 커밋 게이트 훅 + MCP 4
     ├── peer-coding/                  # 스킬 3 + 프롬프트 훅 + 스크립트 3
-    └── free-hands/                   # 스킬 1 + 에이전트 5 + 훅 4 + 스크립트 3
+    └── free-hands/                   # 스킬 1 + 에이전트 5 + 훅 4 + 스크립트 4
 ```
 
 각 플러그인 폴더는 자기완결적입니다: README, 매니페스트, 배포되는 모든 파일이 `plugins/<이름>/` 아래에 있습니다.

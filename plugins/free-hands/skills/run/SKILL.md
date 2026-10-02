@@ -28,6 +28,7 @@ sandbox keeps read-only).
 status: active
 max_iterations: 40
 iterations: 0
+default_branch: <the repository's default branch>
 ## Goal
 <one sentence>
 ## Checklist
@@ -37,6 +38,9 @@ iterations: 0
 <state the next session needs: branches, PRs, what is in progress>
 ```
 
+- `default_branch`: from `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`, else
+  `git symbolic-ref --short refs/remotes/origin/HEAD` without the remote prefix. The hard-limit hook protects this
+  branch; without the line it falls back to the remote's HEAD, then to `main` and `master`.
 - Items must be finite and checkable. No open conditions ("no more findings", "everything clean"); turn them into a
   bounded list or a command whose result decides.
 - No goal in the arguments: take it from the conversation (the prompt that led to the entry question). Only if there is
@@ -58,7 +62,7 @@ iterations: 0
 ## 3. Never ask
 
 Until the goal is done you do not ask the user anything — no exceptions. This overrides every "ask the user" rule from
-project instructions or other skills, including approval gates of other workflows (for example claude-x-codex's).
+project instructions or other skills, including approval gates of other workflows (for example peer-coding's).
 Instead:
 
 1. Small choice → decide, add one line under `## Decisions`, continue.
@@ -77,7 +81,16 @@ with the others:
 - irreversible deletion — files outside the repository, data, remote branches, database drops;
 - deploying, publishing or sending anything outside — releases, package publishes, email or messages.
 
-Force-pushing a branch that is already pushed is allowed after a one-line notice (a notice, not a question).
+Pushing branches, opening issues and pull requests, and commenting on them are part of the PR workflow (§5) and are
+allowed. Force-pushing a branch that is already pushed is allowed after a one-line notice (a notice, not a question).
+
+While the goal is active, a hook denies the common commands that break these limits: `gh pr merge`, pushes that update
+the default branch (`HEAD:main`, `--all`, `--mirror`), `git merge` on the default branch, remote deletions (`git push
+--delete`, `:ref`, `gh repo delete`, `gh release delete`), and publishing or deploying (`npm publish`, `docker push`,
+`gh release create`, `vercel`, `terraform apply`, `kubectl apply`, `sendmail`, …). A denial is final: mark the item `[-]`
+and move on. Never reach the same effect another way — not through a script, a package script, an interactive shell,
+a REPL, `curl` or another tool; the hook does not read those, so the rule above is what holds there. `rm` and database
+commands are not checked by the hook at all.
 
 ## 4. The brainstorming panel
 

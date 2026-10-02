@@ -4,7 +4,7 @@
 
 <p align="center"><strong>有限の目標を渡すと、エージェントが質問や中断をせずチェックリストを最後まで進めます。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="バージョン"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="ライセンス: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code プラグイン"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="バージョン"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="ライセンス: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code プラグイン"></a></p>
 
 <p align="center"><a href="#開始">開始</a> &bull; <a href="#目標ファイル">目標ファイル</a> &bull; <a href="#質問しない">質問しない</a> &bull; <a href="#フック">フック</a> &bull; <a href="#パネル">パネル</a> &bull; <a href="#積み上げpr">積み上げ PR</a> &bull; <a href="#制限と状態">制限と状態</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#必要条件">必要条件</a> &bull; <a href="#インストール">インストール</a></p>
 
@@ -43,13 +43,14 @@ iterations: 0
 
 ## 質問しない
 
-目標が有効な間、スキルはユーザーに質問しません。プロジェクトや他のスキルの質問ルール、claude-x-codex などのワークフローの承認ゲートもこの規則で上書きされます。エージェントは確認を求めずにブランチをプッシュし、PR を作成します。失敗したテスト、ゲート、フック、レビューは修正するか、ユーザー対応が必要として `- [-]` に記録し、合格扱いにしません。他プラグインのフックは引き続き動作します。
+目標が有効な間、スキルはユーザーに質問しません。プロジェクトや他のスキルの質問ルール、peer-coding などのワークフローの承認ゲートもこの規則で上書きされます。エージェントは確認を求めずにブランチをプッシュし、PR を作成します。失敗したテスト、ゲート、フック、レビューは修正するか、ユーザー対応が必要として `- [-]` に記録し、合格扱いにしません。他プラグインのフックは引き続き動作します。
 
 ## フック
 
 フックごとに条件が異なります。
 
 - `## Checklist` の下にあり、かつコードブロック外にある `- [ ]` 行だけを未完了項目として数えます。
+- シェルガード（`Bash` の `PreToolUse`）は目標が `active`、または未完了項目が残る `done`/`waiting` の間に動作します。`[ ]` 項目がなくなった後や `max_iterations` に達した後も同様です。[制限と状態](#制限と状態)に記載したハードリミット対象のコマンドを拒否します。
 - 質問・停止ガードは目標に未完了 `[ ]` があり、`max_iterations` 未満で、状態が `active` または未完了項目が残る `done`/`waiting` の場合に動作します。質問ガードは質問ツールを拒否します。上限では質問が可能です。Stop フックは停止をブロックする前にカウンターをディスクへ記録し、最大40回継続します。
 - 復元メモ（`UserPromptSubmit`、圧縮後を含む `SessionStart`）は目標が `active`（未完了項目がなくても）または未完了項目が残る `done`/`waiting` の間に出力されます。
 - 有効で正しい目標がなく、プロンプトに「free-hands」がある場合は開始メモを出力します。バックグラウンドタスクの通知はプロンプトとして扱いません。プロンプト内で引用された通知は無視し、プロンプトの残りを読み取ります。
@@ -86,13 +87,17 @@ iterations: 0
 
 未測定：`AskUserQuestion` の拒否（headless Claude Code にはこのツールがない）と Codex の `request_user_input` の拒否（エージェントが呼び出さなかった）、実行時の `max_iterations` での解除とカウンター書き込み失敗（単体テストのみ）、ラウンド2（パネル全員が合意）、役割による書き込み試行の阻止（試行なし）、対話型 `/hooks` の信頼、積み上げ PR。4回の実行でエージェント自身が `iterations` を書き換えたため（F04、G03）、エージェントがカウンターを変更しない間だけ上限が機能します。
 
-以下はスキルと復元メモがエージェントに伝えるルールです。該当コマンドをブロックするフックはありません。
+スキルと復元メモはエージェントに次のハードリミットを課します。
 
 - PR をマージしたり、デフォルトブランチに何かをマージしたりしません。
 - リポジトリ外のファイル、データ、リモートブランチ、データベースを取り消せない形で削除しません。
 - デプロイ、公開、外部への送信（リリース、パッケージ公開、メール、メッセージなど）をしません。
 
-該当項目は理由を付けて `- [-]` と記し、他の作業を続けます。すでにプッシュしたブランチへの force-push は一行で通知した後に可能です。
+該当項目は理由を付けて `- [-]` と記し、他の作業を続けます。すでにプッシュしたブランチへの force-push は一行で通知した後に可能です。ブランチのプッシュ、issue と PR の作成、それらへのコメントは許可されています。
+
+0.2.0 から、目標が有効な間はシェルフックも違反につながる一般的なコマンドを拒否します。`gh pr merge`、デフォルトブランチを更新する プッシュとマージ（目標ファイルの `default_branch:`、なければ push 先リモートの HEAD、それもなければ `main` と `master`）、`gh api` によるマージ とリリース作成、リモート削除（`git push --delete`、`:ref`、`--prune`、`--mirror`、`gh repo delete`、`gh release delete`）、および `npm`/`pnpm`/`yarn publish`、`cargo publish`、`twine upload`、`gem push`、`docker push`、`docker buildx build --push`、`gh release create`、`vercel` のデプロイ、`netlify deploy`、`fly deploy`、`firebase deploy`、`terraform apply`、`kubectl apply`、`helm install`/`upgrade`、`sendmail`、`mail`、`mutt` です。`--help`/`-h` は `sendmail`・`mail`・`mutt` と `terraform` を除く一覧のすべての CLI で通過します。`sendmail`・`mail`・`mutt` は常に拒否され、`terraform` のヘルプフラグは `-help` です。`--dry-run` は `git push`、`npm`/`pnpm`/`yarn publish`、`cargo publish`、`kubectl`、`helm` で通過します。両ホストでフックは実行前に `gh pr merge 1`、`npm publish`、`git push origin HEAD:main` を拒否し、その拒否はエージェントに届きました（[z-lab `run-0.2.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.2.0)、P01–P04）。
+
+このフックは協調的なエージェントが使う通常コマンドへの補完策であり、意図的な回避を防ぐものではありません。ルールでは回避を禁じています。`rm`、データベースコマンド、heredoc の本文、スクリプト（`npm run deploy`）、対話セッションに入力されたコマンド、その他の CLI と HTTP 呼び出し（`curl`）は読み取りません。
 
 一時停止するには **「pause」**、「**stop**」、または **「일시정지」** と入力します。目標を `paused` と記録します。コマンドを再実行すると再開します。
 

@@ -445,5 +445,254 @@ class PanelRunTest(unittest.TestCase):
         self.assertEqual(out["deep-thinker"]["model"], "fake-claude-opus")
 
 
+
+SHELL_CASES = [  # (where, command, denied). where: "feature" = repo on feature, "main" = a clone on main.
+    # direct forms and wrappers
+    ("feature", "gh pr merge 1 --squash", True), ("feature", "CI=1 gh pr merge 1", True),
+    ("feature", "bash -lc 'gh pr merge 1'", True), ("feature", "bash -o pipefail -c 'gh pr merge 1'", True),
+    ("feature", "(gh pr merge 1)", True), ("feature", 'echo "$(gh pr merge 1)"', True),
+    ("feature", "echo `gh pr merge 1`", True), ("feature", "/usr/local/bin/gh pr merge 1", True),
+    ("feature", "sudo -u bob -- gh pr merge 1", True), ("feature", "env -u X gh pr merge 1", True),
+    ("feature", "env -S 'gh pr merge 1'", True), ("feature", "exec -a ignored gh pr merge 1", True),
+    ("feature", "time gh pr merge 1", True), ("feature", "timeout 30 gh pr merge 1", True),
+    ("feature", ">/dev/null gh pr merge 1", True), ("feature", "2>/dev/null gh pr merge 1", True),
+    ("feature", "{ gh pr merge 1; }", True), ("feature", "if true; then gh pr merge 1; fi", True),
+    ("feature", "gh pr merge 1 2>&1 | tee log", True), ("feature", "gh pr me\\\nrge 1", True),
+    ("feature", "g\\\nh pr merge 1", True), ("feature", '"g"h pr merge 1', True), ("feature", "g'h' pr merge 1", True),
+    ("feature", "gh --repo o/r pr merge 1", True), ("feature", "gh pr --repo o/r merge 1", True),
+    ("feature", "gh pr merge 1 --subject 'fix; cleanup'", True), ("feature", "gh pr merge 1 --subject --help", True),
+    # literals, comments, heredocs
+    ("feature", "gh pr merge --help", False), ("feature", "gh pr view 1", False), ("feature", "gh --repo o/r pr view 1", False),
+    ("feature", "gh pr create --base main", False), ("feature", "gh issue comment 1 -b hi", False),
+    ("feature", "echo 'gh pr merge 1'", False), ("feature", 'echo ";"', False),
+    ("feature", "printf '%s' '$(gh pr merge 1)'", False), ("feature", 'printf "%s" "\\$(gh pr merge 1)"', False),
+    ("feature", "echo hi # $(gh pr merge 1)", False), ("feature", "git status # it's safe", False),
+    ("feature", "# gh pr merge 1\nls", False), ("feature", "cat <<'EOF'\ngh pr merge 1\nEOF", False),
+    ("feature", "cat <<-EOF\n\tgh pr merge 1\n\tEOF", False), ("feature", "echo '<<EOF'\ngh pr merge 1\nEOF", True),
+    ("feature", "# <<EOF\ngh pr merge 1\nEOF", True), ("feature", "cat <<<EOF\ngh pr merge 1\nEOF", True),
+    ("feature", "bash <<'EOF'\ngh pr merge 1\nEOF", False), ("feature", "git commit -m \"it's done\"", False),
+    ("feature", "git commit -m it's", True), ("feature", "command -v gh", False),
+    # git push
+    ("feature", "git push origin HEAD:main", True), ("feature", "git push origin +main", True),
+    ("feature", "git push origin refs/heads/main", True), ("feature", "git push --repo=origin HEAD:main", True),
+    ("feature", "git push origin feature", False), ("feature", "git push --force origin feature", False),
+    ("feature", "git push -u origin feature", False), ("feature", "git push", False),
+    ("feature", "git push --dry-run origin main", False), ("feature", "git push origin --delete old", True),
+    ("feature", "git push origin :old", True), ("feature", "git push origin +:old", True),
+    ("feature", "git push origin :", True), ("feature", "git push origin 'refs/heads/*:refs/heads/*'", True),
+    ("feature", "git push --all origin", True), ("feature", "git push --mirror", True),
+    ("feature", "git push --prune origin", True), ("feature", "git push --tags origin", False),
+    ("feature", "git -C . push origin main", True), ("feature", "git switch main && git push", True),
+    ("feature", "git -c remote.origin.push=HEAD:main push origin", True),
+    ("feature", "git -c remote.origin.push=HEAD:feature push origin", False),
+    ("feature", "git push upstream HEAD:trunk", True), ("feature", "git push origin HEAD:trunk", False),
+    ("main", "git push -o ci.skip origin", True), ("main", "git push", True),
+    # git merge / pull and state
+    ("feature", "git merge main", False), ("feature", "git switch main && git merge feature", True),
+    ("feature", "git checkout main; git merge origin/main", False), ("feature", "git switch main && git merge --abort", False),
+    ("feature", "(git switch main) && git merge feature", True), ("feature", "echo $(git switch main); git merge feature", True),
+    ("feature", "git switch main; cd plugins; git merge feature", True),
+    ("feature", "git switch main; git -C plugins merge feature", True), ("feature", "git switch -- main && git merge x", True),
+    ("main", "false && git switch feature; git merge feature", True), ("main", "true || git switch feature; git merge feature", True),
+    ("main", "git checkout feature -- README.md; git merge feature", True), ("main", "git switch feature && git merge main", False),
+    ("main", "git merge upstream/main", True), ("main", "git merge --message sync origin/main", False),
+    ("main", "git pull", False), ("main", "git pull origin main", False), ("main", "git pull origin feature", True),
+    # gh api
+    ("feature", "gh api repos/o/r/pulls/1/merge", False), ("feature", "gh api -X PUT repos/o/r/pulls/1/merge", True),
+    ("feature", "gh api -XPUT repos/o/r/pulls/1/merge", True), ("feature", "gh api repos/o/r/pulls/1/merge -f merge_method=squash", True),
+    ("feature", "gh api repos/o/r/pulls/1/merge -fmerge_method=squash", True),
+    ("feature", "gh api -H 'Accept: application/vnd.github+json' -X PUT repos/o/r/pulls/1/merge", True),
+    ("feature", "gh api repos/o/r/pulls/1/merge -XGET -f x=1", False), ("feature", "gh api -X PUT 'repos/o/r/pulls/1/merge?x=1'", True),
+    ("feature", "gh api -X DELETE repos/o/r/git/refs/heads/x", True), ("feature", "gh api -X DELETE repos/o/r", True),
+    ("feature", "gh api graphql -f query='mutation{mergePullRequest(input:{})}'", True),
+    ("feature", "gh api graphql -f query='{viewer{login}}'", False), ("feature", "gh repo delete o/r --yes", True),
+    ("feature", "gh release delete v1", True), ("feature", "gh release create v1", True), ("feature", "gh release upload v1 a.zip", True),
+    ("feature", "gh release view v1", False), ("feature", "gh release list", False),
+    # publish / deploy / send
+    ("feature", "npm publish", True), ("feature", "pnpm publish", True), ("feature", "yarn npm publish", True),
+    ("feature", "npm --prefix . publish", True), ("feature", "npm publish --dry-run", False), ("feature", "npm publish --dry-run=true", False),
+    ("feature", "npm publish --dry-run=false", True), ("feature", "npm publish --dry-run --no-dry-run", True),
+    ("feature", "npm run publish", False), ("feature", "npx vercel --prod", True), ("feature", "npm exec -- vercel deploy", True),
+    ("feature", "npm exec --package vercel -- vercel deploy", True), ("feature", "vercel", True), ("feature", "vercel env ls", False),
+    ("feature", "vercel dev", False), ("feature", "docker push x/y", True), ("feature", "docker --context prod push x/y", True),
+    ("feature", "docker buildx build --push .", True), ("feature", "docker buildx build --push=true .", True),
+    ("feature", "docker buildx build --push=false .", False), ("feature", "docker build .", False),
+    ("feature", "kubectl apply -f k.yaml", True), ("feature", "kubectl --context prod apply -f k.yaml", True),
+    ("feature", "kubectl apply -f k.yaml --dry-run=client", False), ("feature", "kubectl apply -f k.yaml --dry-run=server", False),
+    ("feature", "kubectl apply -f k.yaml --dry-run=none", True), ("feature", "kubectl create ns x", True),
+    ("feature", "kubectl replace -f k.yaml", True), ("feature", "kubectl patch deploy x -p '{}'", True),
+    ("feature", "kubectl delete pod x", True), ("feature", "kubectl get pods", False), ("feature", "kubectl diff -f k.yaml", False),
+    ("feature", "kubectl --context prod get pods", False), ("feature", "terraform plan", False), ("feature", "terraform apply", True),
+    ("feature", "terraform -chdir=infra destroy", True), ("feature", "terraform validate", False),
+    ("feature", "helm upgrade x y", True), ("feature", "helm install x y", True), ("feature", "helm uninstall x", True),
+    ("feature", "helm list", False), ("feature", "helm template x y", False), ("feature", "sendmail a@b.c", True),
+    ("feature", "mail -s hi a@b.c", True), ("feature", "mutt a@b.c", True), ("feature", "cargo publish", True),
+    ("feature", "cargo publish --dry-run", False), ("feature", "twine upload dist/*", True), ("feature", "gem push x.gem", True),
+    ("feature", "gem build x.gemspec", False), ("feature", "netlify deploy", True), ("feature", "fly deploy", True),
+    ("feature", "fly status", False), ("feature", "firebase deploy", True), ("feature", "firebase emulators:start", False),
+    # delta review r2 (R07, R13, R16–R18, R22, R23)
+    ("feature", "npm --loglevel verbose publish", True), ("feature", "npm --loglevel verbose run build", False),
+    ("feature", "npm --prefix . exec -- vercel deploy", True), ("feature", "kubectl --request-timeout 30s apply -f k.yaml", True),
+    ("feature", "kubectl --request-timeout 30s get pods", False), ("feature", "kubectl rollout restart deploy/x", True),
+    ("feature", "kubectl rollout status deploy/x", False),
+    ("feature", "helm --kube-apiserver https://api.example install x y", True),
+    ("feature", "helm --kube-apiserver https://api.example list", False), ("feature", "helm push chart.tgz oci://r", True),
+    ("main", "git switch -c feature; git merge feature", True), ("main", "git status && git switch feature && git push", False),
+    ("main", "git switch -C feature; git merge main", False), ("main", "git checkout -b feature; git merge feature", True),
+    ("tracker", "git push", True), ("tracker", "git push origin HEAD:work", False),
+    ("feature", "git -c push.default=matching push origin", True), ("feature", "git -c remote.origin.mirror=true push origin", True),
+    ("feature", "git -c remote.origin.push=refs/heads/feature:refs/heads/main push origin feature", True),
+    ("feature", "git -c remote.origin.push=feature:main push origin feature", False),  # git ignores short sources
+    ("main", "git -c remote.origin.push=refs/heads/main:refs/heads/feature push origin main", False),
+    ("feature", "npm exec --workspace web -- vercel deploy", True), ("feature", "npm exec --workspace=web -- vercel deploy", True),
+    ("feature", "npm exec --workspace web -- vercel env ls", False), ("feature", "vercel alias rm app.example.com --yes", True),
+    ("feature", "git -c 'remote.origin.push=refs/heads/*:refs/heads/*' push origin main", True),
+    ("main", "git pull upstream main", True), ("main", "git pull upstream feature", True),
+    ("feature", "vercel redeploy abc.vercel.app", True), ("feature", "vercel promote abc.vercel.app", True),
+    ("feature", "vercel rollback abc.vercel.app", True), ("feature", "vercel remove abc.vercel.app --yes", True),
+    ("feature", "vercel promote status", False), ("feature", "vercel alias ls", False), ("feature", "vercel alias set a b", True),
+    ("feature", "gh api repos/o/r/releases -f tag_name=v1", True), ("feature", "gh api repos/o/r/releases", False),
+    ("feature", "gh api -X PATCH repos/o/r/releases/1 -F draft=false", True),
+    ("feature", "gh api repos/o/r/issues/1/comments -f body=hi", False),
+    # not covered on purpose (core scope)
+    ("feature", "rm -rf ../outside", False), ("feature", "psql -c 'DROP TABLE x'", False),
+]
+
+
+def git(*args, cwd):
+    subprocess.run(["git", "-c", "user.name=l", "-c", "user.email=l@x", *args], cwd=cwd, check=True,
+                   capture_output=True, text=True)
+
+
+class ShellGuardTest(unittest.TestCase):
+    """scripts/shellguard.py decisions on realistic repositories, and guard.py's shell mode around them."""
+
+    @classmethod
+    def setUpClass(cls):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("free_hands_shellguard", PLUGIN / "scripts" / "shellguard.py")
+        cls.sg = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.sg)
+        cls.tmp = Path(tempfile.mkdtemp())
+        origin, upstream = cls.tmp / "origin.git", cls.tmp / "upstream.git"
+        git("init", "-q", "--bare", "-b", "main", str(origin), cwd=cls.tmp)
+        git("init", "-q", "--bare", "-b", "trunk", str(upstream), cwd=cls.tmp)
+        repo = cls.tmp / "repo"
+        git("init", "-q", "-b", "main", str(repo), cwd=cls.tmp)
+        (repo / "README.md").write_text("x\n")
+        (repo / "plugins").mkdir()
+        (repo / "plugins" / "a.txt").write_text("a\n")
+        git("add", "-A", cwd=repo)
+        git("commit", "-q", "-m", "init", cwd=repo)
+        git("remote", "add", "origin", str(origin), cwd=repo)
+        git("push", "-q", "-u", "origin", "main", cwd=repo)
+        git("remote", "set-head", "origin", "main", cwd=repo)
+        git("remote", "add", "upstream", str(upstream), cwd=repo)
+        git("push", "-q", "upstream", "main:trunk", cwd=repo)
+        git("fetch", "-q", "upstream", cwd=repo)
+        git("remote", "set-head", "upstream", "trunk", cwd=repo)
+        git("checkout", "-q", "-b", "feature", cwd=repo)
+        git("push", "-q", "-u", "origin", "feature", cwd=repo)
+        clone = cls.tmp / "main"
+        git("clone", "-q", str(origin), str(clone), cwd=cls.tmp)
+        git("remote", "add", "upstream", str(upstream), cwd=clone)
+        git("fetch", "-q", "upstream", cwd=clone)
+        git("fetch", "-q", "origin", "feature:refs/remotes/origin/feature", cwd=clone)
+        git("branch", "-q", "feature", "origin/feature", cwd=clone)
+        tracker = cls.tmp / "tracker"  # a branch whose upstream and push target is upstream/trunk
+        git("clone", "-q", str(origin), str(tracker), cwd=cls.tmp)
+        git("remote", "add", "upstream", str(upstream), cwd=tracker)
+        git("fetch", "-q", "upstream", cwd=tracker)
+        git("remote", "set-head", "upstream", "trunk", cwd=tracker)
+        git("checkout", "-q", "-b", "work", "--track", "upstream/trunk", cwd=tracker)
+        git("config", "push.default", "upstream", cwd=tracker)
+        cls.where = {"feature": str(repo), "main": str(clone), "tracker": str(tracker)}
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp)
+
+    def test_decisions(self):
+        wrong = [(where, cmd, want) for where, cmd, want in SHELL_CASES
+                 if bool(self.sg.check(cmd, self.where[where])[0]) != want]
+        self.assertEqual(wrong, [])
+        for where in self.where.values():  # the cases never changed a repository
+            self.assertEqual(subprocess.run(["git", "-C", where, "status", "--porcelain"], capture_output=True,
+                                            text=True).stdout, "")
+
+    def test_the_default_branch_comes_from_the_goal_then_the_push_remote(self):
+        repo = self.where["feature"]
+        self.assertTrue(self.sg.check("git push origin HEAD:trunk", repo, "trunk")[0])
+        self.assertFalse(self.sg.check("git push origin HEAD:main", repo, "trunk")[0])
+        self.assertEqual(self.sg.check("git push upstream HEAD:trunk", repo)[1], "upstream/HEAD")
+        plain = self.tmp / "plain"
+        git("init", "-q", "-b", "work", str(plain), cwd=self.tmp)
+        git("commit", "-q", "--allow-empty", "-m", "i", cwd=plain)
+        hit, source = self.sg.check("git push here HEAD:master", str(plain))
+        self.assertTrue(hit)
+        self.assertEqual(source, "assumed: main and master")
+        other = self.tmp / "other"
+        git("init", "-q", "-b", "main", str(other), cwd=self.tmp)
+        git("commit", "-q", "--allow-empty", "-m", "i", cwd=other)
+        self.assertTrue(self.sg.check(f"git --git-dir={other}/.git --work-tree={other} merge feature", repo)[0])
+        for cd in ("cd -- plugins", "cd -P plugins", "cd -q plugins", "cd -LP plugins", "cd plugins"):  # R24
+            self.assertTrue(self.sg.check(f"{cd} && git push origin HEAD:trunk", repo, "trunk")[0], cd)
+        main = self.where["main"]
+        self.assertFalse(self.sg.check("cd -- . && git merge origin/main", main, "main")[0])
+        # R25: env -C runs only its own command elsewhere; the next command runs in the shell's directory
+        self.assertTrue(self.sg.check(f"env -C {repo} git status; git merge feature", main)[0])
+        self.assertTrue(self.sg.check(f"env --chdir={repo} git status; git merge feature", main)[0])
+        self.assertFalse(self.sg.check(f"env -C {repo} git merge main", main)[0])
+        # R13: a branch checked out in another worktree cannot be switched to; R16: the named remote's default
+        holder = self.tmp / "holder"
+        git("worktree", "add", "-q", str(holder), "feature", cwd=main)
+        self.addCleanup(git, "worktree", "remove", "--force", str(holder), cwd=main)
+        self.assertTrue(self.sg.check("git switch feature; git merge feature", main)[0])
+        tracker = self.where["tracker"]
+        git("branch", "-q", "trunk", "origin/main", cwd=tracker)
+        self.assertTrue(self.sg.check("git switch trunk && git -c push.default=current push upstream", tracker)[0])
+        self.assertFalse(self.sg.check("git switch trunk && git -c push.default=current push origin", tracker)[0])
+
+    def hook(self, payload, env=None):
+        environ = {k: v for k, v in os.environ.items() if k not in ("FREE_HANDS_ROLE", "CLAUDE_PROJECT_DIR")}
+        result = subprocess.run([sys.executable, str(GUARD), "shell"], input=json.dumps(payload), capture_output=True,
+                                text=True, cwd=self.tmp, env={**environ, **(env or {})})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout) if result.stdout.strip() else None
+
+    def write_goal(self, text):
+        goal = Path(self.where["feature"]) / ".free-hands"
+        goal.mkdir(exist_ok=True)
+        (goal / "goal.md").write_text(text)
+        self.addCleanup(shutil.rmtree, goal, True)
+
+    def test_the_hook_denies_only_while_the_goal_is_guarded(self):
+        payload = {"cwd": self.where["feature"], "tool_name": "Bash", "tool_input": {"command": "gh pr merge 1"}}
+        self.assertIsNone(self.hook(payload))
+        self.write_goal(goal_text(items=("- [x] all done",)))  # active with no open item: the limits still hold
+        out = self.hook(payload)["hookSpecificOutput"]
+        self.assertEqual(out["permissionDecision"], "deny")
+        self.assertIn("hard limit (merge)", out["permissionDecisionReason"])
+        self.assertIn("- [-]", out["permissionDecisionReason"])
+        self.write_goal(goal_text(max_iterations="1", iterations="1"))  # at the limit: still guarded
+        self.assertIsNotNone(self.hook(payload))
+        self.assertIsNone(self.hook({**payload, "tool_input": {"command": "git status"}}))
+        self.assertIsNotNone(self.hook({**payload, "tool_input": {"command": ["gh", "pr", "merge", "1"]}}))
+        self.assertIsNone(self.hook(payload, env={"FREE_HANDS_ROLE": "quick-thinker"}))
+        for status in ("paused", "done"):
+            self.write_goal(goal_text(status=status, items=("- [x] all done",)))
+            self.assertIsNone(self.hook(payload), status)
+
+    def test_the_hook_reads_the_declared_default_branch_and_ignores_bad_input(self):
+        self.write_goal(goal_text().replace("status: active", "status: active\ndefault_branch: trunk"))
+        push = {"cwd": self.where["feature"], "tool_input": {"command": "git push origin HEAD:trunk"}}
+        reason = self.hook(push)["hookSpecificOutput"]["permissionDecisionReason"]
+        self.assertIn("Default branch: trunk", reason)
+        self.assertIsNone(self.hook({**push, "tool_input": {"command": "git push origin HEAD:main"}}))
+        unparsable = self.hook({**push, "tool_input": {"command": "git commit -m it's"}})
+        self.assertIn("could not be parsed", unparsable["hookSpecificOutput"]["permissionDecisionReason"])
+        for bad in ({"cwd": self.where["feature"]}, {"cwd": self.where["feature"], "tool_input": {"command": 3}}):
+            self.assertIsNone(self.hook(bad))
+
 if __name__ == "__main__":
     unittest.main()

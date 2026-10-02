@@ -1,7 +1,7 @@
 {
   "name": "free-hands",
   "description": "Autonomous mode: fixes a goal as a finite checklist and works through every item without asking or stopping; decisions that would go to the user are settled by a five-role brainstorming panel.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {
     "name": "zeriong"
   },

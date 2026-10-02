@@ -11,10 +11,14 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import subprocess
 import sys
 import tempfile
 import time
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import shellguard  # noqa: E402
 
 GOAL = Path(".free-hands") / "goal.md"
 SKILL = Path(__file__).resolve().parents[1] / "skills" / "run" / "SKILL.md"
@@ -180,6 +184,35 @@ def on_ask(data):
                                              "permissionDecisionReason": reason}}))
 
 
+def on_shell(data):
+    """Deny a shell command that breaks a hard limit while the goal is guarded (core scope: merge, remote deletion,
+    deploy/publish/send). The limits last as long as the run, not as long as items are open."""
+    goal, info = active_goal(data)
+    if info is None:
+        return
+    command = (data.get("tool_input") or {}).get("command")
+    if isinstance(command, list):
+        command = shlex.join(str(part) for part in command)
+    if not isinstance(command, str) or not command.strip():
+        return
+    cwd = data.get("cwd") or os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
+    declared = field(load(goal) or "", "default_branch") or None
+    hit, source = shellguard.check(command, cwd, declared)
+    if not hit:
+        return
+    category, part = hit
+    branches = f" Default branch: {declared}." if declared else f" Default branch from {source}."
+    if category == "unparsable":
+        reason = ("free-hands: this command mentions a tool the hard limits cover but could not be parsed safely. "
+                  "Split it into simple commands without heredocs or unbalanced quotes and run them one by one.")
+    else:
+        reason = (f"free-hands hard limit ({category}): `{part}` is never run during a free-hands run.{branches} "
+                  "Do not reach the same effect another way. Mark the item `- [-] … — needs the user: <why>` in "
+                  f"{goal} and continue with the other items.")
+    print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                             "permissionDecisionReason": reason}}))
+
+
 def bump(goal):
     """Increment iterations under a lock; return (new, max, open items) only if the new value reached the disk."""
     lock_path = goal.with_name(goal.name + ".lock")
@@ -241,7 +274,8 @@ def main():
     if data is None:
         return
     try:
-        {"prompt": on_prompt, "session": on_session, "ask": on_ask, "stop": on_stop}.get(mode, lambda _: None)(data)
+        {"prompt": on_prompt, "session": on_session, "ask": on_ask, "stop": on_stop,
+         "shell": on_shell}.get(mode, lambda _: None)(data)
     except Exception:  # a hook never traps the session on its own failure
         return
 

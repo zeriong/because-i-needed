@@ -4,7 +4,7 @@
 
 <p align="center"><strong>交給代理一個有限目標，它就會不提問、不停止地完成清單。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="授權：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 外掛"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="授權：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 外掛"></a></p>
 
 <p align="center"><a href="#開始">開始</a> &bull; <a href="#目標檔案">目標檔案</a> &bull; <a href="#不提問">不提問</a> &bull; <a href="#hooks">Hooks</a> &bull; <a href="#討論面板">討論面板</a> &bull; <a href="#堆疊pr">堆疊 PR</a> &bull; <a href="#限制與狀態">限制與狀態</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#需求">需求</a> &bull; <a href="#安裝">安裝</a></p>
 
@@ -43,13 +43,14 @@ iterations: 0
 
 ## 不提問
 
-目標啟用期間，技能不會向使用者提問。此規則會覆蓋專案與其他技能中的提問要求，也會覆蓋 claude-x-codex 等工作流程的核准閘門。代理會不經詢問推送分支並建立 PR。失敗的測試、閘門、hook 或審查會修正，或標記為 `- [-]`、需要使用者處理；不會改成通過。其他外掛的 hook 仍會執行。
+目標啟用期間，技能不會向使用者提問。此規則會覆蓋專案與其他技能中的提問要求，也會覆蓋 peer-coding 等工作流程的核准閘門。代理會不經詢問推送分支並建立 PR。失敗的測試、閘門、hook 或審查會修正，或標記為 `- [-]`、需要使用者處理；不會改成通過。其他外掛的 hook 仍會執行。
 
 ## Hooks
 
 各 hook 的執行條件不同：
 
 - 只有位於 `## Checklist` 下方、且在程式碼區塊外的 `- [ ]` 行才會計為未完成項目。
+- Shell 守衛（`Bash` 的 `PreToolUse`）會在目標為 `active`，或仍有未完成項目的 `done`/`waiting` 時執行。即使沒有剩餘的 `[ ]` 項目或已達 `max_iterations`，也會執行。它會拒絕[限制與狀態](#限制與狀態)所述的硬性限制命令。
 - 目標有未完成 `[ ]`、迭代數低於 `max_iterations`，且狀態為 `active`，或為仍有未完成項目的 `done`/`waiting` 時，提問與停止守衛會執行。提問守衛會拒絕提問工具。達到上限後可以提問。Stop hook 會先將計數寫入磁碟再阻止停止，最多延續40次。
 - 目標為 `active` 時會送出恢復備註（`UserPromptSubmit`、包括壓縮後的 `SessionStart`），即使沒有未完成項目也會送出；仍有未完成項目的 `done`/`waiting` 狀態也會送出。
 - 沒有有效且啟用中的目標，但提示中出現「free-hands」時，會送出開始備註。背景工作通知不視為提示；提示中引用的通知會被忽略，並讀取提示的其餘部分。
@@ -86,13 +87,17 @@ Hook 輸入錯誤時不會產生效果。目標檔案格式錯誤或無法讀取
 
 未測量：拒絕 `AskUserQuestion`（無頭模式的 Claude Code 沒有此工具）及拒絕 Codex 的 `request_user_input`（代理未呼叫）；執行時在 `max_iterations` 的解除和計數器寫入失敗（僅有單元測試）；第二輪（所有面板成員意見一致）；阻止角色寫入嘗試（沒有角色嘗試）；互動式 `/hooks` 信任；堆疊 PR。代理在四次執行中自行重寫了 `iterations`（F04、G03），因此只有代理不動計數器時上限才有效。
 
-以下是技能與恢復備註交代給代理的規則。沒有 hook 會攔截這些命令：
+技能與恢復備註為代理設定以下硬性限制：
 
 - 不合併 PR，也不將任何內容合併至預設分支。
 - 不以不可逆的方式刪除儲存庫外的檔案、資料、遠端分支或資料庫。
 - 不部署、發布或向外部傳送內容（例如版本發佈、套件發佈、電子郵件或訊息）。
 
-這類事項會附上原因並標記為 `- [-]`，然後繼續其他工作。已推送分支允許在先以一行通知後強制推送。
+這類事項會附上原因並標記為 `- [-]`，然後繼續其他工作。已推送分支允許在先以一行通知後強制推送。允許推送分支、建立 issue 和 PR，以及在其下留言。
+
+自 0.2.0 起，目標啟用期間，shell hook 也會拒絕違反這些限制的常見命令：`gh pr merge`；會更新預設分支的推送與合併（使用目標檔案中的 `default_branch:`，否則使用推送遠端的 HEAD，再否則使用 `main` 和 `master`）；透過 `gh api` 合併及建立發行版本；遠端刪除（`git push --delete`、`:ref`、`--prune`、`--mirror`、`gh repo delete`、`gh release delete`）；以及 `npm`/`pnpm`/`yarn publish`、`cargo publish`、`twine upload`、`gem push`、`docker push`、`docker buildx build --push`、`gh release create`、`vercel` 部署、`netlify deploy`、`fly deploy`、`firebase deploy`、`terraform apply`、`kubectl apply`、`helm install`/`upgrade`、`sendmail`、`mail` 和 `mutt`。除 `sendmail`、`mail`、`mutt` 和 `terraform` 外，`--help`/`-h` 對清單中的所有 CLI 都會通過；`sendmail`、`mail` 和 `mutt` 一律拒絕，`terraform` 的說明旗標是 `-help`；`--dry-run` 對 `git push`、`npm`/`pnpm`/`yarn publish`、`cargo publish`、`kubectl` 和 `helm` 會通過。在兩個宿主上，hook 都於執行前拒絕了 `gh pr merge 1`、`npm publish` 和 `git push origin HEAD:main`，且代理收到了拒絕結果（[z-lab `run-0.2.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.2.0)，P01–P04）。
+
+此 hook 是協作型代理執行一般命令時的後備防護，不是用來防範蓄意規避——規則禁止規避。它不會讀取 `rm`、資料庫命令、heredoc 內容、腳本（`npm run deploy`）、互動工作階段中輸入的命令，或其他 CLI 與 HTTP 呼叫（`curl`）。
 
 若要暫停，請說 **「pause」**、**「stop」** 或 **「일시정지」**。目標會記錄為 `paused`；再次執行命令即可恢復。
 

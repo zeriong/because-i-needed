@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Claude Code plugins built because I needed them — harness, ux-ui, peer-coding, free-hands",
-    "version": "4.0.0"
+    "version": "4.1.0"
   },
   "plugins": [
     {
@@ -71,7 +71,7 @@
       "name": "free-hands",
       "source": "./plugins/free-hands",
       "description": "Autonomous mode that works through a finite goal checklist without asking or stopping; user-level decisions go to a five-role brainstorming panel. (adds UserPromptSubmit, SessionStart, PreToolUse and Stop hooks)",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "author": {
         "name": "zeriong"
       },

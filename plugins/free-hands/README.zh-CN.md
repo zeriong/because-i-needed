@@ -4,7 +4,7 @@
 
 <p align="center"><strong>给智能体一个有限目标，它就会不提问、不停下地完成清单。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="许可证：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 插件"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="许可证：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 插件"></a></p>
 
 <p align="center"><a href="#开始">开始</a> &bull; <a href="#目标文件">目标文件</a> &bull; <a href="#不提问">不提问</a> &bull; <a href="#钩子">钩子</a> &bull; <a href="#讨论面板">讨论面板</a> &bull; <a href="#堆叠pr">堆叠 PR</a> &bull; <a href="#限制与状态">限制与状态</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#要求">要求</a> &bull; <a href="#安装">安装</a></p>
 
@@ -43,13 +43,14 @@ iterations: 0
 
 ## 不提问
 
-目标处于活动状态时，技能不会向用户提问。此规则覆盖项目和其他技能中的提问要求，也覆盖 claude-x-codex 等工作流的审批门禁。智能体会不经询问推送分支并创建 PR。失败的测试、门禁、钩子或评审会被修复，或标记为 `- [-]`、需要用户处理；绝不会改成通过。其他插件的钩子仍会运行。
+目标处于活动状态时，技能不会向用户提问。此规则覆盖项目和其他技能中的提问要求，也覆盖 peer-coding 等工作流的审批门禁。智能体会不经询问推送分支并创建 PR。失败的测试、门禁、钩子或评审会被修复，或标记为 `- [-]`、需要用户处理；绝不会改成通过。其他插件的钩子仍会运行。
 
 ## 钩子
 
 各钩子的触发条件不同：
 
 - 只有位于 `## Checklist` 下方、且在代码块之外的 `- [ ]` 行才计为未完成项。
+- Shell 守卫（`Bash` 上的 `PreToolUse`）会在目标为 `active`，或仍有未完成项的 `done`/`waiting` 时运行。即使没有剩余的 `[ ]` 项，或已达到 `max_iterations`，也会运行。它会拒绝[限制与状态](#限制与状态)中所述的硬性限制命令。
 - 目标有未完成 `[ ]`、迭代数低于 `max_iterations`，且状态为 `active`，或为仍有未完成项的 `done`/`waiting` 时，提问和停止守卫会生效。提问守卫会拒绝提问工具。达到上限后可以提问。Stop 钩子会先将计数写入磁盘再阻止停止，最多继续40次。
 - 目标为 `active` 时会发送恢复说明（`UserPromptSubmit`、包括压缩后的 `SessionStart`），即使没有未完成项也会发送；有未完成项的 `done`/`waiting` 状态也会发送。
 - 没有有效且活动中的目标、但提示中出现“free-hands”时，会发送开始说明。后台任务通知不视为提示；提示中引用的通知会被忽略，提示的其余部分仍会被读取。
@@ -86,13 +87,17 @@ iterations: 0
 
 未测量：拒绝 `AskUserQuestion`（无头模式的 Claude Code 没有此工具）以及拒绝 Codex 的 `request_user_input`（智能体未调用）；运行时在 `max_iterations` 处的解除和计数器写入失败（仅有单元测试）；第二轮（所有面板成员意见一致）；阻止角色写入尝试（没有角色尝试）；交互式 `/hooks` 信任；堆叠 PR。智能体在四次运行中自行重写了 `iterations`（F04、G03），因此只有智能体不改动计数器时上限才有效。
 
-以下是技能和恢复说明给智能体的规则。没有钩子会拦截这些命令：
+技能和恢复说明为智能体设定了以下硬性限制：
 
 - 不合并 PR，也不向默认分支合并任何内容。
 - 不以不可逆的方式删除仓库外的文件、数据、远程分支或数据库。
 - 不部署、发布或向外部发送内容（例如版本发布、包发布、邮件或消息）。
 
-此类事项标记为 `- [-]` 并写明原因，然后继续其他事项。已推送分支允许在提前一行告知后强制推送。
+此类事项标记为 `- [-]` 并写明原因，然后继续其他事项。已推送分支允许在提前一行告知后强制推送。允许推送分支、创建 issue 和 PR，以及对它们发表评论。
+
+从 0.2.0 起，目标处于活动状态时，shell 钩子也会拒绝违反这些限制的常见命令：`gh pr merge`；会更新默认分支的推送和合并（使用目标文件中的 `default_branch:`；否则使用推送远程的 HEAD；再否则使用 `main` 和 `master`）；通过 `gh api` 合并及创建发布；删除远程内容（`git push --delete`、`:ref`、`--prune`、`--mirror`、`gh repo delete`、`gh release delete`）；以及 `npm`/`pnpm`/`yarn publish`、`cargo publish`、`twine upload`、`gem push`、`docker push`、`docker buildx build --push`、`gh release create`、`vercel` 部署、`netlify deploy`、`fly deploy`、`firebase deploy`、`terraform apply`、`kubectl apply`、`helm install`/`upgrade`、`sendmail`、`mail` 和 `mutt`。除 `sendmail`、`mail`、`mutt` 和 `terraform` 外，`--help`/`-h` 对列表中的所有 CLI 都会通过；`sendmail`、`mail` 和 `mutt` 始终被拒绝，`terraform` 的帮助标志是 `-help`；`--dry-run` 对 `git push`、`npm`/`pnpm`/`yarn publish`、`cargo publish`、`kubectl` 和 `helm` 会通过。在两个宿主上，钩子都在执行前拒绝了 `gh pr merge 1`、`npm publish` 和 `git push origin HEAD:main`，并将拒绝结果传达给智能体（[z-lab `run-0.2.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.2.0)，P01–P04）。
+
+该钩子是针对协作型智能体日常命令的后备防护，不用于防御蓄意规避——规则禁止规避。它不会读取 `rm`、数据库命令、heredoc 正文、脚本（`npm run deploy`）、交互会话中输入的命令，或其他 CLI 与 HTTP 调用（`curl`）。
 
 要暂停，请说 **“pause”**、**“stop”** 或 **“일시정지”**。目标记录为 `paused`；再次运行命令即可恢复。
 

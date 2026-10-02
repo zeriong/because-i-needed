@@ -80,13 +80,13 @@ codex plugin add free-hands@because-i-needed
 
 [閱讀 peer-coding 繁體中文 README →](plugins/peer-coding/README.zh-TW.md)
 
-### [free-hands](plugins/free-hands) · `v0.1.0`
+### [free-hands](plugins/free-hands) · `v0.2.0`
 
 **將有限目標的清單逐項完成，不提問、不停止。** 遇到原本需要使用者決定的問題時，由五角色討論面板提供建議，主代理依據證據做決定。
 
 - **適用時機：** 想交付範圍明確的目標，並記錄決定、在中斷後繼續處理時。
 - **進入點：** `/free-hands:run <目標>`（Claude Code）· `$free-hands:run <目標>`（Codex），也可在提示中寫「free-hands」以先收到一次開始確認
-- **注意：** hook 會在每次提示、工作階段開始、提問和停止時執行。沒有啟用中的目標時保持安靜，只有提示中出現「free-hands」時會送出一次開始問題。有未完成項目時，Stop 最多讓目前回合延續40次。
+- **注意：** hook 會在每次提示、工作階段開始、提問、shell 指令和停止時執行。沒有啟用中的目標時保持安靜，只有提示中出現「free-hands」時會送出一次開始問題。有未完成項目時，Stop 最多讓目前回合延續40次；目標啟用期間，輔助 hook 會拒絕清單中合併到預設分支、遠端刪除、部署或發布的 shell 指令（見外掛 README）。
 
 [閱讀 free-hands 繁體中文 README →](plugins/free-hands/README.zh-TW.md)
 
@@ -200,7 +200,7 @@ because-i-needed/
     ├── harness/                      # 技能
     ├── ux-ui/                        # 2 個技能 + 2 個代理 + 提交閘門 hook + 4 個 MCP
     ├── peer-coding/                  # 3 個技能 + 提示 hook + 3 個腳本
-    └── free-hands/                   # 1 個技能 + 5 個代理 + 4 個 hooks + 3 個腳本
+    └── free-hands/                   # 1 個技能 + 5 個代理 + 4 個 hooks + 4 個腳本
 ```
 
 每個外掛資料夾都是自給自足的：它的 README、manifest，以及所有隨附的內容，都放在 `plugins/<name>/` 之下。

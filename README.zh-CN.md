@@ -80,13 +80,13 @@ codex plugin add free-hands@because-i-needed
 
 [查看 peer-coding 简体中文 README →](plugins/peer-coding/README.zh-CN.md)
 
-### [free-hands](plugins/free-hands) · `v0.1.0`
+### [free-hands](plugins/free-hands) · `v0.2.0`
 
 **将有限目标的清单逐项完成，不提问、不停下。** 遇到原本需要用户决定的问题时，由五角色讨论面板提供建议，主智能体依据证据作决定。
 
 - **适用场景：** 希望智能体完成范围明确的目标、记录决策，并能在中断后恢复时。
 - **入口：** `/free-hands:run <目标>`（Claude Code）· `$free-hands:run <目标>`（Codex），也可在提示中写“free-hands”以先收到一次开始确认
-- **注意：** 钩子会在每次提示、会话开始、提问和停止时运行。没有活动目标时保持静默，只有提示中出现“free-hands”时会发送一次开始问题。有未完成事项时，Stop 最多让当前轮继续40次。
+- **注意：** 钩子会在每次提示、会话开始、提问、shell 命令和停止时运行。没有活动目标时保持静默，只有提示中出现“free-hands”时会发送一次开始问题。有未完成事项时，Stop 最多让当前轮继续40次；目标处于活动状态时，辅助钩子会拒绝列表中合并到默认分支、远程删除、部署或发布的 shell 命令（见插件 README）。
 
 [查看 free-hands 简体中文 README →](plugins/free-hands/README.zh-CN.md)
 
@@ -200,7 +200,7 @@ because-i-needed/
     ├── harness/                      # 技能
     ├── ux-ui/                        # 2 个技能 + 2 个智能体 + 提交门禁钩子 + 4 个 MCP
     ├── peer-coding/                  # 3 个技能 + 提示钩子 + 3 个脚本
-    └── free-hands/                   # 1 个技能 + 5 个智能体 + 4 个钩子 + 3 个脚本
+    └── free-hands/                   # 1 个技能 + 5 个智能体 + 4 个钩子 + 4 个脚本
 ```
 
 每个插件目录都是自包含的：它的 README、清单文件以及随插件发布的所有内容都位于 `plugins/<名称>/` 下。
