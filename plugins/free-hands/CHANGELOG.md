@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.3.0] - 2026-10-13
+
+### Changed
+
+- The goal belongs to one session. The goal file gains `owner: <session id>`, and every guard — the restore note, the
+  ask and stop guards, the counter and the hard-limit shell hook — acts only in that session and the subagents it
+  starts. Another session in the same repository is left alone; when its prompt mentions free-hands, the entry note
+  says which session owns the run. The id comes from the hook input's `session_id`.
+- The prompt hook gives the session's id (`[free-hands: session]`) on `/free-hands:run` / `$free-hands:run` and with
+  the entry note; SKILL.md writes it as `owner:` when it starts, resumes or takes over a run. Running the command in
+  another session moves the run there.
+- A guarded goal without `owner:` (one written by 0.2.0, or an agent that left the line out) is claimed under the lock
+  by the first session a hook sees. A hook input without a valid `session_id` keeps the 0.2.0 repository-wide guard.
+
+### Why
+
+A user ran a goal in one terminal, opened a second terminal in the same repository and typed a prompt: the second
+session picked up the goal and the counter rose. `guard.py` keyed everything on the repository path.
+
+Evidence: z-lab `free-hands-lab/session-id-0.3.0` (S01–S05, before building) on Claude Code 2.1.296 and Codex 0.162.1:
+both hosts send `session_id` on every hook event, keep it across resume and compaction, and give a subagent its parent's
+id; an inherited `CLAUDE_CODE_SESSION_ID` named the wrong session, so environment variables are not used.
+`free-hands-lab/run-0.3.0` (O01–O06), one run per case on both hosts: with 0.2.0 a second session was handed the
+running goal (Claude did its item and marked the goal done; Codex archived it and wrote its own); with 0.3.0 the
+second session never touched the goal and the file stayed byte-identical; `gh pr merge 1` was denied in the owner
+session and in its subagent and ran in another session; the skill wrote `owner:` from the hook note when starting a
+run and replaced it when taking one over. Not measured: two sessions running at the same moment, the first-session
+claim at runtime (unit tests only).
+
 ## [0.2.0] - 2026-10-02
 
 ### Added

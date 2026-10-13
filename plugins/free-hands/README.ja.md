@@ -4,7 +4,7 @@
 
 <p align="center"><strong>有限の目標を渡すと、エージェントが質問や中断をせずチェックリストを最後まで進めます。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="バージョン"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="ライセンス: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code プラグイン"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="バージョン"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="ライセンス: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code プラグイン"></a></p>
 
 <p align="center"><a href="#開始">開始</a> &bull; <a href="#目標ファイル">目標ファイル</a> &bull; <a href="#質問しない">質問しない</a> &bull; <a href="#フック">フック</a> &bull; <a href="#パネル">パネル</a> &bull; <a href="#積み上げpr">積み上げ PR</a> &bull; <a href="#制限と状態">制限と状態</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#必要条件">必要条件</a> &bull; <a href="#インストール">インストール</a></p>
 
@@ -20,7 +20,7 @@ free-hands は目標を有限で確認可能なチェックリストにし、未
 
 - Claude Code: `/free-hands:run <目標>`
 - Codex: `$free-hands:run <目標>`
-- プロンプトに **free-hands** と書いて開始することもできます。最初の応答でユーザーの言語による開始質問を一度だけ行います。はいと答えるとその目標でスキルを開始し、いいえと答えると可能な方向を提案してターンを終えます。名称の説明や引用は開始要求ではありません。目標が有効な間にもう一度「free-hands」と伝えると、確認なしで進め方を修正します。
+- プロンプトに **free-hands** と書いて開始することもできます。最初の応答でユーザーの言語による開始質問を一度だけ行います。はいと答えるとその目標でスキルを開始し、いいえと答えると可能な方向を提案してターンを終えます。名称の説明や引用は開始要求ではありません。このセッションで目標が有効な間にもう一度「free-hands」と伝えると、確認なしで進め方を修正します。
 
 ## 目標ファイル
 
@@ -30,6 +30,7 @@ free-hands は目標を有限で確認可能なチェックリストにし、未
 status: active
 max_iterations: 40
 iterations: 0
+owner: <session id>
 ## Goal
 <一文の目標>
 ## Checklist
@@ -41,6 +42,8 @@ iterations: 0
 
 マークは `- [ ]` 未完了、`- [x]` 完了、`- [-] … — needs the user` ハードリミットや別の障害で進められない項目です。状態は `active`、`done`、`waiting`、`paused` です。未完了 `[ ]` だけが質問・停止ガードを有効にし、未完了項目が残っている間は `done` や `waiting` でも実行は終了しません。すべて完了すると `done`、ユーザー対応待ちだけが残ると `waiting` を記録します。`max_iterations` の40回に達すると、復元メモが `paused` に設定して未完了項目を報告し停止するよう指示します。質問は再び可能です。
 
+`owner:` は目標が属するセッションです。エージェントは実行を開始または再開するとき、フックのメモが示したセッション ID を書き込みます。[フック](#フック)を参照してください。
+
 ## 質問しない
 
 目標が有効な間、スキルはユーザーに質問しません。プロジェクトや他のスキルの質問ルール、peer-coding などのワークフローの承認ゲートもこの規則で上書きされます。エージェントは確認を求めずにブランチをプッシュし、PR を作成します。失敗したテスト、ゲート、フック、レビューは修正するか、ユーザー対応が必要として `- [-]` に記録し、合格扱いにしません。他プラグインのフックは引き続き動作します。
@@ -49,6 +52,7 @@ iterations: 0
 
 フックごとに条件が異なります。
 
+- 以下のガードと復元メモは、`owner:` に記されたセッションと、そのセッションが起動したサブエージェントでのみ動作します。同じリポジトリの別のセッション（2つ目のターミナルや、別のツールが起動した `claude -p` など）には、復元メモ、質問・停止ガード、カウンター、シェルガードのいずれも適用されません。そのセッションのプロンプトに「free-hands」が含まれる場合は、どのセッションが実行を所有しているかを開始メモが伝えます。そのセッションで `/free-hands:run`（Codex: `$free-hands:run`）を実行すると、実行はそのセッションに移ります。0.2.0 が作成した目標のように `owner:` のない目標は、フックが最初に検出したセッションのものになります。
 - `## Checklist` の下にあり、かつコードブロック外にある `- [ ]` 行だけを未完了項目として数えます。
 - シェルガード（`Bash` の `PreToolUse`）は目標が `active`、または未完了項目が残る `done`/`waiting` の間に動作します。`[ ]` 項目がなくなった後や `max_iterations` に達した後も同様です。[制限と状態](#制限と状態)に記載したハードリミット対象のコマンドを拒否します。
 - 質問・停止ガードは目標に未完了 `[ ]` があり、`max_iterations` 未満で、状態が `active` または未完了項目が残る `done`/`waiting` の場合に動作します。質問ガードは質問ツールを拒否します。上限では質問が可能です。Stop フックは停止をブロックする前にカウンターをディスクへ記録し、最大40回継続します。
@@ -98,6 +102,8 @@ iterations: 0
 0.2.0 から、目標が有効な間はシェルフックも違反につながる一般的なコマンドを拒否します。`gh pr merge`、デフォルトブランチを更新する プッシュとマージ（目標ファイルの `default_branch:`、なければ push 先リモートの HEAD、それもなければ `main` と `master`）、`gh api` によるマージ とリリース作成、リモート削除（`git push --delete`、`:ref`、`--prune`、`--mirror`、`gh repo delete`、`gh release delete`）、および `npm`/`pnpm`/`yarn publish`、`cargo publish`、`twine upload`、`gem push`、`docker push`、`docker buildx build --push`、`gh release create`、`vercel` のデプロイ、`netlify deploy`、`fly deploy`、`firebase deploy`、`terraform apply`、`kubectl apply`、`helm install`/`upgrade`、`sendmail`、`mail`、`mutt` です。`--help`/`-h` は `sendmail`・`mail`・`mutt` と `terraform` を除く一覧のすべての CLI で通過します。`sendmail`・`mail`・`mutt` は常に拒否され、`terraform` のヘルプフラグは `-help` です。`--dry-run` は `git push`、`npm`/`pnpm`/`yarn publish`、`cargo publish`、`kubectl`、`helm` で通過します。両ホストでフックは実行前に `gh pr merge 1`、`npm publish`、`git push origin HEAD:main` を拒否し、その拒否はエージェントに届きました（[z-lab `run-0.2.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.2.0)、P01–P04）。
 
 このフックは協調的なエージェントが使う通常コマンドへの補完策であり、意図的な回避を防ぐものではありません。ルールでは回避を禁じています。`rm`、データベースコマンド、heredoc の本文、スクリプト（`npm run deploy`）、対話セッションに入力されたコマンド、その他の CLI と HTTP 呼び出し（`curl`）は読み取りません。
+
+0.3.0 から、目標は1つのセッションに属します。Claude Code 2.1.296 と Codex 0.162.1 で、ケースごとに1回ずつ測定しました（[z-lab `run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.3.0)）。0.2.0 では、同じリポジトリの2つ目のセッションが実行中の目標を引き継ぎ、その作業を行いました（O01）。0.3.0 ではそのセッションは目標に関与せず、目標ファイルはバイト単位で変わりませんでした（O02）。所有セッションとそのサブエージェントでは `gh pr merge 1` が引き続き拒否され、別のセッションでは実行されました（O03–O05）。スキルは実行開始時にフックのメモが示した ID で `owner:` を書き、別のセッションの実行を引き継ぐときにその値を置き換えました（O06）。どちらのホストもすべてのフックイベントでセッション ID を送り、再開や圧縮の後も同じ ID を保ちます（[`session-id-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/session-id-0.3.0)、S01–S03）。測定していないこと: 2つのセッションが同時に実行される場合。
 
 一時停止するには **「pause」**、「**stop**」、または **「일시정지」** と入力します。目標を `paused` と記録します。コマンドを再実行すると再開します。
 

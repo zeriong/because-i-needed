@@ -4,7 +4,7 @@
 
 <p align="center"><strong>Give an agent a finite goal; it works through the checklist without asking or stopping.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#start">Start</a> &bull; <a href="#goal-file">Goal file</a> &bull; <a href="#never-ask">Never ask</a> &bull; <a href="#hooks">Hooks</a> &bull; <a href="#the-panel">The panel</a> &bull; <a href="#stacked-prs">Stacked PRs</a> &bull; <a href="#limits-and-status">Limits and status</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#requirements">Requirements</a> &bull; <a href="#installation">Installation</a></p>
 
@@ -20,7 +20,7 @@ free-hands fixes your goal as a finite, checkable list, then works through every
 
 - Claude Code: `/free-hands:run <goal>`
 - Codex: `$free-hands:run <goal>`
-- Or include the word **free-hands** in a prompt. The first response is one entry question in your language. Answer yes to start the skill with that goal; answer no to get possible directions and end that turn. A mention that explains or quotes the name is not a request. While a goal is active, saying “free-hands” again is a correction signal and does not ask for confirmation.
+- Or include the word **free-hands** in a prompt. The first response is one entry question in your language. Answer yes to start the skill with that goal; answer no to get possible directions and end that turn. A mention that explains or quotes the name is not a request. While a goal is active in this session, saying “free-hands” again is a correction signal and does not ask for confirmation.
 
 ## Goal file
 
@@ -30,6 +30,7 @@ At the repository root, free-hands keeps `.free-hands/goal.md` and a `.free-hand
 status: active
 max_iterations: 40
 iterations: 0
+owner: <session id>
 ## Goal
 <one sentence>
 ## Checklist
@@ -41,6 +42,8 @@ iterations: 0
 
 Marks are `- [ ]` open, `- [x]` done, and `- [-] … — needs the user` for work that cannot proceed under a hard limit or another blocker. Status is `active`, `done`, `waiting`, or `paused`. Only open `[ ]` items keep the ask and stop guards engaged, and `done` or `waiting` does not end the run while any `[ ]` item is left. When every item is done, the agent records `done`; when only items needing the user remain, it records `waiting`. At `max_iterations` (40), the restore note tells the agent to set `paused`, report the open items, and stop; asking is allowed again.
 
+`owner:` is the session the goal belongs to. The agent writes it from a hook note when it starts or resumes a run; see [Hooks](#hooks).
+
 ## Never ask
 
 The skill does not ask the user during an active goal. This overrides project and other skill instructions to ask, including approval gates in workflows such as peer-coding. The agent pushes branches and creates PRs without asking. A failed test, gate, hook, or review is fixed or marked `- [-]` as needing the user; it is never reported as passed. Other plugins’ hooks continue to run.
@@ -49,6 +52,7 @@ The skill does not ask the user during an active goal. This overrides project an
 
 The hooks have different conditions:
 
+- The guards and the restore note below act only in the session named by `owner:` and in the subagents it starts. Another session in the same repository — a second terminal, or a `claude -p` that another tool starts — gets no restore note, no ask or stop guard, no counter and no shell guard; when its prompt mentions “free-hands”, the entry note says which session owns the run. Running `/free-hands:run` (Codex: `$free-hands:run`) in that session moves the run there. A goal without `owner:`, such as one written by 0.2.0, becomes the first session's that a hook sees.
 - Only `- [ ]` lines under `## Checklist`, outside code blocks, count as open items.
 - The shell guard (`PreToolUse` on `Bash`) acts while the goal is `active`, or `done`/`waiting` with items still open — also when no `[ ]` item is left and at `max_iterations`. It denies the hard-limit commands described under [Limits and status](#limits-and-status).
 - The ask and stop guards act when the goal has open `[ ]` items, is below `max_iterations`, and is `active` — or `done`/`waiting` with items still open. The ask guard denies asking tools. At the limit, asking is allowed. The Stop hook blocks stopping and increments the counter on disk first, up to 40 continuations.
@@ -98,6 +102,8 @@ Mark such checklist items `- [-]` with the reason and continue with other items.
 Since 0.2.0 a shell hook also denies the ordinary commands that break them while a goal is active: `gh pr merge`; pushes and merges that update the default branch (`default_branch:` in the goal file, else the push remote's HEAD, else `main` and `master`); `gh api` merges and release creation; remote deletions (`git push --delete`, `:ref`, `--prune`, `--mirror`, `gh repo delete`, `gh release delete`); and `npm`/`pnpm`/`yarn publish`, `cargo publish`, `twine upload`, `gem push`, `docker push`, `docker buildx build --push`, `gh release create`, `vercel` deploys, `netlify deploy`, `fly deploy`, `firebase deploy`, `terraform apply`, `kubectl apply`, `helm install`/`upgrade`, `sendmail`, `mail` and `mutt`. `--help`/`-h` passes for every listed CLI except `sendmail`, `mail` and `mutt`, which are always denied, and `terraform`, whose help flag is `-help`; `--dry-run` passes for `git push`, `npm`/`pnpm`/`yarn publish`, `cargo publish`, `kubectl` and `helm`. On both hosts the hook denied `gh pr merge 1`, `npm publish` and `git push origin HEAD:main` before they ran, and the denial reached the agent ([z-lab `run-0.2.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.2.0), P01–P04).
 
 The hook is a backstop for a cooperative agent's ordinary commands, not a defense against deliberate evasion — the rules forbid evasion. It does not read `rm`, database commands, heredoc bodies, scripts (`npm run deploy`), commands typed into an interactive session, or other CLIs and HTTP calls (`curl`).
+
+Since 0.3.0 a goal belongs to one session. Measured once per case on Claude Code 2.1.296 and Codex 0.162.1 ([z-lab `run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.3.0)): under 0.2.0 a second session in the same repository was handed the running goal and worked on it (O01); under 0.3.0 it was left alone and the goal file stayed byte-identical (O02); `gh pr merge 1` was still denied in the owner session and in its subagent, and ran in another session (O03–O05); the skill wrote `owner:` from the hook's note when it started a run and replaced it when it took one over (O06). Both hosts send the session id with every hook event and keep it across resume and compaction ([`session-id-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/session-id-0.3.0), S01–S03). Not measured: two sessions running at the same moment.
 
 To pause, say **“pause”**, **“stop”**, or **“일시정지”**. The goal is recorded as `paused`; invoke the command again to resume.
 

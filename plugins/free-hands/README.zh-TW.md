@@ -4,7 +4,7 @@
 
 <p align="center"><strong>交給代理一個有限目標，它就會不提問、不停止地完成清單。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="授權：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 外掛"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="授權：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 外掛"></a></p>
 
 <p align="center"><a href="#開始">開始</a> &bull; <a href="#目標檔案">目標檔案</a> &bull; <a href="#不提問">不提問</a> &bull; <a href="#hooks">Hooks</a> &bull; <a href="#討論面板">討論面板</a> &bull; <a href="#堆疊pr">堆疊 PR</a> &bull; <a href="#限制與狀態">限制與狀態</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#需求">需求</a> &bull; <a href="#安裝">安裝</a></p>
 
@@ -20,7 +20,7 @@ free-hands 將目標固定為有限且可檢查的清單，接著不向你提問
 
 - Claude Code：`/free-hands:run <目標>`
 - Codex：`$free-hands:run <目標>`
-- 也可以在提示中寫入 **free-hands**。首次回覆會以你的語言詢問一次是否開始。回答「是」會帶著該目標啟動技能；回答「否」則會提出可能方向並結束此回合。解釋或引用名稱不算開始請求。目標啟用期間再次說「free-hands」代表修正目前的執行方式，無須再次確認。
+- 也可以在提示中寫入 **free-hands**。首次回覆會以你的語言詢問一次是否開始。回答「是」會帶著該目標啟動技能；回答「否」則會提出可能方向並結束此回合。解釋或引用名稱不算開始請求。在此工作階段中目標啟用期間再次說「free-hands」代表修正目前的執行方式，無須再次確認。
 
 ## 目標檔案
 
@@ -30,6 +30,7 @@ free-hands 在儲存庫根目錄保存 `.free-hands/goal.md`，並放置 `.free-
 status: active
 max_iterations: 40
 iterations: 0
+owner: <session id>
 ## Goal
 <一句話目標>
 ## Checklist
@@ -41,6 +42,8 @@ iterations: 0
 
 標記：`- [ ]` 未完成，`- [x]` 已完成，`- [-] … — needs the user` 因硬性限制或其他阻礙而無法繼續。狀態為 `active`、`done`、`waiting` 或 `paused`。只有未完成的 `[ ]` 會讓提問與停止守衛生效；只要仍有 `[ ]` 項目，`done`/`waiting` 都不會結束這次執行。清單全部完成後記錄 `done`；只剩待使用者處理事項時記錄 `waiting`。達到 `max_iterations`（40）後，恢復備註會指示代理設為 `paused`、回報未完成事項並停止；此時可以再次提問。
 
+`owner:` 是目標所屬的工作階段。代理在開始或恢復執行時，依 hook 備註提供的工作階段 ID 寫入此欄位；請參閱 [Hooks](#hooks)。
+
 ## 不提問
 
 目標啟用期間，技能不會向使用者提問。此規則會覆蓋專案與其他技能中的提問要求，也會覆蓋 peer-coding 等工作流程的核准閘門。代理會不經詢問推送分支並建立 PR。失敗的測試、閘門、hook 或審查會修正，或標記為 `- [-]`、需要使用者處理；不會改成通過。其他外掛的 hook 仍會執行。
@@ -49,6 +52,7 @@ iterations: 0
 
 各 hook 的執行條件不同：
 
+- 下列守衛與恢復備註只在 `owner:` 指定的工作階段及其啟動的子代理中生效。同一儲存庫中的其他工作階段（第二個終端機，或其他工具啟動的 `claude -p`）不會收到恢復備註，也不受提問與停止守衛、計數器及 Shell 守衛約束；當其提示中出現「free-hands」時，開始備註會說明哪個工作階段擁有這次執行。在該工作階段執行 `/free-hands:run`（Codex：`$free-hands:run`）會把執行移到該工作階段。沒有 `owner:` 的目標（例如由 0.2.0 寫入的目標）歸 hook 最先遇到的工作階段所有。
 - 只有位於 `## Checklist` 下方、且在程式碼區塊外的 `- [ ]` 行才會計為未完成項目。
 - Shell 守衛（`Bash` 的 `PreToolUse`）會在目標為 `active`，或仍有未完成項目的 `done`/`waiting` 時執行。即使沒有剩餘的 `[ ]` 項目或已達 `max_iterations`，也會執行。它會拒絕[限制與狀態](#限制與狀態)所述的硬性限制命令。
 - 目標有未完成 `[ ]`、迭代數低於 `max_iterations`，且狀態為 `active`，或為仍有未完成項目的 `done`/`waiting` 時，提問與停止守衛會執行。提問守衛會拒絕提問工具。達到上限後可以提問。Stop hook 會先將計數寫入磁碟再阻止停止，最多延續40次。
@@ -98,6 +102,8 @@ Hook 輸入錯誤時不會產生效果。目標檔案格式錯誤或無法讀取
 自 0.2.0 起，目標啟用期間，shell hook 也會拒絕違反這些限制的常見命令：`gh pr merge`；會更新預設分支的推送與合併（使用目標檔案中的 `default_branch:`，否則使用推送遠端的 HEAD，再否則使用 `main` 和 `master`）；透過 `gh api` 合併及建立發行版本；遠端刪除（`git push --delete`、`:ref`、`--prune`、`--mirror`、`gh repo delete`、`gh release delete`）；以及 `npm`/`pnpm`/`yarn publish`、`cargo publish`、`twine upload`、`gem push`、`docker push`、`docker buildx build --push`、`gh release create`、`vercel` 部署、`netlify deploy`、`fly deploy`、`firebase deploy`、`terraform apply`、`kubectl apply`、`helm install`/`upgrade`、`sendmail`、`mail` 和 `mutt`。除 `sendmail`、`mail`、`mutt` 和 `terraform` 外，`--help`/`-h` 對清單中的所有 CLI 都會通過；`sendmail`、`mail` 和 `mutt` 一律拒絕，`terraform` 的說明旗標是 `-help`；`--dry-run` 對 `git push`、`npm`/`pnpm`/`yarn publish`、`cargo publish`、`kubectl` 和 `helm` 會通過。在兩個宿主上，hook 都於執行前拒絕了 `gh pr merge 1`、`npm publish` 和 `git push origin HEAD:main`，且代理收到了拒絕結果（[z-lab `run-0.2.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.2.0)，P01–P04）。
 
 此 hook 是協作型代理執行一般命令時的後備防護，不是用來防範蓄意規避——規則禁止規避。它不會讀取 `rm`、資料庫命令、heredoc 內容、腳本（`npm run deploy`）、互動工作階段中輸入的命令，或其他 CLI 與 HTTP 呼叫（`curl`）。
+
+自 0.3.0 起，目標只屬於一個工作階段。在 Claude Code 2.1.296 與 Codex 0.162.1 上每個案例各測量一次（[z-lab `run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.3.0)）：在 0.2.0 下，同一儲存庫中的第二個工作階段接手了執行中的目標並進行其中的工作（O01）；在 0.3.0 下，該工作階段沒有介入目標，目標檔案逐位元組保持不變（O02）；在所屬工作階段及其子代理中，`gh pr merge 1` 仍遭拒絕，而在其他工作階段中會執行（O03–O05）；技能在開始執行時依 hook 備註中的 ID 寫入 `owner:`，接手其他工作階段的執行時替換該值（O06）。兩個主機都會在每個 hook 事件中送出工作階段 ID，並在恢復與壓縮後保持相同的 ID（[`session-id-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/session-id-0.3.0)，S01–S03）。未測量：兩個工作階段同時執行的情況。
 
 若要暫停，請說 **「pause」**、**「stop」** 或 **「일시정지」**。目標會記錄為 `paused`；再次執行命令即可恢復。
 

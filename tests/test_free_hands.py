@@ -17,12 +17,14 @@ PANEL = PLUGIN / "scripts" / "panel.py"
 ROLES = ("quick-thinker", "deep-thinker", "evidence-hunter", "trend-tracker", "devils-advocate")
 
 
-def goal_text(status="active", items=("- [ ] first", "- [x] second"), max_iterations="40", iterations="0"):
+def goal_text(status="active", items=("- [ ] first", "- [x] second"), max_iterations="40", iterations="0", owner=None):
     lines = [f"status: {status}"]
     if max_iterations is not None:
         lines.append(f"max_iterations: {max_iterations}")
     if iterations is not None:
         lines.append(f"iterations: {iterations}")
+    if owner is not None:
+        lines.append(f"owner: {owner}")
     return "\n".join(lines + ["## Goal", "ship it", "## Checklist", *items, "## Decisions", "## Resume", ""])
 
 
@@ -235,6 +237,71 @@ class GuardTest(unittest.TestCase):
         self.goal.unlink()
         out = self.hook("prompt", {"prompt": f"free-hands로 이 로그를 고쳐줘: {notice}"})
         self.assertIn("[free-hands: entry]", out["hookSpecificOutput"]["additionalContext"])
+
+    def test_another_session_is_left_alone(self):
+        self.write(goal_text(owner="session-a"))
+        b = {"session_id": "session-b"}
+        for mode, extra in (("ask", {"tool_name": "AskUserQuestion"}), ("stop", {}), ("session", {"source": "startup"}),
+                            ("prompt", {"prompt": "README 오타 하나만 고쳐줘"}),
+                            ("shell", {"tool_input": {"command": "gh pr merge 1"}})):
+            self.assertIsNone(self.hook(mode, {**b, **extra}), mode)
+        self.assertEqual(self.goal.read_text(), goal_text(owner="session-a"))
+        context = self.hook("prompt", {**b, "prompt": "free-hands 진행 상황 알려줘"})["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("[free-hands: entry]", context)
+        self.assertIn("This session's id is session-b: write `owner: session-b`", context)
+        self.assertIn("Session session-a owns the free-hands run", context)
+        a = {"session_id": "session-a"}
+        self.assertEqual(self.hook("ask", a)["hookSpecificOutput"]["permissionDecision"], "deny")
+        self.assertEqual(self.hook("shell", {**a, "tool_input": {"command": "gh pr merge 1"}})
+                         ["hookSpecificOutput"]["permissionDecision"], "deny")
+        self.assertIn("keep `owner: session-a`", self.hook("session", a)["hookSpecificOutput"]["additionalContext"])
+        self.assertEqual(self.hook("stop", a)["decision"], "block")
+        self.assertIn("iterations: 1", self.goal.read_text())
+
+    def test_an_unowned_goal_becomes_the_first_sessions(self):
+        self.write(goal_text())
+        self.assertEqual(self.hook("stop", {"session_id": "session-a"})["decision"], "block")
+        text = self.goal.read_text()
+        self.assertIn("iterations: 1\nowner: session-a\n", text)
+        self.assertIsNone(self.hook("stop", {"session_id": "session-b"}))
+        self.assertIsNone(self.hook("session", {"session_id": "session-b"}))
+        self.assertEqual(self.goal.read_text(), text)
+
+    def test_concurrent_first_sessions_leave_one_owner(self):
+        self.write(goal_text())
+        threads = [threading.Thread(target=self.hook, args=("stop", {"session_id": sid})) for sid in ("s-1", "s-2")]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        text = self.goal.read_text()
+        self.assertEqual(text.count("owner:"), 1)
+        self.assertIn("iterations: 1", text)
+
+    def test_the_run_moves_when_the_owner_line_changes(self):
+        self.write(goal_text(owner="session-a"))
+        self.write(goal_text(owner="session-b"))  # what the skill writes when session B starts or resumes the run
+        self.assertIsNone(self.hook("stop", {"session_id": "session-a"}))
+        self.assertEqual(self.hook("stop", {"session_id": "session-b"})["decision"], "block")
+        self.assertIn("iterations: 1", self.goal.read_text())
+
+    def test_the_command_prompt_gives_the_session_id(self):
+        out = self.hook("prompt", {"session_id": "session-a", "prompt": "/free-hands:run finish the migration"})
+        context = out["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("This session's id is session-a: write `owner: session-a`", context)
+        self.assertNotIn("owns the free-hands run", context)
+        self.write(goal_text(owner="session-a"))
+        out = self.hook("prompt", {"session_id": "session-b", "prompt": "$free-hands:run"})
+        self.assertIn("Session session-a owns the free-hands run", out["hookSpecificOutput"]["additionalContext"])
+        self.assertEqual(self.goal.read_text(), goal_text(owner="session-a"))
+
+    def test_without_a_valid_session_id_the_guard_is_repository_wide(self):
+        self.write(goal_text(owner="session-a"))
+        for payload in ({}, {"session_id": "two words"}, {"session_id": "x\nowner: y"}, {"session_id": 7}):
+            self.assertEqual(self.hook("ask", payload)["hookSpecificOutput"]["permissionDecision"], "deny", payload)
+        self.write(goal_text())
+        self.hook("ask", {"session_id": "x\nowner: y"})
+        self.assertEqual(self.goal.read_text(), goal_text())
 
     def test_root_comes_from_the_hook_cwd(self):
         self.write(goal_text())

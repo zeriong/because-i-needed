@@ -4,7 +4,7 @@
 
 <p align="center"><strong>에이전트에게 유한한 목표를 주면 체크리스트를 질문하거나 멈추지 않고 처리합니다.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="버전"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="라이선스: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 플러그인"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="버전"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="라이선스: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 플러그인"></a></p>
 
 <p align="center"><a href="#시작하기">시작하기</a> &bull; <a href="#목표-파일">목표 파일</a> &bull; <a href="#묻지-않기">묻지 않기</a> &bull; <a href="#훅">훅</a> &bull; <a href="#패널">패널</a> &bull; <a href="#누적-pr">누적 PR</a> &bull; <a href="#한계와-상태">한계와 상태</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#요구사항">요구사항</a> &bull; <a href="#설치">설치</a></p>
 
@@ -20,7 +20,7 @@ free-hands는 목표를 유한하고 확인 가능한 체크리스트로 고정�
 
 - Claude Code: `/free-hands:run <목표>`
 - Codex: `$free-hands:run <목표>`
-- 프롬프트에 **free-hands**라는 단어를 넣어 시작할 수도 있습니다. 첫 응답으로 사용자 언어의 진입 질문 하나가 나옵니다. 예라고 답하면 해당 목표로 스킬을 시작하고, 아니요라고 답하면 가능한 방향을 제안하고 그 차례를 끝냅니다. 이름을 설명하거나 인용한 언급은 실행 요청으로 보지 않습니다. 목표가 활성화된 동안 다시 “free-hands”라고 하면 확인을 묻지 않고 진행 방식을 바로잡습니다.
+- 프롬프트에 **free-hands**라는 단어를 넣어 시작할 수도 있습니다. 첫 응답으로 사용자 언어의 진입 질문 하나가 나옵니다. 예라고 답하면 해당 목표로 스킬을 시작하고, 아니요라고 답하면 가능한 방향을 제안하고 그 차례를 끝냅니다. 이름을 설명하거나 인용한 언급은 실행 요청으로 보지 않습니다. 이 세션에서 목표가 활성화된 동안 다시 “free-hands”라고 하면 확인을 묻지 않고 진행 방식을 바로잡습니다.
 
 ## 목표 파일
 
@@ -30,6 +30,7 @@ free-hands는 목표를 유한하고 확인 가능한 체크리스트로 고정�
 status: active
 max_iterations: 40
 iterations: 0
+owner: <session id>
 ## Goal
 <한 문장 목표>
 ## Checklist
@@ -41,6 +42,8 @@ iterations: 0
 
 표시는 `- [ ]` 미완료, `- [x]` 완료, `- [-] … — needs the user` 하드 리밋이나 다른 장애물로 진행할 수 없는 항목입니다. 상태는 `active`, `done`, `waiting`, `paused`입니다. 미완료 `[ ]` 항목만 질문·중단 가드를 작동시키며, 미완료 항목이 남아 있으면 `done`이나 `waiting`으로 실행이 끝나지 않습니다. 모두 완료되면 `done`, 사용자 처리가 필요한 항목만 남으면 `waiting`을 기록합니다. `max_iterations` 40회에 도달하면 복원 메모가 `paused` 설정, 미완료 항목 보고, 중단을 지시하며 질문이 다시 허용됩니다.
 
+`owner:`는 목표가 속한 세션입니다. 에이전트가 실행을 시작하거나 재개할 때 훅 메모가 알려 준 세션 id를 적습니다. [훅](#훅)을 참고하세요.
+
 ## 묻지 않기
 
 목표가 활성 상태인 동안 스킬은 사용자에게 묻지 않습니다. 프로젝트와 다른 스킬의 질문 규칙, peer-coding 같은 워크플로의 승인 게이트도 이 규칙으로 덮어씁니다. 에이전트는 묻지 않고 브랜치를 푸시하고 PR을 생성합니다. 실패한 테스트·게이트·훅·리뷰는 수정하거나 사용자 처리가 필요하다고 `- [-]`로 표시하며, 통과한 것으로 바꾸지 않습니다. 다른 플러그인의 훅은 계속 동작합니다.
@@ -49,6 +52,7 @@ iterations: 0
 
 훅마다 동작 조건이 다릅니다.
 
+- 아래의 가드와 복원 메모는 `owner:`에 적힌 세션과 그 세션이 띄운 서브에이전트에서만 동작합니다. 같은 저장소의 다른 세션(두 번째 터미널, 다른 도구가 띄운 `claude -p` 등)에는 복원 메모, 질문·중단 가드, 카운터, 셸 가드가 모두 적용되지 않습니다. 그 세션의 프롬프트에 “free-hands”가 있으면 진입 메모가 어느 세션이 실행을 소유하는지 알려 줍니다. 그 세션에서 `/free-hands:run`(Codex: `$free-hands:run`)을 실행하면 실행이 그 세션으로 넘어갑니다. 0.2.0이 만든 목표처럼 `owner:`가 없는 목표는 훅이 처음 마주친 세션의 것이 됩니다.
 - `## Checklist` 아래에 있으면서 코드 블록 밖에 있는 `- [ ]` 줄만 미완료 항목으로 셉니다.
 - 셸 가드(`Bash`의 `PreToolUse`)는 목표가 `active`이거나, 미완료 항목이 남은 `done`/`waiting`일 때 동작합니다. `[ ]` 항목이 더 이상 없거나 `max_iterations`에 도달해도 마찬가지입니다. [한계와 상태](#한계와-상태)에 설명된 하드 리밋 명령을 거부합니다.
 - 질문·중단 가드는 목표에 미완료 `[ ]` 항목이 있고 `max_iterations` 미만이며, 상태가 `active`이거나 미완료 항목이 남은 `done`/`waiting`일 때 동작합니다. 질문 가드는 질문 도구를 거부합니다. 한도에서는 질문이 허용됩니다. Stop 훅은 중단을 막기 전에 반복 횟수를 디스크에 기록하며 최대 40회까지 이어갑니다.
@@ -98,6 +102,8 @@ iterations: 0
 0.2.0부터는 목표가 활성 상태일 때 셸 훅도 이를 위반하는 일반 명령을 거부합니다. `gh pr merge`; 기본 브랜치를 업데이트하는 푸시와 병합(목표 파일의 `default_branch:`, 없으면 푸시 원격의 HEAD, 그것도 없으면 `main`과 `master`); `gh api`를 통한 병합과 릴리스 생성; 원격 삭제(`git push --delete`, `:ref`, `--prune`, `--mirror`, `gh repo delete`, `gh release delete`); 그리고 `npm`/`pnpm`/`yarn publish`, `cargo publish`, `twine upload`, `gem push`, `docker push`, `docker buildx build --push`, `gh release create`, `vercel` 배포, `netlify deploy`, `fly deploy`, `firebase deploy`, `terraform apply`, `kubectl apply`, `helm install`/`upgrade`, `sendmail`, `mail`, `mutt`입니다. `--help`/`-h`는 `sendmail`·`mail`·`mutt`과 `terraform`을 제외한 목록의 모든 CLI에서 통과합니다. `sendmail`·`mail`·`mutt`은 항상 거부되고, `terraform`의 도움말 플래그는 `-help`입니다. `--dry-run`은 `git push`, `npm`/`pnpm`/`yarn publish`, `cargo publish`, `kubectl`, `helm`에서 통과합니다. 두 호스트에서 훅은 실행 전에 `gh pr merge 1`, `npm publish`, `git push origin HEAD:main`을 거부했고, 거부 결과는 에이전트에 전달됐습니다([z-lab `run-0.2.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.2.0), P01–P04).
 
 이 훅은 협조적인 에이전트가 사용하는 일반 명령에 대한 보완 장치이며, 의도적인 우회를 막는 방어 수단은 아닙니다. 규칙상 우회는 금지됩니다. `rm`, 데이터베이스 명령, heredoc 본문, 스크립트(`npm run deploy`), 대화형 세션에 입력한 명령, 다른 CLI 및 HTTP 호출(`curl`)은 읽지 않습니다.
+
+0.3.0부터 목표는 한 세션에 속합니다. Claude Code 2.1.296과 Codex 0.162.1에서 사례마다 한 번씩 측정했습니다([z-lab `run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.3.0)). 0.2.0에서는 같은 저장소의 두 번째 세션이 실행 중인 목표를 넘겨받아 그 작업을 했습니다(O01). 0.3.0에서는 그 세션이 목표에 관여하지 않았고, 목표 파일은 바이트 단위까지 그대로였습니다(O02). 소유 세션과 그 서브에이전트에서는 `gh pr merge 1`이 여전히 거부됐고, 다른 세션에서는 실행됐습니다(O03–O05). 스킬은 실행을 시작할 때 훅 메모의 id로 `owner:`를 적었고, 다른 세션의 실행을 넘겨받을 때 그 값을 바꿨습니다(O06). 두 호스트 모두 모든 훅 이벤트에 세션 id를 보내며, 재개와 압축 뒤에도 같은 id를 유지합니다([`session-id-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/session-id-0.3.0), S01–S03). 측정하지 않은 것: 두 세션이 동시에 실행되는 경우.
 
 “pause”, “stop” 또는 **“일시정지”**라고 말하면 일시정지합니다. 목표에 `paused`를 기록하고 명령을 다시 실행하면 재개합니다.
 

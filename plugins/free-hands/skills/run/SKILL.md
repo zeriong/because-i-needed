@@ -14,9 +14,9 @@ elsewhere (on Codex, resolve it from the skill file you loaded, never from the p
 `references/host-codex.md` before step 2.
 
 You are here because the user ran the command or answered yes to the entry question. Work until the goal is done. The
-plugin's hooks keep this rule alive for the rest of the session: while the goal file is active and has open items, the
-ask tool is denied, stopping is blocked (up to `max_iterations`), and after a restart or compaction a note tells you to
-re-read this file and the goal file.
+plugin's hooks keep this rule alive in the session that owns the goal file (`owner:`): while the goal file is active and
+has open items, the ask tool is denied, stopping is blocked (up to `max_iterations`), and after a restart or compaction
+a note tells you to re-read this file and the goal file. Other sessions in the same repository are left alone.
 
 ## 1. Goal file
 
@@ -28,6 +28,7 @@ sandbox keeps read-only).
 status: active
 max_iterations: 40
 iterations: 0
+owner: <this session's id>
 default_branch: <the repository's default branch>
 ## Goal
 <one sentence>
@@ -41,13 +42,17 @@ default_branch: <the repository's default branch>
 - `default_branch`: from `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`, else
   `git symbolic-ref --short refs/remotes/origin/HEAD` without the remote prefix. The hard-limit hook protects this
   branch; without the line it falls back to the remote's HEAD, then to `main` and `master`.
+- `owner`: the id from the `[free-hands: session]` note a hook added to your context ("This session's id is …").
+  Only this session's hooks act on the goal; subagents you start count as this session. If no note gave you an id,
+  leave the line out: the first session whose hook sees the goal becomes its owner.
 - Items must be finite and checkable. No open conditions ("no more findings", "everything clean"); turn them into a
   bounded list or a command whose result decides.
 - No goal in the arguments: take it from the conversation (the prompt that led to the entry question). Only if there is
   none at all, ask for it once — the goal file does not exist yet, so this is the one question allowed.
 - An active goal file already exists: with no new goal, resume it. With a new goal, rename the old file to
-  `goal.<YYYYMMDD-HHMM>.md` and start the new one.
-- A paused goal and the command again → set `status: active` and continue it.
+  `goal.<YYYYMMDD-HHMM>.md` and start the new one. Either way set `owner:` to this session's id — if another session
+  owned the run, it moves here and that session's hooks stop acting on it.
+- A paused goal and the command again → set `status: active`, set `owner:` to this session's id, and continue it.
 
 ## 2. Hooks and the session goal
 

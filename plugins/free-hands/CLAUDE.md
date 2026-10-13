@@ -10,6 +10,15 @@ Contents: the `run` skill and Codex adapter, five read-only panel roles, `hooks/
 - Guards fail open on malformed hook input, malformed or unreadable goal files, lock timeouts, and failed writes. Stop is blocked only after the incremented iteration counter is on disk. Metadata counts only when the whole value is valid (`iterations: 0 x` is malformed). **Why (FH-03, FH-17, FH-24):** broken state or I/O must not trap a user's session, and a stop blocked without a durable counter could run past `max_iterations`.
 - Keep fail-open scoped to ask/stop guards and restore notes. The prompt hook routes entry without a goal file. **Why (FH-06):** entry happens before any goal file exists.
 - Keep the restore note's goal path, skill path and its rules (never ask; the panel; the hard limits; keep the goal file current; pause first). **Why (D4a/FH-05):** the skill body is not reloaded after compaction and this file never loads in user sessions, so the SessionStart/UserPromptSubmit note is the only carrier; shortening it drops rules.
+- Every guard acts only in the session named by the goal's `owner:` — the hook input's `session_id`, never an
+  environment variable. Another session in the same repository gets no restore note, no ask or stop guard, no counter
+  and no shell guard; it only learns, when its prompt mentions free-hands, who owns the run. A guarded goal without
+  `owner:` is claimed under the lock by the first session a hook sees; an input without a valid `session_id` keeps the
+  repository-wide guard. The skill writes `owner:` from the `[free-hands: session]` note when it starts, resumes or
+  takes over a run. **Why (user report, 2026-10-13; z-lab `session-id-0.3.0` S01–S05):** a second terminal in the
+  repository picked up the running goal and raised its counter. Both hosts send `session_id` on every event, keep it
+  across resume and compaction, and give a subagent its parent's id; an inherited `CLAUDE_CODE_SESSION_ID` named the
+  wrong session.
 - `FREE_HANDS_ROLE` disables the guard in panel children so their work cannot change the main goal or its counter. **Why (FH-04):** Codex panel children load the same plugin hooks in the same repository; without it a child's Stop hook would raise the parent's counter and keep the child from finishing.
 - Keep the hard limits in `skills/run/SKILL.md` and its restore note as rules for the agent: no PR merge or merge into the default branch, irreversible deletion, deployment, publication, or external sending. A blocked item is marked as needing the user and skipped while the run continues. **Why (maintainer decision, 2026-10-01; FH-26):** these boundaries preserve decisions for the user.
 - The shell hook (`guard.py shell`, `scripts/shellguard.py`) is a backstop with a fixed list, on while the goal is guarded (not tied to open items or `max_iterations`): merges into the default branch, remote deletions, deploy/publish/send. `rm` and database commands, heredoc bodies, scripts, interactive input and other CLIs are deliberately not read (user, 2026-10-02: core scope). A command that names a covered tool but does not parse is denied; any other failure lets the command run. It is built for a cooperative agent's ordinary commands, not against deliberate evasion (the rules forbid that). GitHub issues, PRs and comments are allowed (user, 2026-10-02). **Why:** the rules stay the contract; the hook catches the common commands without stalling normal work. Extend the list only with a case in `SHELL_CASES` (tests/test_free_hands.py) for the new deny and its near misses.
@@ -22,6 +31,10 @@ Contents: the `run` skill and Codex adapter, five read-only panel roles, `hooks/
 Use SemVer for this plugin: MAJOR for a breaking goal-file format or command change; MINOR when a rule, role, or hook behavior is added or changed; PATCH for documentation changes. **Why (root Rule 2):** installed copies are version-keyed, so changes must be classified and released consistently.
 
 ## Evidence
+
+0.3.0 session ownership: z-lab `free-hands-lab/session-id-0.3.0` S01–S05 (the hosts' session ids) and
+`free-hands-lab/run-0.3.0` O01–O06 (0.2.0 control reproduced the report; another session left alone; owner and its
+subagent still denied; the skill writes and replaces `owner:`); unit tests in `GuardTest`.
 
 0.2.0 shell hook: z-lab `free-hands-lab/run-0.2.0` P01–P04 (denied before running on both hosts; allowed command and
 controls ran), P05 (the rules alone kept the limits in the full skill); the list in `SHELL_CASES`.
