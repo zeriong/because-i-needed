@@ -4,7 +4,7 @@
 
 <p align="center"><strong>给智能体一个有限目标，它就会不提问、不停下地完成清单。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="许可证：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 插件"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.4.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="许可证：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 插件"></a></p>
 
 <p align="center"><a href="#开始">开始</a> &bull; <a href="#目标文件">目标文件</a> &bull; <a href="#不提问">不提问</a> &bull; <a href="#钩子">钩子</a> &bull; <a href="#讨论面板">讨论面板</a> &bull; <a href="#堆叠pr">堆叠 PR</a> &bull; <a href="#限制与状态">限制与状态</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#要求">要求</a> &bull; <a href="#安装">安装</a></p>
 
@@ -48,6 +48,8 @@ owner: <session id>
 
 目标处于活动状态时，技能不会向用户提问。此规则覆盖项目和其他技能中的提问要求，也覆盖 peer-coding 等工作流的审批门禁。智能体会不经询问推送分支并创建 PR。失败的测试、门禁、钩子或评审会被修复，或标记为 `- [-]`、需要用户处理；绝不会改成通过。其他插件的钩子仍会运行。
 
+唯一的例外是 [budget](../budget) 插件的用量提问：当 budget 因达到你设定的用量阈值而拦下某次调用时，智能体会照它说的做——在 Claude Code 中通过对话框，在 Codex 中以该问题结束本轮。超出阈值继续花费由你决定，而不是由讨论面板决定。
+
 ## 钩子
 
 各钩子的触发条件不同：
@@ -55,7 +57,7 @@ owner: <session id>
 - 下列守卫和恢复说明只在 `owner:` 指定的会话及其启动的子智能体中生效。同一仓库中的其他会话（第二个终端，或其他工具启动的 `claude -p`）不会收到恢复说明，也不受提问和停止守卫、计数器及 Shell 守卫的约束；当其提示中出现“free-hands”时，开始说明会告知哪个会话拥有本次运行。在该会话中运行 `/free-hands:run`（Codex：`$free-hands:run`）会把运行转移到该会话。没有 `owner:` 的目标（例如由 0.2.0 写入的目标）归钩子最先遇到的会话所有。
 - 只有位于 `## Checklist` 下方、且在代码块之外的 `- [ ]` 行才计为未完成项。
 - Shell 守卫（`Bash` 上的 `PreToolUse`）会在目标为 `active`，或仍有未完成项的 `done`/`waiting` 时运行。即使没有剩余的 `[ ]` 项，或已达到 `max_iterations`，也会运行。它会拒绝[限制与状态](#限制与状态)中所述的硬性限制命令。
-- 目标有未完成 `[ ]`、迭代数低于 `max_iterations`，且状态为 `active`，或为仍有未完成项的 `done`/`waiting` 时，提问和停止守卫会生效。提问守卫会拒绝提问工具。达到上限后可以提问。Stop 钩子会先将计数写入磁盘再阻止停止，最多继续40次。
+- 目标有未完成 `[ ]`、迭代数低于 `max_iterations`，且状态为 `active`，或为仍有未完成项的 `done`/`waiting` 时，提问和停止守卫会生效。提问守卫会拒绝提问工具。达到上限后可以提问。Stop 钩子会先将计数写入磁盘再阻止停止，最多继续40次。budget 的用量提问在会话中处于打开状态时，两个守卫都不生效。
 - 目标为 `active` 时会发送恢复说明（`UserPromptSubmit`、包括压缩后的 `SessionStart`），即使没有未完成项也会发送；有未完成项的 `done`/`waiting` 状态也会发送。
 - 没有有效且活动中的目标、但提示中出现“free-hands”时，会发送开始说明。后台任务通知不视为提示；提示中引用的通知会被忽略，提示的其余部分仍会被读取。
 
@@ -104,6 +106,8 @@ owner: <session id>
 该钩子是针对协作型智能体日常命令的后备防护，不用于防御蓄意规避——规则禁止规避。它不会读取 `rm`、数据库命令、heredoc 正文、脚本（`npm run deploy`）、交互会话中输入的命令，或其他 CLI 与 HTTP 调用（`curl`）。
 
 从 0.3.0 起，目标只属于一个会话。在 Claude Code 2.1.296 和 Codex 0.162.1 上每个用例测量一次（[z-lab `run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.3.0)）：在 0.2.0 下，同一仓库中的第二个会话接手了正在运行的目标并执行了其中的工作（O01）；在 0.3.0 下，该会话没有介入目标，目标文件逐字节保持不变（O02）；在所属会话及其子智能体中，`gh pr merge 1` 仍被拒绝，而在其他会话中会执行（O03–O05）；技能在开始运行时按钩子说明中的 ID 写入 `owner:`，接手其他会话的运行时替换该值（O06）。两个宿主都会在每个钩子事件中发送会话 ID，并在恢复和压缩后保持相同的 ID（[`session-id-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/session-id-0.3.0)，S01–S03）。未测量：两个会话同时运行的情况。
+
+从 0.4.0 起，[budget](../budget) 的提问可以通过，目标也会显示在 [dashboard](../dashboard) 上。在 Claude Code 2.1.299 和 Codex 0.162.1 上测量（[z-lab `budget-lab`](https://github.com/zeriong/z-lab/tree/main/budget-lab)、[`dashboard-lab`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab)）：目标运行时，budget 的对话框得以显示，而 0.3.0 会将其拦下；在 Codex 上，被拦下的这一轮立即结束，而 0.3.0 的停止守卫还会让它继续三次（budget-lab R04、R07、R12；codex-gate B03）。`guard.py status` 在两个宿主上都向 dashboard 给出了 `active 0/40 · 1 open`（dashboard-lab D01、D04）。
 
 要暂停，请说 **“pause”**、**“stop”** 或 **“일시정지”**。目标记录为 `paused`；再次运行命令即可恢复。
 

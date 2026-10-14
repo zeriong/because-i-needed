@@ -2,7 +2,7 @@
 
 Every shared rule in the root `CLAUDE.md` applies. This plugin gives an agent a finite goal checklist and instructions to continue without asking; a five-role read-only panel advises on user-level decisions, and the main agent decides from evidence.
 
-Contents: the `run` skill and Codex adapter, five read-only panel roles, `hooks/hooks.json` (UserPromptSubmit, SessionStart, PreToolUse for the ask tool and for Bash, Stop), `scripts/guard.py`, `scripts/shellguard.py`, `scripts/panel.py`, and a byte-identical `scripts/latest-model.py` copy.
+Contents: the `run` skill and Codex adapter, five read-only panel roles, `dashboard.json`, `hooks/hooks.json` (UserPromptSubmit, SessionStart, PreToolUse for the ask tool and for Bash, Stop), `scripts/guard.py`, `scripts/shellguard.py`, `scripts/panel.py`, and a byte-identical `scripts/latest-model.py` copy.
 
 ## Invariants
 
@@ -19,6 +19,14 @@ Contents: the `run` skill and Codex adapter, five read-only panel roles, `hooks/
   repository picked up the running goal and raised its counter. Both hosts send `session_id` on every event, keep it
   across resume and compaction, and give a subagent its parent's id; an inherited `CLAUDE_CODE_SESSION_ID` named the
   wrong session.
+- While budget's question is open for the session (`$XDG_CONFIG_HOME/because-i-needed/budget/pending/<session id>.json`
+  holds `"open": true`), the ask and stop guards stand aside; the shell guard does not. The skill and the restore note
+  name it as the one exception to never-ask. **Why (maintainer decision, 2026-10-14: the usage question outranks
+  free-hands; z-lab `plugin-platform-lab/mod-interactive-2.1.299` I05, `budget-lab/codex-gate-0.1.0` B03 →
+  `budget-lab/run-0.1.0` R04, R07, `-r2` R12):** 0.3.0 blocked the question on Claude Code and, on Codex, the end of the
+  gated turn.
+- `guard.py status` prints the goal's state for the dashboard (root Rule 11, `dashboard.json`). **Why
+  (`dashboard-lab/run-0.1.0` D01, D04).**
 - `FREE_HANDS_ROLE` disables the guard in panel children so their work cannot change the main goal or its counter. **Why (FH-04):** Codex panel children load the same plugin hooks in the same repository; without it a child's Stop hook would raise the parent's counter and keep the child from finishing.
 - Keep the hard limits in `skills/run/SKILL.md` and its restore note as rules for the agent: no PR merge or merge into the default branch, irreversible deletion, deployment, publication, or external sending. A blocked item is marked as needing the user and skipped while the run continues. **Why (maintainer decision, 2026-10-01; FH-26):** these boundaries preserve decisions for the user.
 - The shell hook (`guard.py shell`, `scripts/shellguard.py`) is a backstop with a fixed list, on while the goal is guarded (not tied to open items or `max_iterations`): merges into the default branch, remote deletions, deploy/publish/send. `rm` and database commands, heredoc bodies, scripts, interactive input and other CLIs are deliberately not read (user, 2026-10-02: core scope). A command that names a covered tool but does not parse is denied; any other failure lets the command run. It is built for a cooperative agent's ordinary commands, not against deliberate evasion (the rules forbid that). GitHub issues, PRs and comments are allowed (user, 2026-10-02). **Why:** the rules stay the contract; the hook catches the common commands without stalling normal work. Extend the list only with a case in `SHELL_CASES` (tests/test_free_hands.py) for the new deny and its near misses.
@@ -31,6 +39,9 @@ Contents: the `run` skill and Codex adapter, five read-only panel roles, `hooks/
 Use SemVer for this plugin: MAJOR for a breaking goal-file format or command change; MINOR when a rule, role, or hook behavior is added or changed; PATCH for documentation changes. **Why (root Rule 2):** installed copies are version-keyed, so changes must be classified and released consistently.
 
 ## Evidence
+
+0.4.0 budget exception and status: z-lab `budget-lab/run-0.1.0` R04, R07, `run-0.1.0-r2` R12; `dashboard-lab/run-0.1.0`
+D01, D04; unit tests in `GuardTest`.
 
 0.3.0 session ownership: z-lab `free-hands-lab/session-id-0.3.0` S01–S05 (the hosts' session ids) and
 `free-hands-lab/run-0.3.0` O01–O06 (0.2.0 control reproduced the report; another session left alone; owner and its

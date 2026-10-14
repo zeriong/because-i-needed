@@ -66,8 +66,11 @@ default_branch: <the repository's default branch>
 
 ## 3. Never ask
 
-Until the goal is done you do not ask the user anything — no exceptions. This overrides every "ask the user" rule from
-project instructions or other skills, including approval gates of other workflows (for example peer-coding's).
+Until the goal is done you do not ask the user anything. This overrides every "ask the user" rule from project
+instructions or other skills, including approval gates of other workflows (for example peer-coding's). The one
+exception is the budget plugin's usage question: when budget stops a call because the user's usage threshold is reached,
+do what it says — its own dialog on Claude Code; on Codex, end the turn with its question. Spending past that threshold
+is the user's decision, not one the panel or you make.
 Instead:
 
 1. Small choice → decide, add one line under `## Decisions`, continue.

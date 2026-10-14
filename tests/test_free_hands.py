@@ -303,6 +303,40 @@ class GuardTest(unittest.TestCase):
         self.hook("ask", {"session_id": "x\nowner: y"})
         self.assertEqual(self.goal.read_text(), goal_text())
 
+    def test_an_open_budget_question_lets_asking_and_stopping_through(self):
+        self.write(goal_text(owner="session-a"))
+        xdg = self.tmp / "xdg"
+        pending = xdg / "because-i-needed" / "budget" / "pending" / "session-a.json"
+        a, env = {"session_id": "session-a"}, {"XDG_CONFIG_HOME": str(xdg)}
+        self.assertEqual(self.hook("ask", a, env=env)["hookSpecificOutput"]["permissionDecision"], "deny")
+        pending.parent.mkdir(parents=True)
+        pending.write_text('{"open": true, "threshold": 80}')
+        self.assertIsNone(self.hook("ask", a, env=env))
+        self.assertIsNone(self.hook("stop", a, env=env))
+        self.assertIn("iterations: 0", self.goal.read_text())
+        self.assertEqual(self.hook("shell", {**a, "tool_input": {"command": "gh pr merge 1"}}, env=env)
+                         ["hookSpecificOutput"]["permissionDecision"], "deny")  # the hard limits stay
+        for closed in ('{"open": false}', "not json", "[]"):
+            pending.write_text(closed)
+            self.assertEqual(self.hook("ask", a, env=env)["hookSpecificOutput"]["permissionDecision"], "deny", closed)
+        pending.write_text('{"open": true}')
+        self.assertEqual(self.hook("ask", {}, env=env)["hookSpecificOutput"]["permissionDecision"], "deny")  # no id
+
+    def test_status_prints_the_dashboard_contract(self):
+        def status():
+            result = subprocess.run([sys.executable, str(GUARD), "status"], cwd=self.repo / "sub", capture_output=True,
+                                    text=True)
+            return json.loads(result.stdout)
+        self.assertEqual(status(), {"value": "off", "source": "default", "project": None, "global": None,
+                                    "detail": None})
+        self.write(goal_text(owner="0123456789abcdef", iterations="3"))
+        self.assertEqual(status()["value"], "active 3/40 · 1 open")
+        self.assertEqual((status()["source"], status()["detail"]), ("project", "owner 01234567"))
+        self.write(goal_text(status="paused"))
+        self.assertEqual(status()["value"], "paused 0/40 · 1 open")
+        self.write(goal_text(status="done", items=("- [x] a",)))
+        self.assertEqual(status()["value"], "done")
+
     def test_root_comes_from_the_hook_cwd(self):
         self.write(goal_text())
         out = self.hook("ask", {"cwd": str(self.repo / "sub")})

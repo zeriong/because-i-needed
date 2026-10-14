@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""free-hands hook guard. Usage: guard.py prompt|session|ask|stop  (hook JSON on stdin)
+"""free-hands hook guard. Usage: guard.py prompt|session|ask|stop|shell  (hook JSON on stdin) | guard.py status
 
 While `.free-hands/goal.md` is active and has open items (`- [ ]`), it denies the ask tool, keeps the session from
 stopping (up to max_iterations) and re-injects the rules after a restart or compaction — in the session named by the
@@ -22,6 +22,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import shellguard  # noqa: E402
 
 GOAL = Path(".free-hands") / "goal.md"
+# budget's open question for a session (plugins/budget/scripts/budget.py): the one question free-hands lets through.
+BUDGET_PENDING = (Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "because-i-needed" / "budget"
+                  / "pending")
 SKILL = Path(__file__).resolve().parents[1] / "skills" / "run" / "SKILL.md"
 WORD = re.compile(r"free[-_ ]?hands", re.IGNORECASE)
 COMMAND = re.compile(r"^\s*[/$]free-hands:run\b")
@@ -123,7 +126,8 @@ def restore_note(goal, info):
              "asked you to stop or wait, set `status: paused`." if info["status"] in FINISHED else "")
     return (f"[free-hands: ACTIVE]{wrong}{owner} Goal file: {goal}. If the free-hands rules are not in your context, "
             f"read {SKILL} and the goal file before anything else. Until the goal is done: (1) never ask the user — "
-            "decide with the brainstorming panel or yourself, record it under ## Decisions, continue; (2) never merge a "
+            "decide with the brainstorming panel or yourself, record it under ## Decisions, continue (the one exception: "
+            "when the budget plugin stops you at the user's usage threshold, do what it says); (2) never merge a "
             "PR or into the default branch, delete irreversibly, deploy or send anything outside — mark such items "
             "`- [-] … — needs the user: <why>`; (3) keep the goal file current (`- [x]` when an item is done; status "
             "done, waiting or paused at the end); (4) if the user asks to pause or stop, set `status: paused` first.")
@@ -213,9 +217,21 @@ def on_session(data):
         emit("SessionStart", restore_note(goal, info))
 
 
+def budget_question_open(data):
+    """budget is asking this session whether to go on past the user's usage threshold (z-lab plugin-platform-lab
+    mod-interactive-2.1.299 I05, budget-lab codex-gate-0.1.0 B03): the user's spending decision outranks never-ask."""
+    sid = session_of(data)
+    if sid is None:
+        return False
+    try:
+        return json.loads((BUDGET_PENDING / f"{sid}.json").read_text()).get("open") is True
+    except (OSError, ValueError, AttributeError):
+        return False
+
+
 def on_ask(data):
     goal, info, _ = active_goal(data)
-    if not engaged(info):
+    if not engaged(info) or budget_question_open(data):
         return
     reason = (f"free-hands: asking the user is off while the goal is open ({len(info['items'])} items left in "
               f"{goal}). Decide with the brainstorming panel or yourself, record the decision under ## Decisions, "
@@ -312,7 +328,7 @@ def bump(goal, sid=None):
 
 def on_stop(data):
     goal, info, _ = active_goal(data)
-    if not engaged(info):
+    if not engaged(info) or budget_question_open(data):
         return
     result = bump(goal, session_of(data))
     if result is None:
@@ -329,8 +345,26 @@ def on_stop(data):
     print(json.dumps({"decision": "block", "reason": reason}))
 
 
+def status():
+    """The goal's state for the dashboard (root Rule 11): one JSON object, read-only."""
+    goal = project_root({}) / GOAL
+    info = parse(load(goal))
+    if info is None:
+        state = None
+    elif info["items"]:
+        state = f"{info['status']} {info['iterations']}/{info['max']} · {len(info['items'])} open"
+    else:
+        state = info["status"]
+    detail = f"owner {info['owner'][:8]}" if info and info["owner"] else None
+    print(json.dumps({"value": state or "off", "source": "project" if state else "default", "project": state,
+                      "global": None, "detail": detail}))
+
+
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else ""
+    if mode == "status":
+        status()
+        return
     if os.environ.get("FREE_HANDS_ROLE"):
         return
     data = read_input()

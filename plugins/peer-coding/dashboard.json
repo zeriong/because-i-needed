@@ -1,0 +1,8 @@
+{
+  "entries": [
+    {
+      "label": "peer-coding",
+      "status": ["bash", "scripts/mode.sh", "status", "--json"]
+    }
+  ]
+}

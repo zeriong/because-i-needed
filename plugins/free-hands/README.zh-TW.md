@@ -4,7 +4,7 @@
 
 <p align="center"><strong>交給代理一個有限目標，它就會不提問、不停止地完成清單。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="授權：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 外掛"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.4.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="授權：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 外掛"></a></p>
 
 <p align="center"><a href="#開始">開始</a> &bull; <a href="#目標檔案">目標檔案</a> &bull; <a href="#不提問">不提問</a> &bull; <a href="#hooks">Hooks</a> &bull; <a href="#討論面板">討論面板</a> &bull; <a href="#堆疊pr">堆疊 PR</a> &bull; <a href="#限制與狀態">限制與狀態</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#需求">需求</a> &bull; <a href="#安裝">安裝</a></p>
 
@@ -48,6 +48,8 @@ owner: <session id>
 
 目標啟用期間，技能不會向使用者提問。此規則會覆蓋專案與其他技能中的提問要求，也會覆蓋 peer-coding 等工作流程的核准閘門。代理會不經詢問推送分支並建立 PR。失敗的測試、閘門、hook 或審查會修正，或標記為 `- [-]`、需要使用者處理；不會改成通過。其他外掛的 hook 仍會執行。
 
+唯一的例外是 [budget](../budget) 外掛的用量問題：當 budget 因你的用量門檻已達到而攔下某次呼叫時，代理會照它的要求去做——在 Claude Code 的對話框中，或在 Codex 上以該問題結束回合。超出你的門檻繼續花費，是你的決定，不是討論面板的決定。
+
 ## Hooks
 
 各 hook 的執行條件不同：
@@ -55,7 +57,7 @@ owner: <session id>
 - 下列守衛與恢復備註只在 `owner:` 指定的工作階段及其啟動的子代理中生效。同一儲存庫中的其他工作階段（第二個終端機，或其他工具啟動的 `claude -p`）不會收到恢復備註，也不受提問與停止守衛、計數器及 Shell 守衛約束；當其提示中出現「free-hands」時，開始備註會說明哪個工作階段擁有這次執行。在該工作階段執行 `/free-hands:run`（Codex：`$free-hands:run`）會把執行移到該工作階段。沒有 `owner:` 的目標（例如由 0.2.0 寫入的目標）歸 hook 最先遇到的工作階段所有。
 - 只有位於 `## Checklist` 下方、且在程式碼區塊外的 `- [ ]` 行才會計為未完成項目。
 - Shell 守衛（`Bash` 的 `PreToolUse`）會在目標為 `active`，或仍有未完成項目的 `done`/`waiting` 時執行。即使沒有剩餘的 `[ ]` 項目或已達 `max_iterations`，也會執行。它會拒絕[限制與狀態](#限制與狀態)所述的硬性限制命令。
-- 目標有未完成 `[ ]`、迭代數低於 `max_iterations`，且狀態為 `active`，或為仍有未完成項目的 `done`/`waiting` 時，提問與停止守衛會執行。提問守衛會拒絕提問工具。達到上限後可以提問。Stop hook 會先將計數寫入磁碟再阻止停止，最多延續40次。
+- 目標有未完成 `[ ]`、迭代數低於 `max_iterations`，且狀態為 `active`，或為仍有未完成項目的 `done`/`waiting` 時，提問與停止守衛會執行。提問守衛會拒絕提問工具。達到上限後可以提問。Stop hook 會先將計數寫入磁碟再阻止停止，最多延續40次。budget 的用量問題在該工作階段中開啟期間，這兩個守衛都不會生效。
 - 目標為 `active` 時會送出恢復備註（`UserPromptSubmit`、包括壓縮後的 `SessionStart`），即使沒有未完成項目也會送出；仍有未完成項目的 `done`/`waiting` 狀態也會送出。
 - 沒有有效且啟用中的目標，但提示中出現「free-hands」時，會送出開始備註。背景工作通知不視為提示；提示中引用的通知會被忽略，並讀取提示的其餘部分。
 
@@ -104,6 +106,8 @@ Hook 輸入錯誤時不會產生效果。目標檔案格式錯誤或無法讀取
 此 hook 是協作型代理執行一般命令時的後備防護，不是用來防範蓄意規避——規則禁止規避。它不會讀取 `rm`、資料庫命令、heredoc 內容、腳本（`npm run deploy`）、互動工作階段中輸入的命令，或其他 CLI 與 HTTP 呼叫（`curl`）。
 
 自 0.3.0 起，目標只屬於一個工作階段。在 Claude Code 2.1.296 與 Codex 0.162.1 上每個案例各測量一次（[z-lab `run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.3.0)）：在 0.2.0 下，同一儲存庫中的第二個工作階段接手了執行中的目標並進行其中的工作（O01）；在 0.3.0 下，該工作階段沒有介入目標，目標檔案逐位元組保持不變（O02）；在所屬工作階段及其子代理中，`gh pr merge 1` 仍遭拒絕，而在其他工作階段中會執行（O03–O05）；技能在開始執行時依 hook 備註中的 ID 寫入 `owner:`，接手其他工作階段的執行時替換該值（O06）。兩個主機都會在每個 hook 事件中送出工作階段 ID，並在恢復與壓縮後保持相同的 ID（[`session-id-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/session-id-0.3.0)，S01–S03）。未測量：兩個工作階段同時執行的情況。
+
+自 0.4.0 起，[budget](../budget) 的問題可以通過，目標也會顯示在 [dashboard](../dashboard) 上。在 Claude Code 2.1.299 與 Codex 0.162.1 上（[z-lab `budget-lab`](https://github.com/zeriong/z-lab/tree/main/budget-lab)、[`dashboard-lab`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab)）：目標執行時，budget 的對話框顯示了出來，而 0.3.0 會將其阻擋；在 Codex 上，被攔住的回合立刻結束，而 0.3.0 的停止守衛讓它又繼續了三次（budget-lab R04、R07、R12；codex-gate B03）。`guard.py status` 在兩個宿主上都給了 dashboard `active 0/40 · 1 open`（dashboard-lab D01、D04）。
 
 若要暫停，請說 **「pause」**、**「stop」** 或 **「일시정지」**。目標會記錄為 `paused`；再次執行命令即可恢復。
 

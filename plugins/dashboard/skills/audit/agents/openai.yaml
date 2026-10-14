@@ -1,0 +1,7 @@
+interface:
+  display_name: "because-i-needed dashboard"
+  short_description: "Show the state of every because-i-needed mode"
+  default_prompt: "Use dashboard:audit to show my modes."
+
+policy:
+  allow_implicit_invocation: true

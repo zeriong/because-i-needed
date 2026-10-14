@@ -10,6 +10,7 @@
 # Usage:
 #   mode.sh get                 → prints on|off
 #   mode.sh status              → prints value and where it came from
+#   mode.sh status --json       → the same as one JSON object, for the dashboard plugin (root Rule 11)
 #   mode.sh on|off [--global]   → writes the project flag (or the global one)
 #   mode.sh clear [--global]    → removes the project flag (or the global one)
 set -euo pipefail
@@ -53,6 +54,18 @@ case "$cmd" in
     ;;
   status)
     read -r value source <<<"$(resolve)"
+    if [ "${1:-}" = "--json" ]; then
+      g="$(read_flag "$USER_FILE")"; p="$(read_flag "$PROJECT_FILE")"
+      case "$source" in
+        env:*) level=env ;;
+        "$PROJECT_FILE") level=project ;;
+        "$USER_FILE") level=global ;;
+        *) level=default ;;
+      esac
+      printf '{"value": "%s", "source": "%s", "project": %s, "global": %s}\n' "$value" "$level" \
+        "$( [ -n "$p" ] && printf '"%s"' "$p" || printf null )" "$( [ -n "$g" ] && printf '"%s"' "$g" || printf null )"
+      exit 0
+    fi
     echo "peer-coding mode: $value (source: $source)"
     echo '  invoke skills with / in Claude Code or $ in Codex'
     g="$(read_flag "$USER_FILE")"; p="$(read_flag "$PROJECT_FILE")"
@@ -90,7 +103,7 @@ case "$cmd" in
     echo "peer-coding mode: cleared $file → effective: $value (source: $source)"
     ;;
   *)
-    echo "usage: mode.sh get | status | on|off [--global] | clear [--global]" >&2
+    echo "usage: mode.sh get | status [--json] | on|off [--global] | clear [--global]" >&2
     exit 2
     ;;
 esac

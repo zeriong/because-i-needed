@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.0.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.1.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -65,7 +65,7 @@ Host routing uses the configured CXC reviewer model and effort; names in parenth
 | `/peer-coding:mode on\|off\|status\|clear [--global]` | One-line switch for automatic orchestration. User-only: the model cannot flip it |
 | `/peer-coding:audit` | Read-only check that both vendors start from the same project context; proposes fixes, changes nothing |
 
-`on` and `off` write this project's flag (`.claude-x-codex/mode`, git-excluded); `--global` writes your default for every project (`~/.config/claude-x-codex/mode`); `clear` drops the project flag; `CXC_MODE=on|off` overrides both for one shell. With the mode off, `run` starts only when you ask for it.
+`on` and `off` write this project's flag (`.claude-x-codex/mode`, git-excluded); `--global` writes your default for every project (`~/.config/claude-x-codex/mode`); `clear` drops the project flag; `CXC_MODE=on|off` overrides both for one shell. With the mode off, `run` starts only when you ask for it. The [dashboard](../dashboard) plugin shows the mode in effect and where it comes from (`mode.sh status --json`, declared in `dashboard.json`).
 
 ## Installation
 

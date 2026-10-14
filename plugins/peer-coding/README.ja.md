@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.0.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.1.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -65,7 +65,7 @@ codex plugin add peer-coding@because-i-needed
 | `/peer-coding:mode on\|off\|status\|clear [--global]` | 自動オーケストレーションをオン / オフする 1 行のスイッチです。ユーザー専用で、モデルは切り替えられません |
 | `/peer-coding:audit` | 両ベンダーが同じプロジェクトの文脈から始められるかを読み取り専用で点検します。修正案を提案するだけで、何も変更しません |
 
-`on`・`off` はこのプロジェクトのフラグ（`.claude-x-codex/mode`、git から除外）を書き込み、`--global` はすべてのプロジェクトに適用される既定値（`~/.config/claude-x-codex/mode`）を書き込みます。`clear` はプロジェクトのフラグを削除し、`CXC_MODE=on|off` は 1 つのシェルで両方より優先されます。モードがオフのとき、`run` は依頼されたときだけ開始します。
+`on`・`off` はこのプロジェクトのフラグ（`.claude-x-codex/mode`、git から除外）を書き込み、`--global` はすべてのプロジェクトに適用される既定値（`~/.config/claude-x-codex/mode`）を書き込みます。`clear` はプロジェクトのフラグを削除し、`CXC_MODE=on|off` は 1 つのシェルで両方より優先されます。モードがオフのとき、`run` は依頼されたときだけ開始します。[dashboard](../dashboard) プラグインは、有効なモードとその出どころを表示します（`mode.sh status --json`、`dashboard.json` で宣言）。
 
 ## インストール
 

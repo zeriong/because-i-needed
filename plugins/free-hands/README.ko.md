@@ -4,7 +4,7 @@
 
 <p align="center"><strong>에이전트에게 유한한 목표를 주면 체크리스트를 질문하거나 멈추지 않고 처리합니다.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="버전"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="라이선스: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 플러그인"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.4.0-blue" alt="버전"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="라이선스: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 플러그인"></a></p>
 
 <p align="center"><a href="#시작하기">시작하기</a> &bull; <a href="#목표-파일">목표 파일</a> &bull; <a href="#묻지-않기">묻지 않기</a> &bull; <a href="#훅">훅</a> &bull; <a href="#패널">패널</a> &bull; <a href="#누적-pr">누적 PR</a> &bull; <a href="#한계와-상태">한계와 상태</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#요구사항">요구사항</a> &bull; <a href="#설치">설치</a></p>
 
@@ -48,6 +48,8 @@ owner: <session id>
 
 목표가 활성 상태인 동안 스킬은 사용자에게 묻지 않습니다. 프로젝트와 다른 스킬의 질문 규칙, peer-coding 같은 워크플로의 승인 게이트도 이 규칙으로 덮어씁니다. 에이전트는 묻지 않고 브랜치를 푸시하고 PR을 생성합니다. 실패한 테스트·게이트·훅·리뷰는 수정하거나 사용자 처리가 필요하다고 `- [-]`로 표시하며, 통과한 것으로 바꾸지 않습니다. 다른 플러그인의 훅은 계속 동작합니다.
 
+단 하나의 예외는 [budget](../budget) 플러그인의 사용량 질문입니다. 사용량 임계값에 도달해 budget이 호출을 멈추면 에이전트는 그 지시를 따릅니다. Claude Code에서는 대화상자로, Codex에서는 질문과 함께 차례를 끝내는 방식입니다. 임계값을 넘겨 쓸지는 패널이 아니라 사용자가 결정합니다.
+
 ## 훅
 
 훅마다 동작 조건이 다릅니다.
@@ -55,7 +57,7 @@ owner: <session id>
 - 아래의 가드와 복원 메모는 `owner:`에 적힌 세션과 그 세션이 띄운 서브에이전트에서만 동작합니다. 같은 저장소의 다른 세션(두 번째 터미널, 다른 도구가 띄운 `claude -p` 등)에는 복원 메모, 질문·중단 가드, 카운터, 셸 가드가 모두 적용되지 않습니다. 그 세션의 프롬프트에 “free-hands”가 있으면 진입 메모가 어느 세션이 실행을 소유하는지 알려 줍니다. 그 세션에서 `/free-hands:run`(Codex: `$free-hands:run`)을 실행하면 실행이 그 세션으로 넘어갑니다. 0.2.0이 만든 목표처럼 `owner:`가 없는 목표는 훅이 처음 마주친 세션의 것이 됩니다.
 - `## Checklist` 아래에 있으면서 코드 블록 밖에 있는 `- [ ]` 줄만 미완료 항목으로 셉니다.
 - 셸 가드(`Bash`의 `PreToolUse`)는 목표가 `active`이거나, 미완료 항목이 남은 `done`/`waiting`일 때 동작합니다. `[ ]` 항목이 더 이상 없거나 `max_iterations`에 도달해도 마찬가지입니다. [한계와 상태](#한계와-상태)에 설명된 하드 리밋 명령을 거부합니다.
-- 질문·중단 가드는 목표에 미완료 `[ ]` 항목이 있고 `max_iterations` 미만이며, 상태가 `active`이거나 미완료 항목이 남은 `done`/`waiting`일 때 동작합니다. 질문 가드는 질문 도구를 거부합니다. 한도에서는 질문이 허용됩니다. Stop 훅은 중단을 막기 전에 반복 횟수를 디스크에 기록하며 최대 40회까지 이어갑니다.
+- 질문·중단 가드는 목표에 미완료 `[ ]` 항목이 있고 `max_iterations` 미만이며, 상태가 `active`이거나 미완료 항목이 남은 `done`/`waiting`일 때 동작합니다. 질문 가드는 질문 도구를 거부합니다. 한도에서는 질문이 허용됩니다. Stop 훅은 중단을 막기 전에 반복 횟수를 디스크에 기록하며 최대 40회까지 이어갑니다. 세션에서 budget의 사용량 질문이 열려 있는 동안에는 두 가드 모두 동작하지 않습니다.
 - 복원 메모(`UserPromptSubmit`, 압축 후를 포함한 `SessionStart`)는 목표가 `active`(미완료 `[ ]` 항목이 없어도)인 동안 또는 미완료 항목이 남은 `done`/`waiting` 상태에서 전달됩니다.
 - 진입 메모는 활성 상태의 올바른 목표가 없고 프롬프트에 “free-hands”가 있을 때 전달됩니다. 백그라운드 작업 알림은 프롬프트로 취급하지 않습니다. 프롬프트 안에 인용된 알림은 무시하고 나머지 프롬프트는 읽습니다.
 
@@ -104,6 +106,8 @@ owner: <session id>
 이 훅은 협조적인 에이전트가 사용하는 일반 명령에 대한 보완 장치이며, 의도적인 우회를 막는 방어 수단은 아닙니다. 규칙상 우회는 금지됩니다. `rm`, 데이터베이스 명령, heredoc 본문, 스크립트(`npm run deploy`), 대화형 세션에 입력한 명령, 다른 CLI 및 HTTP 호출(`curl`)은 읽지 않습니다.
 
 0.3.0부터 목표는 한 세션에 속합니다. Claude Code 2.1.296과 Codex 0.162.1에서 사례마다 한 번씩 측정했습니다([z-lab `run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.3.0)). 0.2.0에서는 같은 저장소의 두 번째 세션이 실행 중인 목표를 넘겨받아 그 작업을 했습니다(O01). 0.3.0에서는 그 세션이 목표에 관여하지 않았고, 목표 파일은 바이트 단위까지 그대로였습니다(O02). 소유 세션과 그 서브에이전트에서는 `gh pr merge 1`이 여전히 거부됐고, 다른 세션에서는 실행됐습니다(O03–O05). 스킬은 실행을 시작할 때 훅 메모의 id로 `owner:`를 적었고, 다른 세션의 실행을 넘겨받을 때 그 값을 바꿨습니다(O06). 두 호스트 모두 모든 훅 이벤트에 세션 id를 보내며, 재개와 압축 뒤에도 같은 id를 유지합니다([`session-id-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/session-id-0.3.0), S01–S03). 측정하지 않은 것: 두 세션이 동시에 실행되는 경우.
+
+0.4.0부터 [budget](../budget) 질문이 통과하고, 목표가 [dashboard](../dashboard)에 표시됩니다. Claude Code 2.1.299와 Codex 0.162.1에서 측정했습니다([z-lab `budget-lab`](https://github.com/zeriong/z-lab/tree/main/budget-lab), [`dashboard-lab`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab)). 목표를 실행하는 중에도 budget의 대화상자가 표시됐는데, 0.3.0에서는 이것이 막혔습니다. Codex에서는 게이트가 걸린 차례가 곧바로 끝났고, 0.3.0의 중단 가드는 세 번 더 이어가게 했습니다(budget-lab R04, R07, R12; codex-gate B03). `guard.py status`는 두 호스트 모두에서 dashboard에 `active 0/40 · 1 open`을 전달했습니다(dashboard-lab D01, D04).
 
 “pause”, “stop” 또는 **“일시정지”**라고 말하면 일시정지합니다. 목표에 `paused`를 기록하고 명령을 다시 실행하면 재개합니다.
 

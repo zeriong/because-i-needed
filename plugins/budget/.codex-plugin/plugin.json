@@ -1,0 +1,33 @@
+{
+  "name": "budget",
+  "description": "Usage gate: when the account's usage window reaches your threshold, every running session stops and asks whether to continue.",
+  "version": "0.1.0",
+  "author": {
+    "name": "zeriong"
+  },
+  "homepage": "https://github.com/zeriong/because-i-needed/tree/main/plugins/budget",
+  "repository": "https://github.com/zeriong/because-i-needed",
+  "keywords": [
+    "usage",
+    "rate-limit",
+    "budget",
+    "codex"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/codex.json",
+  "license": "MIT",
+  "interface": {
+    "displayName": "budget",
+    "shortDescription": "Stop and ask at a usage threshold",
+    "longDescription": "Usage gate: when the account's usage window reaches your threshold, every running session stops and asks whether to continue.",
+    "developerName": "zeriong",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use budget:mode to show the usage threshold."
+    ]
+  }
+}

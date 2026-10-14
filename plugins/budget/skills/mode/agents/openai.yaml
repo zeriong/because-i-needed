@@ -1,0 +1,7 @@
+interface:
+  display_name: "Usage threshold"
+  short_description: "Set, clear or show the usage threshold"
+  default_prompt: "Use budget:mode to show the usage threshold."
+
+policy:
+  allow_implicit_invocation: false

@@ -4,7 +4,7 @@
 
 <p align="center"><strong>Give an agent a finite goal; it works through the checklist without asking or stopping.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.4.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#start">Start</a> &bull; <a href="#goal-file">Goal file</a> &bull; <a href="#never-ask">Never ask</a> &bull; <a href="#hooks">Hooks</a> &bull; <a href="#the-panel">The panel</a> &bull; <a href="#stacked-prs">Stacked PRs</a> &bull; <a href="#limits-and-status">Limits and status</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#requirements">Requirements</a> &bull; <a href="#installation">Installation</a></p>
 
@@ -48,6 +48,8 @@ Marks are `- [ ]` open, `- [x]` done, and `- [-] … — needs the user` for wor
 
 The skill does not ask the user during an active goal. This overrides project and other skill instructions to ask, including approval gates in workflows such as peer-coding. The agent pushes branches and creates PRs without asking. A failed test, gate, hook, or review is fixed or marked `- [-]` as needing the user; it is never reported as passed. Other plugins’ hooks continue to run.
 
+The one exception is the [budget](../budget) plugin's usage question: when budget stops a call because your usage threshold is reached, the agent does what it says — in Claude Code's dialog, or on Codex by ending the turn with the question. Spending past your threshold is your decision, not the panel's.
+
 ## Hooks
 
 The hooks have different conditions:
@@ -55,7 +57,7 @@ The hooks have different conditions:
 - The guards and the restore note below act only in the session named by `owner:` and in the subagents it starts. Another session in the same repository — a second terminal, or a `claude -p` that another tool starts — gets no restore note, no ask or stop guard, no counter and no shell guard; when its prompt mentions “free-hands”, the entry note says which session owns the run. Running `/free-hands:run` (Codex: `$free-hands:run`) in that session moves the run there. A goal without `owner:`, such as one written by 0.2.0, becomes the first session's that a hook sees.
 - Only `- [ ]` lines under `## Checklist`, outside code blocks, count as open items.
 - The shell guard (`PreToolUse` on `Bash`) acts while the goal is `active`, or `done`/`waiting` with items still open — also when no `[ ]` item is left and at `max_iterations`. It denies the hard-limit commands described under [Limits and status](#limits-and-status).
-- The ask and stop guards act when the goal has open `[ ]` items, is below `max_iterations`, and is `active` — or `done`/`waiting` with items still open. The ask guard denies asking tools. At the limit, asking is allowed. The Stop hook blocks stopping and increments the counter on disk first, up to 40 continuations.
+- The ask and stop guards act when the goal has open `[ ]` items, is below `max_iterations`, and is `active` — or `done`/`waiting` with items still open. The ask guard denies asking tools. At the limit, asking is allowed. The Stop hook blocks stopping and increments the counter on disk first, up to 40 continuations. While budget's usage question is open in the session, neither guard acts.
 - The restore note (`UserPromptSubmit`, and `SessionStart` including after a compaction) is emitted while the goal is `active` (also when no `[ ]` items remain) or `done`/`waiting` with items still open.
 - The entry note is emitted when there is no active, well-formed goal and a prompt mentions “free-hands”. Background-task notifications are not treated as prompts; a notification quoted inside a prompt is ignored and the rest of the prompt is read.
 
@@ -104,6 +106,8 @@ Since 0.2.0 a shell hook also denies the ordinary commands that break them while
 The hook is a backstop for a cooperative agent's ordinary commands, not a defense against deliberate evasion — the rules forbid evasion. It does not read `rm`, database commands, heredoc bodies, scripts (`npm run deploy`), commands typed into an interactive session, or other CLIs and HTTP calls (`curl`).
 
 Since 0.3.0 a goal belongs to one session. Measured once per case on Claude Code 2.1.296 and Codex 0.162.1 ([z-lab `run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.3.0)): under 0.2.0 a second session in the same repository was handed the running goal and worked on it (O01); under 0.3.0 it was left alone and the goal file stayed byte-identical (O02); `gh pr merge 1` was still denied in the owner session and in its subagent, and ran in another session (O03–O05); the skill wrote `owner:` from the hook's note when it started a run and replaced it when it took one over (O06). Both hosts send the session id with every hook event and keep it across resume and compaction ([`session-id-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/session-id-0.3.0), S01–S03). Not measured: two sessions running at the same moment.
+
+Since 0.4.0 the [budget](../budget) question gets through, and the goal shows on the [dashboard](../dashboard). On Claude Code 2.1.299 and Codex 0.162.1 ([z-lab `budget-lab`](https://github.com/zeriong/z-lab/tree/main/budget-lab), [`dashboard-lab`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab)): with a goal running, budget's dialog was shown, which 0.3.0 had blocked; on Codex the gated turn ended at once, while 0.3.0's stop guard kept it going three more times (budget-lab R04, R07, R12; codex-gate B03). `guard.py status` gave the dashboard `active 0/40 · 1 open` on both hosts (dashboard-lab D01, D04).
 
 To pause, say **“pause”**, **“stop”**, or **“일시정지”**. The goal is recorded as `paused`; invoke the command again to resume.
 

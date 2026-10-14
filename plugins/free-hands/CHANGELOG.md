@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.4.0] - 2026-10-14
+
+### Changed
+
+- While the budget plugin's usage question is open for the session, the ask and stop guards stand aside (the shell
+  guard stays). SKILL.md and the restore note name it as the one exception to never-ask.
+
+### Added
+
+- `guard.py status` and `dashboard.json`: the goal's state (`active 3/40 · 2 open`, `paused`, `off`) shows on the
+  dashboard plugin (root Rule 11).
+
+### Why
+
+With a goal running, free-hands 0.3.0 blocked budget's question on Claude Code and kept a gated Codex turn going until
+`max_iterations`. Spending past the user's threshold is the user's decision (maintainer decision, 2026-10-14).
+
+Evidence: z-lab `budget-lab/run-0.1.0` R04 (Claude: the dialog shown with a goal running), R07 (Codex: the gated turn
+ended at once, `iterations` unchanged), `run-0.1.0-r2` R12; before: `plugin-platform-lab/mod-interactive-2.1.299` I05,
+`budget-lab/codex-gate-0.1.0` B03. Status: `dashboard-lab/run-0.1.0` D01, D04.
+
 ## [0.3.0] - 2026-10-13
 
 ### Changed

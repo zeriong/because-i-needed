@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0] - 2026-10-14
+
+### Added
+
+- `mode.sh status --json` and `dashboard.json`: the mode in effect, its source (`env`, `project`, `global`, `default`)
+  and the value at each level show on the dashboard plugin (root Rule 11).
+
+### Why
+
+Every because-i-needed mode must show on the dashboard (maintainer decision, 2026-10-14).
+
+Evidence: z-lab `dashboard-lab/run-0.1.0` D01 (Claude Code: `peer-coding on (project)` in the line), D02 (the audit's
+levels), D04 (Codex); the contract in `tests/test_dashboard_contract.py`.
+
 ## [1.0.0] - 2026-10-02
 
 ### Changed

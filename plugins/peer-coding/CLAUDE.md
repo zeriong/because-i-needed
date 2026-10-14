@@ -26,7 +26,9 @@ the marketplace installer, not part of this plugin.
 - `worktree-setup.sh` finds the main tree through `git rev-parse --git-common-dir`, so it works from the main tree,
   a subdirectory, or inside the worktree itself. It skips anything already present (idempotent).
 - `mode.sh` resolves `CXC_MODE` → project flag → global flag → `off`. The flag file is one line, `mode=on|off`;
-  anything else counts as unset.
+  anything else counts as unset. `mode.sh status --json` prints that resolution for the dashboard plugin (root Rule 11,
+  `dashboard.json`): `source` is `env`, `project`, `global` or `default`. **Why (z-lab `dashboard-lab/run-0.1.0` D01,
+  D04).**
 - Scripts stay LF (`.gitattributes`) and executable (git mode `100755`), and bash 3.2 compatible — no associative
   arrays, `mapfile`, or `${var,,}`.
 

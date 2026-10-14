@@ -4,7 +4,7 @@
 
 <p align="center"><strong>有限の目標を渡すと、エージェントが質問や中断をせずチェックリストを最後まで進めます。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="バージョン"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="ライセンス: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code プラグイン"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.4.0-blue" alt="バージョン"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="ライセンス: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code プラグイン"></a></p>
 
 <p align="center"><a href="#開始">開始</a> &bull; <a href="#目標ファイル">目標ファイル</a> &bull; <a href="#質問しない">質問しない</a> &bull; <a href="#フック">フック</a> &bull; <a href="#パネル">パネル</a> &bull; <a href="#積み上げpr">積み上げ PR</a> &bull; <a href="#制限と状態">制限と状態</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#必要条件">必要条件</a> &bull; <a href="#インストール">インストール</a></p>
 
@@ -48,6 +48,8 @@ owner: <session id>
 
 目標が有効な間、スキルはユーザーに質問しません。プロジェクトや他のスキルの質問ルール、peer-coding などのワークフローの承認ゲートもこの規則で上書きされます。エージェントは確認を求めずにブランチをプッシュし、PR を作成します。失敗したテスト、ゲート、フック、レビューは修正するか、ユーザー対応が必要として `- [-]` に記録し、合格扱いにしません。他プラグインのフックは引き続き動作します。
 
+唯一の例外が [budget](../budget) プラグインの使用量の質問です。使用量の割合に達して budget が呼び出しを止めたとき、エージェントはその指示に従います — Claude Code ではダイアログで、Codex ではターンを質問で終えて。割合を超えて使うかどうかは、パネルではなくあなたが決めます。
+
 ## フック
 
 フックごとに条件が異なります。
@@ -55,7 +57,7 @@ owner: <session id>
 - 以下のガードと復元メモは、`owner:` に記されたセッションと、そのセッションが起動したサブエージェントでのみ動作します。同じリポジトリの別のセッション（2つ目のターミナルや、別のツールが起動した `claude -p` など）には、復元メモ、質問・停止ガード、カウンター、シェルガードのいずれも適用されません。そのセッションのプロンプトに「free-hands」が含まれる場合は、どのセッションが実行を所有しているかを開始メモが伝えます。そのセッションで `/free-hands:run`（Codex: `$free-hands:run`）を実行すると、実行はそのセッションに移ります。0.2.0 が作成した目標のように `owner:` のない目標は、フックが最初に検出したセッションのものになります。
 - `## Checklist` の下にあり、かつコードブロック外にある `- [ ]` 行だけを未完了項目として数えます。
 - シェルガード（`Bash` の `PreToolUse`）は目標が `active`、または未完了項目が残る `done`/`waiting` の間に動作します。`[ ]` 項目がなくなった後や `max_iterations` に達した後も同様です。[制限と状態](#制限と状態)に記載したハードリミット対象のコマンドを拒否します。
-- 質問・停止ガードは目標に未完了 `[ ]` があり、`max_iterations` 未満で、状態が `active` または未完了項目が残る `done`/`waiting` の場合に動作します。質問ガードは質問ツールを拒否します。上限では質問が可能です。Stop フックは停止をブロックする前にカウンターをディスクへ記録し、最大40回継続します。
+- 質問・停止ガードは目標に未完了 `[ ]` があり、`max_iterations` 未満で、状態が `active` または未完了項目が残る `done`/`waiting` の場合に動作します。質問ガードは質問ツールを拒否します。上限では質問が可能です。Stop フックは停止をブロックする前にカウンターをディスクへ記録し、最大40回継続します。セッションで budget の使用量の質問が開いている間は、どちらのガードも動作しません。
 - 復元メモ（`UserPromptSubmit`、圧縮後を含む `SessionStart`）は目標が `active`（未完了項目がなくても）または未完了項目が残る `done`/`waiting` の間に出力されます。
 - 有効で正しい目標がなく、プロンプトに「free-hands」がある場合は開始メモを出力します。バックグラウンドタスクの通知はプロンプトとして扱いません。プロンプト内で引用された通知は無視し、プロンプトの残りを読み取ります。
 
@@ -104,6 +106,8 @@ owner: <session id>
 このフックは協調的なエージェントが使う通常コマンドへの補完策であり、意図的な回避を防ぐものではありません。ルールでは回避を禁じています。`rm`、データベースコマンド、heredoc の本文、スクリプト（`npm run deploy`）、対話セッションに入力されたコマンド、その他の CLI と HTTP 呼び出し（`curl`）は読み取りません。
 
 0.3.0 から、目標は1つのセッションに属します。Claude Code 2.1.296 と Codex 0.162.1 で、ケースごとに1回ずつ測定しました（[z-lab `run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/run-0.3.0)）。0.2.0 では、同じリポジトリの2つ目のセッションが実行中の目標を引き継ぎ、その作業を行いました（O01）。0.3.0 ではそのセッションは目標に関与せず、目標ファイルはバイト単位で変わりませんでした（O02）。所有セッションとそのサブエージェントでは `gh pr merge 1` が引き続き拒否され、別のセッションでは実行されました（O03–O05）。スキルは実行開始時にフックのメモが示した ID で `owner:` を書き、別のセッションの実行を引き継ぐときにその値を置き換えました（O06）。どちらのホストもすべてのフックイベントでセッション ID を送り、再開や圧縮の後も同じ ID を保ちます（[`session-id-0.3.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/session-id-0.3.0)、S01–S03）。測定していないこと: 2つのセッションが同時に実行される場合。
+
+0.4.0 から [budget](../budget) の質問が通り、目標は [dashboard](../dashboard) に表示されます。Claude Code 2.1.299 と Codex 0.162.1 で測定しました（[z-lab `budget-lab`](https://github.com/zeriong/z-lab/tree/main/budget-lab)、[`dashboard-lab`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab)）。目標の実行中に budget のダイアログが表示されました（0.3.0 ではブロックされていました）。Codex ではゲートされたターンがすぐに終了しましたが、0.3.0 の停止ガードはさらに3回続行させていました（budget-lab R04、R07、R12。codex-gate B03）。`guard.py status` は、両ホストで dashboard に `active 0/40 · 1 open` を渡しました（dashboard-lab D01、D04）。
 
 一時停止するには **「pause」**、「**stop**」、または **「일시정지」** と入力します。目標を `paused` と記録します。コマンドを再実行すると再開します。
 

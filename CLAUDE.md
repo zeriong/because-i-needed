@@ -1,6 +1,7 @@
 # because-i-needed — repository rules
 
-This repository is a Claude Code and Codex marketplace holding four plugins (harness, ux-ui, peer-coding, free-hands).
+This repository is a Claude Code and Codex marketplace holding six plugins (harness, ux-ui, peer-coding, free-hands,
+dashboard, budget).
 **Shared rules live in this file**; **per-plugin rules live in `plugins/<name>/CLAUDE.md`** (loaded automatically when you read that plugin's files).
 A plugin file does not repeat this file — it holds only what applies to that plugin. If the two conflict, fix both.
 
@@ -71,7 +72,9 @@ original repositories — the ux-ui-builder root README carried a 1.0.0 badge wh
 - **English:** every other file — `CLAUDE.md` (this file and each plugin's), `SKILL.md`, `references/*.md`, `agents/*.md`,
   messages emitted by hooks and scripts, script comments, manifests, `CHANGELOG.md`.
 - **Exception — literals that must match what a user types** stay in the user's language: trigger keywords in a skill
-  `description` (`"harness 만들어"`), bypass phrases (`"harness 빼고"`). Add an English gloss where the meaning is not obvious.
+  `description` (`"harness 만들어"`), bypass phrases (`"harness 빼고"`), and budget's answers 예/아니오 with the question
+  the maintainer worded ("지정한 n%에 도달했습니다, 작업을 이어서 진행하시겠어요?"). Add an English gloss where the meaning is
+  not obvious.
 - This rule governs files in the repository, not the language of a conversation with the maintainer.
 
 **Why:** maintainer decision, 2026-09-28. Until then the CLAUDE.md files were Korean while everything they govern was English.
@@ -126,7 +129,7 @@ Plugin skills are invoked as `/<plugin>:<skill>` in Claude Code and `$<plugin>:<
 | `build` | Create an artifact in the project (a harness, a UI) |
 | `forge` | Distill conversation context into a document (a plan) |
 | `run` | Execute a task |
-| `mode` | Switch a behavior on or off |
+| `mode` | Switch a behavior on or off; the state is declared to dashboard (Rule 11) |
 | `audit` | Inspect, read-only |
 | `review` | Evaluate a result |
 
@@ -188,6 +191,8 @@ into three experiments whose answer was "uninstall and reinstall", which the mai
 
 ## Rule 10 — Shared workflows, explicit host wiring
 
+- Every plugin supports both Claude Code and Codex. Where one host has no surface for a feature, the
+  plugin README says what the plugin does on that host instead.
 - Each plugin ships a `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`. They refer to
   the same skill/resource tree. The root Claude marketplace remains the single catalog; Codex
   0.158.0 reads it directly (z-lab `plugin-platform-lab/codex-compat-0.158.0/`, P01).
@@ -203,3 +208,18 @@ into three experiments whose answer was "uninstall and reinstall", which the mai
 
 **Why:** loading a skill does not translate its tool names, agent dispatch or generated paths.
 Host adapters make those choices explicit while keeping each workflow in one shared source.
+
+## Rule 11 — Every mode shows on the dashboard
+
+- A plugin with a `mode` skill — any switch a user turns on or off and that stays set — declares that state to the
+  dashboard plugin in `dashboard.json` at the plugin root: one entry per switch, each with a `label` and a `status`
+  command (an argv list, paths relative to the plugin root).
+- The `status` command is read-only, runs offline in under a second on both hosts (`python3` or `sh`), and prints one
+  JSON object: `value` (what is in effect), `source` (`env`, `project`, `global` or `default`), and `project` and
+  `global` (the value set at each level, or `null`), with an optional `detail` string. Other persistent state a user
+  should see (a free-hands goal, a budget threshold) may be declared the same way.
+- A new mode, or a change to where a mode is stored, updates `dashboard.json` in the same commit.
+  `tests/test_dashboard_contract.py` runs every declared command and checks its output.
+
+**Why:** maintainer decision, 2026-10-14. The dashboard reads only these declarations, so a mode added later appears on
+it without a dashboard release, and a mode that is not declared is a switch the user cannot see.

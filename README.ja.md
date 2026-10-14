@@ -5,7 +5,7 @@
 <p align="center"><strong>Claude Code</strong> と <strong>Codex CLI</strong> でのみ動作します。</p>
 
 <p align="center">
-  <strong>必要だから作った Claude Code と Codex プラグイン集 — プロジェクトハーネス、実測ベースの UI、Claude × Codex のオーケストレーション、自律ゴール実行。</strong>
+  <strong>必要だから作った Claude Code と Codex プラグイン集 — プロジェクトハーネス、実測ベースの UI、Claude × Codex のオーケストレーション、自律ゴール実行、全モードのダッシュボード、使用量ゲート。</strong>
 </p>
 
 <p align="center">
@@ -23,14 +23,14 @@
 
 ---
 
-このリポジトリは、独立した4つのプラグインを収めた Claude Code と Codex の**プラグインマーケットプレイス**です。必要なものだけをインストールしてください。
+このリポジトリは、独立した6つのプラグインを収めた Claude Code と Codex の**プラグインマーケットプレイス**です。必要なものだけをインストールしてください。
 
 ## Codex
 
-同じ4つのプラグインを Codex CLI 0.158.0 以降でも使用できます。必要なものを選んでインストールします。
+同じ6つのプラグインを Codex CLI 0.158.0 以降でも使用できます。必要なものを選んでインストールします。
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands,dashboard,budget
 ```
 
 CLI から直接インストールすることもできます。
@@ -41,9 +41,11 @@ codex plugin add harness@because-i-needed
 codex plugin add ux-ui@because-i-needed
 codex plugin add peer-coding@because-i-needed
 codex plugin add free-hands@because-i-needed
+codex plugin add dashboard@because-i-needed
+codex plugin add budget@because-i-needed
 ```
 
-新しい Codex セッションで `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$peer-coding:run`、`$free-hands:run` を呼び出します。自動オーケストレーションは `$peer-coding:mode on`、コンテキスト点検は `$peer-coding:audit` です。自動ルーティング、UI コミットゲート、free-hands の強制動作を使う前に、`/hooks` でフックを確認して信頼してください。
+新しい Codex セッションで `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$peer-coding:run`、`$free-hands:run` を呼び出します。自動オーケストレーションは `$peer-coding:mode on`、コンテキスト点検は `$peer-coding:audit`、すべてのモードの確認は `$dashboard:audit`、使用量の割合での停止は `$budget:mode 80` です。自動ルーティング、UI コミットゲート、free-hands の強制動作、budget ゲートを使う前に、`/hooks` でフックを確認して信頼してください。
 
 インストーラーの既定は Claude Code です。`--host codex` で Codex を選択します。Codex はユーザースコープのみで、`--scope` を省略するか `--scope user` を指定します。project/local は拒否されます。スキル、スクリプト、作業手順は共有し、各プラグインに Codex マニフェストを同梱します。Codex では独自の質問ツールと独立したエージェントを使用します。ハーネスは `.codex/hooks.json`、`.codex/hooks/`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py`、`.agents/skills/` を生成し、既存の Claude ファイルを保持します。UI の実測には対応するブラウザー・モバイルツールが必要です。詳細は各プラグインの Codex 節を参照してください。
 
@@ -70,7 +72,7 @@ codex plugin add free-hands@because-i-needed
 
 [ux-ui の日本語 README を読む →](plugins/ux-ui/README.ja.md)
 
-### [peer-coding](plugins/peer-coding) · `v1.0.0`
+### [peer-coding](plugins/peer-coding) · `v1.1.0`
 
 **Claude × Codex のピアオーケストレーション**。メインエージェントが計画してすべてのゲートを判断し、作業を高速な Claude ワーカーか大量処理向けの Codex ワーカーに振り分け、2 つのベンダーが互いの作業をレビューします — メインエージェント自身の計画も含みます。反論は 1 回で、判定するのは役割ではなく証拠です。監査機能が、両ベンダーが同じプロジェクトの指示から始められるかを確認します。非公式のコミュニティプラグインです。
 
@@ -80,7 +82,7 @@ codex plugin add free-hands@because-i-needed
 
 [peer-coding の日本語 README を読む →](plugins/peer-coding/README.ja.md)
 
-### [free-hands](plugins/free-hands) · `v0.3.0`
+### [free-hands](plugins/free-hands) · `v0.4.0`
 
 **有限の目標を、質問や中断なしでチェックリストの最後まで進めます。** ユーザーが決める場面では5役のパネルが助言し、メインエージェントが証拠に基づいて決定します。
 
@@ -89,6 +91,26 @@ codex plugin add free-hands@because-i-needed
 - **注意:** フックはプロンプト、セッション開始、質問、シェルコマンド、停止ごとに実行されます。有効な目標がなければ、プロンプトに「free-hands」とある場合の一度だけの開始質問を除いて何も出力しません。未完了項目がある間、Stop は最大40回ターンを続けます。目標が有効な間は、補助フックがデフォルトブランチへのマージ・リモート削除・デプロイ・公開を行う一覧のシェルコマンドを拒否します（プラグイン README を参照）。どちらも実行を開始したセッションでのみ動作し、同じリポジトリの別のセッションには影響しません。
 
 [free-hands の日本語 README を読む →](plugins/free-hands/README.ja.md)
+
+### [dashboard](plugins/dashboard) · `v0.1.0`
+
+**オンにしている because-i-needed のモードを、1行で確認できます。** Claude Code では、有効な because-i-needed プラグインが宣言したスイッチ — peer-coding のモード、free-hands の目標、budget の割合、あとから追加されるものも — を、それを設定しているレベルとともにプロンプトの上の1行に表示します。Codex ではコマンドで同じ内容を確認します。
+
+- **使いどころ:** プロジェクトまたはグローバルのレベルでモードをオンにしたままにしていて、尋ねなくても確認したいとき。
+- **エントリーポイント:** Claude Code では自動で表示されます。レベルの確認は `/dashboard:audit` · `$dashboard:audit`
+- **注意:** Claude Code では、セッション開始時、ターンごと、使用量ウィンドウが動いたときに `python3` を実行するプラグインフックモジュールが追加されます。スイッチを宣言するプラグインがなければ何も描画しません。
+
+[dashboard の日本語 README を読む →](plugins/dashboard/README.ja.md)
+
+### [budget](plugins/budget) · `v0.1.0`
+
+**選んだ使用量ウィンドウの割合で、実行中のすべてのセッションを止め、続けるかどうかを尋ねます。** 割合を超えると、各セッションの次のツール呼び出しは、1つの質問 — "지정한 n%에 도달했습니다, 작업을 이어서 진행하시겠어요?" — への回答を待ちます。Claude Code では専用のダイアログ（5時間ウィンドウ）、Codex ではエージェントの最後のメッセージ（7日ウィンドウ）で尋ねます。
+
+- **使いどころ:** 複数のセッションのエージェントが、確認する前に使用量ウィンドウを使い切ってしまうおそれがあるとき。
+- **エントリーポイント:** `/budget:mode 80` · `$budget:mode 80`。オフにするには `off`
+- **注意:** Claude Code では、すべてのツール呼び出しを確認するプラグインフックモジュールが追加されます。Codex では `PreToolUse` と `UserPromptSubmit` フックが追加されます。割合を下回っている間は、すべてを通します。
+
+[budget の日本語 README を読む →](plugins/budget/README.ja.md)
 
 ## 退役したプラグイン
 
@@ -119,6 +141,8 @@ claude plugin install harness@because-i-needed
 claude plugin install ux-ui@because-i-needed
 claude plugin install peer-coding@because-i-needed
 claude plugin install free-hands@because-i-needed
+claude plugin install dashboard@because-i-needed
+claude plugin install budget@because-i-needed
 ```
 
 または Claude Code 内で `/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git` と進み、一覧からインストールします。
@@ -136,7 +160,9 @@ claude plugin install free-hands@because-i-needed
     "harness@because-i-needed": true,
     "ux-ui@because-i-needed": true,
     "peer-coding@because-i-needed": true,
-    "free-hands@because-i-needed": true
+    "free-hands@because-i-needed": true,
+    "dashboard@because-i-needed": true,
+    "budget@because-i-needed": true
   }
 }
 ```
@@ -194,13 +220,15 @@ codex plugin remove claude-x-codex@because-i-needed
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # 4 つのプラグインを登録
+├── .claude-plugin/marketplace.json   # 6 つのプラグインを登録
 ├── install.sh                        # 対話式インストーラー（--host claude|codex）
 └── plugins/
     ├── harness/                      # スキル
     ├── ux-ui/                        # スキル 2 + エージェント 2 + コミットゲートフック + MCP 4
     ├── peer-coding/                  # スキル 3 + プロンプトフック + スクリプト 3
-    └── free-hands/                   # スキル 1 + エージェント 5 + フック 4 + スクリプト 4
+    ├── free-hands/                   # スキル 1 + エージェント 5 + フック 4 + スクリプト 4
+    ├── dashboard/                    # スキル 1 + フックモジュール + スクリプト 1
+    └── budget/                       # スキル 1 + フックモジュール + Codex フック 2 + スクリプト 2
 ```
 
 各プラグインフォルダは自己完結しています。README、マニフェスト、配布されるすべてのファイルが `plugins/<名前>/` の下にあります。

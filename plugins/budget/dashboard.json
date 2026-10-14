@@ -1,0 +1,8 @@
+{
+  "entries": [
+    {
+      "label": "budget",
+      "status": ["python3", "scripts/budget.py", "status", "--json"]
+    }
+  ]
+}

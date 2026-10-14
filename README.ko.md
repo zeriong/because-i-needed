@@ -5,7 +5,7 @@
 <p align="center"><strong>Claude Code</strong>와 <strong>Codex CLI</strong>에서만 동작합니다.</p>
 
 <p align="center">
-  <strong>필요해서 만든 Claude Code와 Codex 플러그인 모음 — 프로젝트 하네스, 실측 기반 UI, Claude × Codex 오케스트레이션, 자율 목표 실행.</strong>
+  <strong>필요해서 만든 Claude Code와 Codex 플러그인 모음 — 프로젝트 하네스, 실측 기반 UI, Claude × Codex 오케스트레이션, 자율 목표 실행, 모든 모드를 보여 주는 대시보드, 사용량 게이트.</strong>
 </p>
 
 <p align="center">
@@ -23,14 +23,14 @@
 
 ---
 
-이 레포는 독립된 플러그인 4개를 담은 Claude Code와 Codex **플러그인 마켓플레이스**입니다. 필요한 것만 골라 설치하면 됩니다.
+이 레포는 독립된 플러그인 6개를 담은 Claude Code와 Codex **플러그인 마켓플레이스**입니다. 필요한 것만 골라 설치하면 됩니다.
 
 ## Codex
 
-같은 플러그인 4개를 Codex CLI 0.158.0 이상에서도 사용할 수 있습니다. 필요한 플러그인을 골라 설치하세요:
+같은 플러그인 6개를 Codex CLI 0.158.0 이상에서도 사용할 수 있습니다. 필요한 플러그인을 골라 설치하세요:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands,dashboard,budget
 ```
 
 또는 CLI로 직접 설치합니다:
@@ -41,9 +41,11 @@ codex plugin add harness@because-i-needed
 codex plugin add ux-ui@because-i-needed
 codex plugin add peer-coding@because-i-needed
 codex plugin add free-hands@because-i-needed
+codex plugin add dashboard@because-i-needed
+codex plugin add budget@because-i-needed
 ```
 
-새 Codex 세션에서 `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$peer-coding:run`, `$free-hands:run`을 호출합니다. 자동 오케스트레이션은 `$peer-coding:mode on`, 컨텍스트 점검은 `$peer-coding:audit`입니다. 자동 라우팅, UI 커밋 게이트, free-hands 강제를 사용하기 전에 `/hooks`에서 설치된 훅을 검토하고 신뢰해야 합니다.
+새 Codex 세션에서 `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$peer-coding:run`, `$free-hands:run`을 호출합니다. 자동 오케스트레이션은 `$peer-coding:mode on`, 컨텍스트 점검은 `$peer-coding:audit`, 모든 모드 확인은 `$dashboard:audit`, 사용량 임계값에서 멈추려면 `$budget:mode 80`입니다. 자동 라우팅, UI 커밋 게이트, free-hands 강제, budget 게이트를 사용하기 전에 `/hooks`에서 설치된 훅을 검토하고 신뢰해야 합니다.
 
 설치 스크립트의 기본 대상은 Claude Code이며, `--host codex`로 Codex를 선택합니다. Codex는 사용자 범위로 설치하므로 `--scope`를 생략하거나 `--scope user`를 사용하세요. project/local 범위는 거부합니다. 스킬·스크립트·작업 절차를 공유하고 플러그인별 Codex 명세를 함께 제공합니다. Codex에서는 자체 질문 도구와 독립 에이전트를 사용합니다. 하네스는 `.codex/hooks.json`, `.codex/hooks/`, `.codex/scripts/review-gate.sh`, `.codex/scripts/latest-model.py`, `.agents/skills/`를 생성하며 기존 Claude 파일을 보존합니다. UI 실측에는 해당 브라우저·모바일 도구가 필요합니다. 자세한 내용은 각 플러그인의 Codex 절을 참고하세요.
 
@@ -70,7 +72,7 @@ codex plugin add free-hands@because-i-needed
 
 [ux-ui 한국어 README 보기 →](plugins/ux-ui/README.ko.md)
 
-### [peer-coding](plugins/peer-coding) · `v1.0.0`
+### [peer-coding](plugins/peer-coding) · `v1.1.0`
 
 **Claude × Codex 동료 오케스트레이션.** 메인 에이전트가 계획하고 모든 관문을 판단하며, 작업을 빠른 Claude 워커나 대량 처리용 Codex 워커에 보내고, 두 벤더가 서로의 작업을 리뷰합니다 — 메인 에이전트 자신의 계획도 포함됩니다. 반론은 한 번이고, 판정은 역할이 아니라 증거가 합니다. 감사 기능이 두 벤더가 같은 프로젝트 지침에서 출발하는지 확인합니다. 비공식 커뮤니티 플러그인입니다.
 
@@ -80,7 +82,7 @@ codex plugin add free-hands@because-i-needed
 
 [peer-coding 한국어 README 보기 →](plugins/peer-coding/README.ko.md)
 
-### [free-hands](plugins/free-hands) · `v0.3.0`
+### [free-hands](plugins/free-hands) · `v0.4.0`
 
 **유한한 목표를 질문이나 중단 없이 체크리스트 끝까지 처리합니다.** 사용자가 결정할 사안은 다섯 역할 패널이 검토하고 메인 에이전트가 증거를 바탕으로 결정합니다.
 
@@ -89,6 +91,26 @@ codex plugin add free-hands@because-i-needed
 - **참고:** 프롬프트·세션 시작·질문·셸 명령·중단 때 훅이 실행됩니다. 활성 목표가 없으면 프롬프트에 “free-hands”가 있을 때 한 번의 진입 질문을 내는 경우 외에는 조용합니다. 미완료 항목이 있으면 Stop이 최대 40회까지 차례를 이어가고, 목표가 활성인 동안 보조 훅이 기본 브랜치 병합·원격 삭제·배포·공개를 하는 목록의 셸 명령을 거부합니다(플러그인 README 참고). 두 동작 모두 실행을 시작한 세션에서만 일어나며, 같은 저장소의 다른 세션에는 영향을 주지 않습니다.
 
 [free-hands 한국어 README 보기 →](plugins/free-hands/README.ko.md)
+
+### [dashboard](plugins/dashboard) · `v0.1.0`
+
+**켜 둔 because-i-needed 모드를 한 줄로 모두 확인합니다.** Claude Code에서는 프롬프트 위의 한 줄이 활성화된 because-i-needed 플러그인이 선언한 스위치를 모두 보여 줍니다 — peer-coding의 모드, free-hands 목표, budget 임계값, 이후 추가되는 것까지 — 값을 정한 수준과 함께 표시합니다. Codex에서는 같은 내용을 명령으로 확인합니다.
+
+- **이럴 때** 프로젝트나 전역 수준에 모드를 켜 두고, 따로 묻지 않고도 확인하고 싶을 때.
+- **진입점:** Claude Code에서는 자동으로 표시됩니다. 수준별 값은 `/dashboard:audit` · `$dashboard:audit`
+- **참고:** Claude Code에서는 세션 시작 시, 매 차례 뒤, 사용량 창이 움직일 때 `python3`를 실행하는 플러그인 훅 모듈이 추가됩니다. 선언한 스위치가 있는 플러그인이 없으면 아무것도 그리지 않습니다.
+
+[dashboard 한국어 README 보기 →](plugins/dashboard/README.ko.md)
+
+### [budget](plugins/budget) · `v0.1.0`
+
+**실행 중인 모든 세션을 직접 정한 사용량 창 비율에서 멈추고, 계속할지 결정합니다.** 임계값을 넘으면 각 세션의 다음 도구 호출이 질문 하나 — "지정한 n%에 도달했습니다, 작업을 이어서 진행하시겠어요?" — 를 기다립니다. Claude Code에서는 자체 대화상자(5시간 창), Codex에서는 에이전트의 마지막 메시지(7일 창)로 나옵니다.
+
+- **이럴 때** 여러 세션의 에이전트가 확인하기 전에 사용량 창을 다 써 버릴 수 있을 때.
+- **진입점:** `/budget:mode 80` · `$budget:mode 80`, 끄려면 `off`
+- **참고:** Claude Code에서는 모든 도구 호출을 확인하는 플러그인 훅 모듈이 추가되고, Codex에서는 `PreToolUse`와 `UserPromptSubmit` 훅이 추가됩니다. 임계값 미만에서는 모든 호출을 통과시킵니다.
+
+[budget 한국어 README 보기 →](plugins/budget/README.ko.md)
 
 ## 은퇴한 플러그인
 
@@ -119,6 +141,8 @@ claude plugin install harness@because-i-needed
 claude plugin install ux-ui@because-i-needed
 claude plugin install peer-coding@because-i-needed
 claude plugin install free-hands@because-i-needed
+claude plugin install dashboard@because-i-needed
+claude plugin install budget@because-i-needed
 ```
 
 또는 Claude Code에서: `/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git` 입력 후 목록에서 설치.
@@ -136,7 +160,9 @@ claude plugin install free-hands@because-i-needed
     "harness@because-i-needed": true,
     "ux-ui@because-i-needed": true,
     "peer-coding@because-i-needed": true,
-    "free-hands@because-i-needed": true
+    "free-hands@because-i-needed": true,
+    "dashboard@because-i-needed": true,
+    "budget@because-i-needed": true
   }
 }
 ```
@@ -194,13 +220,15 @@ codex plugin remove claude-x-codex@because-i-needed
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # 플러그인 4개 등록
+├── .claude-plugin/marketplace.json   # 플러그인 6개 등록
 ├── install.sh                        # 대화형 설치 스크립트 (--host claude|codex)
 └── plugins/
     ├── harness/                      # 스킬
     ├── ux-ui/                        # 스킬 2 + 에이전트 2 + 커밋 게이트 훅 + MCP 4
     ├── peer-coding/                  # 스킬 3 + 프롬프트 훅 + 스크립트 3
-    └── free-hands/                   # 스킬 1 + 에이전트 5 + 훅 4 + 스크립트 4
+    ├── free-hands/                   # 스킬 1 + 에이전트 5 + 훅 4 + 스크립트 4
+    ├── dashboard/                    # 스킬 1 + 훅 모듈 + 스크립트 1
+    └── budget/                       # 스킬 1 + 훅 모듈 + Codex 훅 2 + 스크립트 2
 ```
 
 각 플러그인 폴더는 자기완결적입니다: README, 매니페스트, 배포되는 모든 파일이 `plugins/<이름>/` 아래에 있습니다.

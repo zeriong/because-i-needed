@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.0.0-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.1.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -65,7 +65,7 @@ codex plugin add peer-coding@because-i-needed
 | `/peer-coding:mode on\|off\|status\|clear [--global]` | 开启或关闭自动编排的一行开关。仅限用户使用，模型无法切换 |
 | `/peer-coding:audit` | 以只读方式检查两个厂商是否从同样的项目上下文出发；只提出修改建议，不做任何更改 |
 
-`on`、`off` 写入本项目的标志（`.claude-x-codex/mode`，已排除在 git 之外）；`--global` 写入对所有项目生效的默认值（`~/.config/claude-x-codex/mode`）；`clear` 删除项目标志；`CXC_MODE=on|off` 在单个 shell 中优先于两者。模式关闭时，`run` 只在你明确要求时才启动。
+`on`、`off` 写入本项目的标志（`.claude-x-codex/mode`，已排除在 git 之外）；`--global` 写入对所有项目生效的默认值（`~/.config/claude-x-codex/mode`）；`clear` 删除项目标志；`CXC_MODE=on|off` 在单个 shell 中优先于两者。模式关闭时，`run` 只在你明确要求时才启动。[dashboard](../dashboard) 插件会显示当前生效的模式及其来源（`mode.sh status --json`，在 `dashboard.json` 中声明）。
 
 ## 安装
 

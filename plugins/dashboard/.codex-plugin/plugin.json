@@ -1,0 +1,32 @@
+{
+  "name": "dashboard",
+  "description": "One line above the prompt with the state of every because-i-needed mode you have on: peer-coding, free-hands, budget and any added later.",
+  "version": "0.1.0",
+  "author": {
+    "name": "zeriong"
+  },
+  "homepage": "https://github.com/zeriong/because-i-needed/tree/main/plugins/dashboard",
+  "repository": "https://github.com/zeriong/because-i-needed",
+  "keywords": [
+    "status",
+    "dashboard",
+    "mode",
+    "codex"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/codex.json",
+  "license": "MIT",
+  "interface": {
+    "displayName": "dashboard",
+    "shortDescription": "Show every because-i-needed mode",
+    "longDescription": "Shows the state of every because-i-needed mode you have on: peer-coding, free-hands, budget and any added later. On Codex it is a command; Claude Code also draws it above the prompt.",
+    "developerName": "zeriong",
+    "category": "Productivity",
+    "capabilities": [
+      "Read"
+    ],
+    "defaultPrompt": [
+      "Use dashboard:audit to show my modes."
+    ]
+  }
+}

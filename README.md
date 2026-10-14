@@ -5,7 +5,7 @@
 <p align="center">Works only with <strong>Claude Code</strong> and <strong>Codex CLI</strong>.</p>
 
 <p align="center">
-  <strong>Claude Code and Codex plugins I built because I needed them — project harnesses, measured UI, Claude × Codex orchestration, and autonomous goal runs.</strong>
+  <strong>Claude Code and Codex plugins I built because I needed them — project harnesses, measured UI, Claude × Codex orchestration, autonomous goal runs, a dashboard of every mode, and a usage gate.</strong>
 </p>
 
 <p align="center">
@@ -23,14 +23,14 @@
 
 ---
 
-This repository is a Claude Code and Codex **plugin marketplace** with four independent plugins. Install only the ones you need.
+This repository is a Claude Code and Codex **plugin marketplace** with six independent plugins. Install only the ones you need.
 
 ## Codex
 
-The same four plugins also support Codex CLI 0.158.0 or later. Install a chosen subset:
+The same six plugins also support Codex CLI 0.158.0 or later. Install a chosen subset:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands,dashboard,budget
 ```
 
 Or use the CLI directly:
@@ -41,9 +41,11 @@ codex plugin add harness@because-i-needed
 codex plugin add ux-ui@because-i-needed
 codex plugin add peer-coding@because-i-needed
 codex plugin add free-hands@because-i-needed
+codex plugin add dashboard@because-i-needed
+codex plugin add budget@because-i-needed
 ```
 
-Start a new Codex session and invoke `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$peer-coding:run`, or `$free-hands:run`. Use `$peer-coding:mode on` for automatic orchestration and `$peer-coding:audit` to inspect context parity. Review and trust installed hooks with `/hooks` before relying on automatic routing, the UI commit gate, or free-hands enforcement.
+Start a new Codex session and invoke `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$peer-coding:run`, or `$free-hands:run`. Use `$peer-coding:mode on` for automatic orchestration, `$peer-coding:audit` to inspect context parity, `$dashboard:audit` to see every mode, and `$budget:mode 80` to stop at a usage threshold. Review and trust installed hooks with `/hooks` before relying on automatic routing, the UI commit gate, free-hands enforcement, or the budget gate.
 
 The installer defaults to Claude Code; `--host codex` selects Codex. Codex installs at user scope: omit `--scope` or use `--scope user`; project/local scope is rejected. Skills, scripts and workflow contracts are shared; each plugin includes a Codex manifest. Codex execution uses its own questions and independent agents. The harness generates `.codex/hooks.json`, `.codex/hooks/`, `.codex/scripts/review-gate.sh`, `.codex/scripts/latest-model.py` and `.agents/skills/`; existing Claude artifacts are preserved. UI measurement still requires the relevant browser/mobile tools. See each plugin's Codex section for details.
 
@@ -70,7 +72,7 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the ux-ui README →](plugins/ux-ui)
 
-### [peer-coding](plugins/peer-coding) · `v1.0.0`
+### [peer-coding](plugins/peer-coding) · `v1.1.0`
 
 **Claude × Codex peer orchestration.** The main agent plans and owns every gate, routes work to fast Claude or bulk Codex workers, and the two vendors review each other's work — the main agent's own plan included — with one rebuttal round and evidence, not role, deciding. An audit makes sure both vendors start from the same project instructions. Unofficial community plugin.
 
@@ -80,7 +82,7 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the peer-coding README →](plugins/peer-coding)
 
-### [free-hands](plugins/free-hands) · `v0.3.0`
+### [free-hands](plugins/free-hands) · `v0.4.0`
 
 **Carry a finite goal through its checklist without asking or stopping.** When a decision would normally go to you, a five-role panel advises and the main agent decides from evidence.
 
@@ -89,6 +91,26 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 - **Heads-up:** hooks run on every prompt, session start, ask, shell command and stop; with no active goal they are silent except for a one-question entry note when a prompt says “free-hands”. While items are open, Stop keeps the turn going up to 40 times; while a goal is active, a backstop hook denies the listed shell commands that merge into the default branch, delete remotely, deploy or publish (see the plugin README). Both act only in the session that started the run; other sessions in the repository are left alone.
 
 [Read the free-hands README →](plugins/free-hands)
+
+### [dashboard](plugins/dashboard) · `v0.1.0`
+
+**See every because-i-needed mode you have on, in one line.** On Claude Code a line above the prompt shows each switch an enabled because-i-needed plugin declares — peer-coding's mode, a free-hands goal, a budget threshold, and any added later — with the level that sets it. On Codex the same is a command.
+
+- **Use it when** you keep modes on at the project or global level and want to see them without asking.
+- **Entry:** shows by itself on Claude Code; `/dashboard:audit` · `$dashboard:audit` for the levels
+- **Heads-up:** on Claude Code it adds a plugin hooks module that runs `python3` at session start, after each turn and when the usage window moves; it draws nothing when no plugin declares a switch.
+
+[Read the dashboard README →](plugins/dashboard)
+
+### [budget](plugins/budget) · `v0.1.0`
+
+**Stop every running session at a share of your usage window you choose, and decide whether to go on.** Past the threshold, each session's next tool call waits for one question — "지정한 n%에 도달했습니다, 작업을 이어서 진행하시겠어요?" — on Claude Code in its own dialog (five-hour window), on Codex as the agent's last message (7-day window).
+
+- **Use it when** agents in several sessions could use up your window before you look.
+- **Entry:** `/budget:mode 80` · `$budget:mode 80`; `off` to turn it off
+- **Heads-up:** on Claude Code it adds a plugin hooks module that checks every tool call; on Codex, `PreToolUse` and `UserPromptSubmit` hooks. Under the threshold they let everything through.
+
+[Read the budget README →](plugins/budget)
 
 ## Retired plugins
 
@@ -119,6 +141,8 @@ claude plugin install harness@because-i-needed
 claude plugin install ux-ui@because-i-needed
 claude plugin install peer-coding@because-i-needed
 claude plugin install free-hands@because-i-needed
+claude plugin install dashboard@because-i-needed
+claude plugin install budget@because-i-needed
 ```
 
 Or in Claude Code: `/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git`, then install from the list.
@@ -136,7 +160,9 @@ Or wire it directly in `~/.claude/settings.json`:
     "harness@because-i-needed": true,
     "ux-ui@because-i-needed": true,
     "peer-coding@because-i-needed": true,
-    "free-hands@because-i-needed": true
+    "free-hands@because-i-needed": true,
+    "dashboard@because-i-needed": true,
+    "budget@because-i-needed": true
   }
 }
 ```
@@ -194,13 +220,15 @@ Every command reads **subject : action** — `/<plugin>:<skill>`.
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # lists the four plugins
+├── .claude-plugin/marketplace.json   # lists the six plugins
 ├── install.sh                        # interactive installer (--host claude|codex)
 └── plugins/
     ├── harness/                      # skill
     ├── ux-ui/                        # 2 skills + 2 agents + commit-gate hook + 4 MCPs
     ├── peer-coding/                  # 3 skills + prompt hook + 3 scripts
-    └── free-hands/                   # 1 skill + 5 agents + 4 hooks + 4 scripts
+    ├── free-hands/                   # 1 skill + 5 agents + 4 hooks + 4 scripts
+    ├── dashboard/                    # 1 skill + hooks module + 1 script
+    └── budget/                       # 1 skill + hooks module + 2 Codex hooks + 2 scripts
 ```
 
 Each plugin folder is self-contained: its README, manifest, and everything it ships live under `plugins/<name>/`.

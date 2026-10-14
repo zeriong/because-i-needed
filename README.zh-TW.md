@@ -5,7 +5,7 @@
 <p align="center">僅適用於 <strong>Claude Code</strong> 和 <strong>Codex CLI</strong>。</p>
 
 <p align="center">
-  <strong>因為需要才自己做的 Claude Code 與 Codex 外掛——專案 harness、實測驅動的 UI、Claude × Codex 協作編排與自主目標執行。</strong>
+  <strong>因為需要才自己做的 Claude Code 與 Codex 外掛——專案 harness、實測驅動的 UI、Claude × Codex 協作編排與自主目標執行、所有模式的儀表板與用量閘門。</strong>
 </p>
 
 <p align="center">
@@ -23,14 +23,14 @@
 
 ---
 
-本儲存庫是一個 Claude Code 與 Codex **外掛市集**，收錄四個彼此獨立的外掛。只要安裝你需要的即可。
+本儲存庫是一個 Claude Code 與 Codex **外掛市集**，收錄六個彼此獨立的外掛。只要安裝你需要的即可。
 
 ## Codex
 
-這4個外掛也支援 Codex CLI 0.158.0 及以上版本。選擇需要的外掛安裝：
+這6個外掛也支援 Codex CLI 0.158.0 及以上版本。選擇需要的外掛安裝：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands,dashboard,budget
 ```
 
 也可以直接使用 CLI：
@@ -41,9 +41,11 @@ codex plugin add harness@because-i-needed
 codex plugin add ux-ui@because-i-needed
 codex plugin add peer-coding@because-i-needed
 codex plugin add free-hands@because-i-needed
+codex plugin add dashboard@because-i-needed
+codex plugin add budget@because-i-needed
 ```
 
-在新的 Codex 工作階段中呼叫 `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$peer-coding:run` 或 `$free-hands:run`。使用 `$peer-coding:mode on` 開啟自動協作，使用 `$peer-coding:audit` 檢查上下文。在依賴自動路由、UI 提交閘門和 free-hands 強制執行之前，請透過 `/hooks` 審核並信任已安裝的掛鉤。
+在新的 Codex 工作階段中呼叫 `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$peer-coding:run` 或 `$free-hands:run`。使用 `$peer-coding:mode on` 開啟自動協作，使用 `$peer-coding:audit` 檢查上下文，使用 `$dashboard:audit` 查看所有模式，使用 `$budget:mode 80` 在用量門檻處停止。在依賴自動路由、UI 提交閘門、free-hands 強制執行和 budget 閘門之前，請透過 `/hooks` 審核並信任已安裝的掛鉤。
 
 安裝器預設使用 Claude Code；`--host codex` 選擇 Codex。Codex 僅支援使用者範圍：省略 `--scope` 或使用 `--scope user`，project/local 範圍會被拒絕。兩個宿主共用技能、腳本和工作流程，每個外掛另附 Codex 清單。Codex 使用自己的提問工具和獨立代理。產生的 harness 使用 `.codex/hooks.json`、`.codex/hooks/`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py` 和 `.agents/skills/`，保留現有 Claude 檔案。UI 實測仍需要對應的瀏覽器或行動工具。詳情參閱各外掛的 Codex 章節。
 
@@ -70,7 +72,7 @@ codex plugin add free-hands@because-i-needed
 
 [閱讀 ux-ui 繁體中文 README →](plugins/ux-ui/README.zh-TW.md)
 
-### [peer-coding](plugins/peer-coding) · `v1.0.0`
+### [peer-coding](plugins/peer-coding) · `v1.1.0`
 
 **Claude × Codex 同儕編排。** 主代理負責規劃並做出每個關卡的決定，把工作分派給快速的 Claude 工作者或批次處理的 Codex 工作者，兩個廠商互相審查對方的工作——包括主代理自己的計畫。反駁只有一輪，裁定依據的是證據而不是角色。稽核功能確保兩個廠商從相同的專案指示出發。非官方社群外掛。
 
@@ -80,7 +82,7 @@ codex plugin add free-hands@because-i-needed
 
 [閱讀 peer-coding 繁體中文 README →](plugins/peer-coding/README.zh-TW.md)
 
-### [free-hands](plugins/free-hands) · `v0.3.0`
+### [free-hands](plugins/free-hands) · `v0.4.0`
 
 **將有限目標的清單逐項完成，不提問、不停止。** 遇到原本需要使用者決定的問題時，由五角色討論面板提供建議，主代理依據證據做決定。
 
@@ -89,6 +91,26 @@ codex plugin add free-hands@because-i-needed
 - **注意：** hook 會在每次提示、工作階段開始、提問、shell 指令和停止時執行。沒有啟用中的目標時保持安靜，只有提示中出現「free-hands」時會送出一次開始問題。有未完成項目時，Stop 最多讓目前回合延續40次；目標啟用期間，輔助 hook 會拒絕清單中合併到預設分支、遠端刪除、部署或發布的 shell 指令（見外掛 README）。兩者都只在啟動這次執行的工作階段中生效，不影響同一儲存庫中的其他工作階段。
 
 [閱讀 free-hands 繁體中文 README →](plugins/free-hands/README.zh-TW.md)
+
+### [dashboard](plugins/dashboard) · `v0.1.0`
+
+**用一行看到你開啟的每個 because-i-needed 模式。** 在 Claude Code 上，提示上方的一行會顯示每個已啟用的 because-i-needed 外掛所宣告的開關——peer-coding 的模式、free-hands 的目標、budget 的門檻，以及之後新增的任何開關——並附上設定它的層級。在 Codex 上則以命令呈現同樣的內容。
+
+- **適用時機：** 你在專案或全域層級保持開啟某些模式，並希望不必詢問就能看到它們時。
+- **進入點：** 在 Claude Code 上自動顯示；`/dashboard:audit` · `$dashboard:audit` 查看各層級
+- **注意：** 在 Claude Code 上，它會加入一個外掛 hooks 模組，在工作階段開始時、每個回合之後以及用量額度變動時執行 `python3`；沒有任何外掛宣告開關時，它不會繪製任何內容。
+
+[閱讀 dashboard 繁體中文 README →](plugins/dashboard/README.zh-TW.md)
+
+### [budget](plugins/budget) · `v0.1.0`
+
+**在你選定的用量額度比例處停下每個執行中的工作階段，由你決定是否繼續。** 超過門檻後，每個工作階段的下一次工具呼叫都會等待一個問題——「지정한 n%에 도달했습니다, 작업을 이어서 진행하시겠어요?」——在 Claude Code 上以自己的對話框呈現（五小時額度），在 Codex 上則作為代理的最後一則訊息（7 天額度）。
+
+- **適用時機：** 多個工作階段中的代理可能在你察看之前就用完你的額度時。
+- **進入點：** `/budget:mode 80` · `$budget:mode 80`；`off` 關閉
+- **注意：** 在 Claude Code 上，它會加入一個檢查每次工具呼叫的外掛 hooks 模組；在 Codex 上則是 `PreToolUse` 與 `UserPromptSubmit` hook。低於門檻時，它們讓一切通過。
+
+[閱讀 budget 繁體中文 README →](plugins/budget/README.zh-TW.md)
 
 ## 已退役的外掛
 
@@ -119,6 +141,8 @@ claude plugin install harness@because-i-needed
 claude plugin install ux-ui@because-i-needed
 claude plugin install peer-coding@because-i-needed
 claude plugin install free-hands@because-i-needed
+claude plugin install dashboard@because-i-needed
+claude plugin install budget@because-i-needed
 ```
 
 或在 Claude Code 中：`/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git`，然後從清單中安裝。
@@ -136,7 +160,9 @@ claude plugin install free-hands@because-i-needed
     "harness@because-i-needed": true,
     "ux-ui@because-i-needed": true,
     "peer-coding@because-i-needed": true,
-    "free-hands@because-i-needed": true
+    "free-hands@because-i-needed": true,
+    "dashboard@because-i-needed": true,
+    "budget@because-i-needed": true
   }
 }
 ```
@@ -194,13 +220,15 @@ codex plugin remove claude-x-codex@because-i-needed
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # 列出四個外掛
+├── .claude-plugin/marketplace.json   # 列出六個外掛
 ├── install.sh                        # 互動式安裝腳本（--host claude|codex）
 └── plugins/
     ├── harness/                      # 技能
     ├── ux-ui/                        # 2 個技能 + 2 個代理 + 提交閘門 hook + 4 個 MCP
     ├── peer-coding/                  # 3 個技能 + 提示 hook + 3 個腳本
-    └── free-hands/                   # 1 個技能 + 5 個代理 + 4 個 hooks + 4 個腳本
+    ├── free-hands/                   # 1 個技能 + 5 個代理 + 4 個 hooks + 4 個腳本
+    ├── dashboard/                    # 1 個技能 + hooks 模組 + 1 個腳本
+    └── budget/                       # 1 個技能 + hooks 模組 + 2 個 Codex hooks + 2 個腳本
 ```
 
 每個外掛資料夾都是自給自足的：它的 README、manifest，以及所有隨附的內容，都放在 `plugins/<name>/` 之下。
