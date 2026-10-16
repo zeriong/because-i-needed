@@ -72,7 +72,7 @@ codex plugin add budget@because-i-needed
 
 [ux-ui の日本語 README を読む →](plugins/ux-ui/README.ja.md)
 
-### [peer-coding](plugins/peer-coding) · `v1.1.0`
+### [peer-coding](plugins/peer-coding) · `v1.1.1`
 
 **Claude × Codex のピアオーケストレーション**。メインエージェントが計画してすべてのゲートを判断し、作業を高速な Claude ワーカーか大量処理向けの Codex ワーカーに振り分け、2 つのベンダーが互いの作業をレビューします — メインエージェント自身の計画も含みます。反論は 1 回で、判定するのは役割ではなく証拠です。監査機能が、両ベンダーが同じプロジェクトの指示から始められるかを確認します。非公式のコミュニティプラグインです。
 
@@ -82,7 +82,7 @@ codex plugin add budget@because-i-needed
 
 [peer-coding の日本語 README を読む →](plugins/peer-coding/README.ja.md)
 
-### [free-hands](plugins/free-hands) · `v0.4.0`
+### [free-hands](plugins/free-hands) · `v0.4.1`
 
 **有限の目標を、質問や中断なしでチェックリストの最後まで進めます。** ユーザーが決める場面では5役のパネルが助言し、メインエージェントが証拠に基づいて決定します。
 
@@ -92,7 +92,7 @@ codex plugin add budget@because-i-needed
 
 [free-hands の日本語 README を読む →](plugins/free-hands/README.ja.md)
 
-### [dashboard](plugins/dashboard) · `v0.1.0`
+### [dashboard](plugins/dashboard) · `v0.2.0`
 
 **オンにしている because-i-needed のモードを、1行で確認できます。** Claude Code では、有効な because-i-needed プラグインが宣言したスイッチ — peer-coding のモード、free-hands の目標、budget の割合、あとから追加されるものも — を、それを設定しているレベルとともにプロンプトの上の1行に表示します。Codex ではコマンドで同じ内容を確認します。
 
@@ -102,7 +102,7 @@ codex plugin add budget@because-i-needed
 
 [dashboard の日本語 README を読む →](plugins/dashboard/README.ja.md)
 
-### [budget](plugins/budget) · `v0.1.0`
+### [budget](plugins/budget) · `v0.1.1`
 
 **選んだ使用量ウィンドウの割合で、実行中のすべてのセッションを止め、続けるかどうかを尋ねます。** 割合を超えると、各セッションの次のツール呼び出しは、1つの質問 — "지정한 n%에 도달했습니다, 작업을 이어서 진행하시겠어요?" — への回答を待ちます。Claude Code では専用のダイアログ（5時間ウィンドウ）、Codex ではエージェントの最後のメッセージ（7日ウィンドウ）で尋ねます。
 

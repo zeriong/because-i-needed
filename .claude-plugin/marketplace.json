@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Claude Code plugins built because I needed them — harness, ux-ui, peer-coding, free-hands",
-    "version": "4.3.0"
+    "version": "4.4.0"
   },
   "plugins": [
     {
@@ -54,7 +54,7 @@
       "name": "peer-coding",
       "source": "./plugins/peer-coding",
       "description": "Claude × Codex peer orchestration: the two plan, build, and review each other's work as peers, with evidence-based triage, a rebuttal round, and shared project context across both vendors. Unofficial community plugin. (adds a UserPromptSubmit hook; silent when mode is off)",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "author": {
         "name": "zeriong"
       },
@@ -71,7 +71,7 @@
       "name": "free-hands",
       "source": "./plugins/free-hands",
       "description": "Autonomous mode that works through a finite goal checklist without asking or stopping; user-level decisions go to a five-role brainstorming panel. (adds UserPromptSubmit, SessionStart, PreToolUse and Stop hooks)",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "author": {
         "name": "zeriong"
       },
@@ -88,7 +88,7 @@
       "name": "dashboard",
       "source": "./plugins/dashboard",
       "description": "One line above the prompt with the state of every because-i-needed mode you have on; on Codex, a command. (adds a Claude Code hooks module)",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "author": {
         "name": "zeriong"
       },
@@ -104,7 +104,7 @@
       "name": "budget",
       "source": "./plugins/budget",
       "description": "Usage gate: when the account's usage window reaches your threshold, every running session stops and asks whether to continue. (adds a Claude Code hooks module and Codex PreToolUse and UserPromptSubmit hooks)",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": {
         "name": "zeriong"
       },

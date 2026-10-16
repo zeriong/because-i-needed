@@ -2,6 +2,7 @@
   "entries": [
     {
       "label": "peer-coding",
+      "icon": "🤝",
       "status": ["bash", "scripts/mode.sh", "status", "--json"]
     }
   ]

@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.1] - 2026-10-16
+
+### Changed
+
+- `dashboard.json` declares the icon `🤝` that dashboard 0.2.0 shows before the label. Nothing else changes.
+
+### Why
+
+Delivery release: installed copies need the new declaration for dashboard 0.2.0 to show the icon (evidence: z-lab
+`dashboard-lab/run-0.2.0` D06–D08).
+
 ## [1.1.0] - 2026-10-14
 
 ### Added

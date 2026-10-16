@@ -19,6 +19,9 @@ Contents: the `audit` skill (Codex policy in `skills/audit/agents/openai.yaml`);
   (`mod-dual-host-2.1.299` M04, M05; `dashboard-lab/run-0.1.0` D04):** Codex rejects a hooks file that names `modules`.
 - On Codex the dashboard is a command, and the README points to Codex's own `weekly-limit` status line item. **Why
   (`dashboard-lab/codex-status-line-0.162.1` C01–C03):** Codex's status line takes built-in items only.
+- The band is a dim rule as wide as `bodyColumns`, then one `{icon}label: value` entry per switch, wrapping whole.
+  **Why (maintainer request, 2026-10-16; z-lab `dashboard-lab/run-0.2.0` D06–D08):** the 0.1.0 single line was hard to
+  tell apart from the transcript.
 - The band is drawn only when at least one entry exists; a failing status command shows as `error` and never breaks the
   others. **Why:** the user asked for the line to show only when because-i-needed plugins are registered; one broken
   plugin must not hide the rest.
@@ -30,6 +33,6 @@ changes; PATCH for documentation.
 
 ## Evidence
 
-z-lab `dashboard-lab/run-0.1.0` (D01–D05), `dashboard-lab/codex-status-line-0.162.1` (C01–C03),
+z-lab `dashboard-lab/run-0.1.0` (D01–D05), `run-0.2.0` (D06–D08), `dashboard-lab/codex-status-line-0.162.1` (C01–C03),
 `plugin-platform-lab/mod-dual-host-2.1.299` (M01–M07), `mod-interactive-2.1.299` (I01). Decisions in
 `dashboard-lab/analyze/improvement-backlog.md`.

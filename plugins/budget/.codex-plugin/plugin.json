@@ -1,7 +1,7 @@
 {
   "name": "budget",
   "description": "Usage gate: when the account's usage window reaches your threshold, every running session stops and asks whether to continue.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": {
     "name": "zeriong"
   },

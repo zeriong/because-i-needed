@@ -2,6 +2,7 @@
   "entries": [
     {
       "label": "budget",
+      "icon": "💰",
       "status": ["python3", "scripts/budget.py", "status", "--json"]
     }
   ]

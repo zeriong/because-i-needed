@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.0] - 2026-10-16
+
+### Changed
+
+- The band is a dim rule as wide as the band, then one `{icon}label: value` entry per declared switch (bold label,
+  the deciding level and the detail dimmed); entries wrap whole on a narrow terminal. The audit prints the same form.
+- `dashboard.json` entries take an `icon` (one emoji; `🔹` when missing).
+
+### Why
+
+The 0.1.0 line was hard to tell apart from the transcript (maintainer request, 2026-10-16).
+
+Evidence: z-lab `dashboard-lab/run-0.2.0` (D06–D08) on Claude Code 2.1.300 and Codex 0.162.1: the rule and the entries
+on one row at 200 columns, wrapped whole at 80 columns, and the Codex audit in the same form. Not measured: styling,
+terminals other than tmux.
+
 ## [0.1.0] - 2026-10-14
 
 ### Added

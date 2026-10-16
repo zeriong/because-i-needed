@@ -53,7 +53,7 @@ class DashboardTest(unittest.TestCase):
             "off@because-i-needed": [{"scope": "user", "installPath": str(off)}]}}))
         out = self.run_dashboard("--host", "claude", "--enabled", "alpha@because-i-needed,other@another-market")
         self.assertEqual([(e["plugin"], e["value"]) for e in out["entries"]], [("alpha", "on")])
-        self.assertEqual(out["line"], "because-i-needed │ alpha on")
+        self.assertEqual(out["line"], "🔹alpha: on")  # no icon declared: the default
         (self.tmp / "claude" / "settings.json").write_text(json.dumps({"enabledPlugins": {"off@because-i-needed": True}}))
         self.assertEqual([e["plugin"] for e in self.run_dashboard("--host", "claude")["entries"]], ["off"])
 
@@ -65,6 +65,16 @@ class DashboardTest(unittest.TestCase):
             '[plugins."alpha@because-i-needed"]\nenabled = true\n\n[plugins."beta@because-i-needed"]\nenabled = false\n')
         out = self.run_dashboard("--host", "codex")
         self.assertEqual([e["value"] for e in out["entries"]], ["new"])
+
+    def test_icons_levels_and_details_are_shown(self):
+        root = fake_plugin(self.tmp / "dev" / "alpha", "alpha", [dict(self.entry("on"), icon="🧪"),
+                                                                 {"label": "beta", "icon": " ", "status": [
+                                                                     sys.executable, "-c", "import json; print(json.dumps("
+                                                                     "{'value': '3', 'source': 'project', 'project': '3',"
+                                                                     " 'global': None, 'detail': 'two open'}))"]}])
+        out = self.run_dashboard("--host", "codex", env={"BECAUSE_I_NEEDED_PLUGIN_DIRS": str(root)})
+        self.assertEqual([(e["icon"], e["where"]) for e in out["entries"]], [("🧪", None), ("🔹", "project")])
+        self.assertEqual(out["line"], "🧪alpha: on   🔹beta: 3 (project) · two open")
 
     def test_extra_folders_errors_and_the_dashboard_itself(self):
         alpha = fake_plugin(self.tmp / "dev" / "alpha", "alpha", [self.entry("on")])

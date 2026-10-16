@@ -72,7 +72,7 @@ codex plugin add budget@because-i-needed
 
 [ux-ui 한국어 README 보기 →](plugins/ux-ui/README.ko.md)
 
-### [peer-coding](plugins/peer-coding) · `v1.1.0`
+### [peer-coding](plugins/peer-coding) · `v1.1.1`
 
 **Claude × Codex 동료 오케스트레이션.** 메인 에이전트가 계획하고 모든 관문을 판단하며, 작업을 빠른 Claude 워커나 대량 처리용 Codex 워커에 보내고, 두 벤더가 서로의 작업을 리뷰합니다 — 메인 에이전트 자신의 계획도 포함됩니다. 반론은 한 번이고, 판정은 역할이 아니라 증거가 합니다. 감사 기능이 두 벤더가 같은 프로젝트 지침에서 출발하는지 확인합니다. 비공식 커뮤니티 플러그인입니다.
 
@@ -82,7 +82,7 @@ codex plugin add budget@because-i-needed
 
 [peer-coding 한국어 README 보기 →](plugins/peer-coding/README.ko.md)
 
-### [free-hands](plugins/free-hands) · `v0.4.0`
+### [free-hands](plugins/free-hands) · `v0.4.1`
 
 **유한한 목표를 질문이나 중단 없이 체크리스트 끝까지 처리합니다.** 사용자가 결정할 사안은 다섯 역할 패널이 검토하고 메인 에이전트가 증거를 바탕으로 결정합니다.
 
@@ -92,7 +92,7 @@ codex plugin add budget@because-i-needed
 
 [free-hands 한국어 README 보기 →](plugins/free-hands/README.ko.md)
 
-### [dashboard](plugins/dashboard) · `v0.1.0`
+### [dashboard](plugins/dashboard) · `v0.2.0`
 
 **켜 둔 because-i-needed 모드를 한 줄로 모두 확인합니다.** Claude Code에서는 프롬프트 위의 한 줄이 활성화된 because-i-needed 플러그인이 선언한 스위치를 모두 보여 줍니다 — peer-coding의 모드, free-hands 목표, budget 임계값, 이후 추가되는 것까지 — 값을 정한 수준과 함께 표시합니다. Codex에서는 같은 내용을 명령으로 확인합니다.
 
@@ -102,7 +102,7 @@ codex plugin add budget@because-i-needed
 
 [dashboard 한국어 README 보기 →](plugins/dashboard/README.ko.md)
 
-### [budget](plugins/budget) · `v0.1.0`
+### [budget](plugins/budget) · `v0.1.1`
 
 **실행 중인 모든 세션을 직접 정한 사용량 창 비율에서 멈추고, 계속할지 결정합니다.** 임계값을 넘으면 각 세션의 다음 도구 호출이 질문 하나 — "지정한 n%에 도달했습니다, 작업을 이어서 진행하시겠어요?" — 를 기다립니다. Claude Code에서는 자체 대화상자(5시간 창), Codex에서는 에이전트의 마지막 메시지(7일 창)로 나옵니다.
 

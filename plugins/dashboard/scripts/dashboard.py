@@ -19,6 +19,7 @@ import sys
 MARKET = "because-i-needed"
 SELF = "dashboard"
 TIMEOUT = 2
+DEFAULT_ICON = "🔹"
 
 
 def read_json(path):
@@ -117,17 +118,24 @@ def collect(host, enabled, cwd):
         declared = read_json(roots[name] / "dashboard.json") or {}
         for entry in declared.get("entries") or []:
             if isinstance(entry, dict) and isinstance(entry.get("label"), str) and isinstance(entry.get("status"), list):
-                entries.append({"plugin": name, "label": entry["label"], **run_status(roots[name], entry["status"], cwd)})
+                icon = entry.get("icon") if isinstance(entry.get("icon"), str) and entry["icon"].strip() else DEFAULT_ICON
+                entries.append({"plugin": name, "label": entry["label"], "icon": icon.strip(),
+                                **run_status(roots[name], entry["status"], cwd)})
     return entries
+
+
+def where(entry):
+    """The level that decides the value, when it is not the user's global default."""
+    return entry["source"] if entry.get("source") in ("env", "project") else None
 
 
 def line(entries):
     parts = []
     for e in entries:
-        where = f" ({e['source']})" if e.get("source") in ("env", "project") else ""
+        level = f" ({where(e)})" if where(e) else ""
         detail = f" · {e['detail']}" if e.get("detail") else ""
-        parts.append(f"{e['label']} {e['value']}{where}{detail}")
-    return f"{MARKET} │ " + " │ ".join(parts) if parts else ""
+        parts.append(f"{e['icon']}{e['label']}: {e['value']}{level}{detail}")
+    return "   ".join(parts)
 
 
 def main():
@@ -140,9 +148,10 @@ def main():
     enabled = set(filter(None, (args.enabled or "").split(","))) if args.enabled is not None else claude_enabled(args.cwd)
     entries = collect(args.host, enabled, args.cwd)
     if args.json:
-        print(json.dumps({"entries": entries, "line": line(entries)}))
+        print(json.dumps({"entries": [dict(e, where=where(e)) for e in entries], "line": line(entries)},
+                         ensure_ascii=False))
     elif entries:
-        print(line(entries))
+        print(f"{MARKET}\n{line(entries)}")
         for e in entries:
             levels = f"project: {e.get('project') or 'unset'}   global: {e.get('global') or 'unset'}"
             print(f"  {e['label']}: {e['value']} (source: {e['source']})   {levels}")

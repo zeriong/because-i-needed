@@ -2,6 +2,7 @@
   "entries": [
     {
       "label": "free-hands",
+      "icon": "🙌",
       "status": ["python3", "scripts/guard.py", "status"]
     }
   ]

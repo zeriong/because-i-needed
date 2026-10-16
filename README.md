@@ -72,7 +72,7 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the ux-ui README →](plugins/ux-ui)
 
-### [peer-coding](plugins/peer-coding) · `v1.1.0`
+### [peer-coding](plugins/peer-coding) · `v1.1.1`
 
 **Claude × Codex peer orchestration.** The main agent plans and owns every gate, routes work to fast Claude or bulk Codex workers, and the two vendors review each other's work — the main agent's own plan included — with one rebuttal round and evidence, not role, deciding. An audit makes sure both vendors start from the same project instructions. Unofficial community plugin.
 
@@ -82,7 +82,7 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the peer-coding README →](plugins/peer-coding)
 
-### [free-hands](plugins/free-hands) · `v0.4.0`
+### [free-hands](plugins/free-hands) · `v0.4.1`
 
 **Carry a finite goal through its checklist without asking or stopping.** When a decision would normally go to you, a five-role panel advises and the main agent decides from evidence.
 
@@ -92,7 +92,7 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the free-hands README →](plugins/free-hands)
 
-### [dashboard](plugins/dashboard) · `v0.1.0`
+### [dashboard](plugins/dashboard) · `v0.2.0`
 
 **See every because-i-needed mode you have on, in one line.** On Claude Code a line above the prompt shows each switch an enabled because-i-needed plugin declares — peer-coding's mode, a free-hands goal, a budget threshold, and any added later — with the level that sets it. On Codex the same is a command.
 
@@ -102,7 +102,7 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the dashboard README →](plugins/dashboard)
 
-### [budget](plugins/budget) · `v0.1.0`
+### [budget](plugins/budget) · `v0.1.1`
 
 **Stop every running session at a share of your usage window you choose, and decide whether to go on.** Past the threshold, each session's next tool call waits for one question — "지정한 n%에 도달했습니다, 작업을 이어서 진행하시겠어요?" — on Claude Code in its own dialog (five-hour window), on Codex as the agent's last message (7-day window).
 

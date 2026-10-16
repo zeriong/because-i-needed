@@ -72,7 +72,7 @@ codex plugin add budget@because-i-needed
 
 [閱讀 ux-ui 繁體中文 README →](plugins/ux-ui/README.zh-TW.md)
 
-### [peer-coding](plugins/peer-coding) · `v1.1.0`
+### [peer-coding](plugins/peer-coding) · `v1.1.1`
 
 **Claude × Codex 同儕編排。** 主代理負責規劃並做出每個關卡的決定，把工作分派給快速的 Claude 工作者或批次處理的 Codex 工作者，兩個廠商互相審查對方的工作——包括主代理自己的計畫。反駁只有一輪，裁定依據的是證據而不是角色。稽核功能確保兩個廠商從相同的專案指示出發。非官方社群外掛。
 
@@ -82,7 +82,7 @@ codex plugin add budget@because-i-needed
 
 [閱讀 peer-coding 繁體中文 README →](plugins/peer-coding/README.zh-TW.md)
 
-### [free-hands](plugins/free-hands) · `v0.4.0`
+### [free-hands](plugins/free-hands) · `v0.4.1`
 
 **將有限目標的清單逐項完成，不提問、不停止。** 遇到原本需要使用者決定的問題時，由五角色討論面板提供建議，主代理依據證據做決定。
 
@@ -92,7 +92,7 @@ codex plugin add budget@because-i-needed
 
 [閱讀 free-hands 繁體中文 README →](plugins/free-hands/README.zh-TW.md)
 
-### [dashboard](plugins/dashboard) · `v0.1.0`
+### [dashboard](plugins/dashboard) · `v0.2.0`
 
 **用一行看到你開啟的每個 because-i-needed 模式。** 在 Claude Code 上，提示上方的一行會顯示每個已啟用的 because-i-needed 外掛所宣告的開關——peer-coding 的模式、free-hands 的目標、budget 的門檻，以及之後新增的任何開關——並附上設定它的層級。在 Codex 上則以命令呈現同樣的內容。
 
@@ -102,7 +102,7 @@ codex plugin add budget@because-i-needed
 
 [閱讀 dashboard 繁體中文 README →](plugins/dashboard/README.zh-TW.md)
 
-### [budget](plugins/budget) · `v0.1.0`
+### [budget](plugins/budget) · `v0.1.1`
 
 **在你選定的用量額度比例處停下每個執行中的工作階段，由你決定是否繼續。** 超過門檻後，每個工作階段的下一次工具呼叫都會等待一個問題——「지정한 n%에 도달했습니다, 작업을 이어서 진행하시겠어요?」——在 Claude Code 上以自己的對話框呈現（五小時額度），在 Codex 上則作為代理的最後一則訊息（7 天額度）。
 

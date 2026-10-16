@@ -31,6 +31,7 @@ class DashboardContractTest(unittest.TestCase):
                 for entry in json.loads(path.read_text())["entries"]:
                     with self.subTest(plugin=root.name, label=entry["label"]):
                         self.assertIsInstance(entry["label"], str)
+                        self.assertTrue(isinstance(entry.get("icon"), str) and 0 < len(entry["icon"]) <= 4)
                         argv = [str(root / a) if i and (root / a).exists() else a for i, a in enumerate(entry["status"])]
                         start = time.monotonic()
                         proc = subprocess.run(argv, cwd=repo, env=env, capture_output=True, text=True, timeout=5)

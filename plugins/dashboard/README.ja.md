@@ -4,7 +4,7 @@
 
 <p align="center"><strong>オンにしている because-i-needed のモードと、各値の出どころを、1行で確認できます。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="バージョン"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="ライセンス: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code プラグイン"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="バージョン"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="ライセンス: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code プラグイン"></a></p>
 
 <p align="center"><a href="#表示内容">表示内容</a> &bull; <a href="#claude-code">Claude Code</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#プラグインの参加方法">プラグインの参加方法</a> &bull; <a href="#制限と状態">制限と状態</a> &bull; <a href="#インストール">インストール</a></p>
 
@@ -19,10 +19,11 @@ because-i-needed のプラグインには、プロジェクトまたはユーザ
 ## 表示内容
 
 ```
-because-i-needed │ budget 80% · 5h now 20% │ free-hands active 0/40 · 1 open (project) · owner lab-sess │ peer-coding on (project)
+────────────────────────────────────────────────────────────────────────────────────────────────
+💰budget: 80% · 5h now 24%   🙌free-hands: active 0/40 · 1 open (project) · owner lab-sess   🤝peer-coding: on (project)
 ```
 
-- 有効な because-i-needed プラグインが宣言したスイッチごとに1項目: その値、決めているレベルが該当する場合は `(project)` または `(env)`、そして最後に測定した使用量ウィンドウや目標の所有セッションなどの詳細。
+- 薄い区切り線の下に、有効な because-i-needed プラグインが宣言したスイッチごとに `{icon}label: value` の項目が1つ並びます。決めているレベルが該当する場合は `(project)` または `(env)`、そして最後に測定した使用量ウィンドウや目標の所有セッションなどの詳細も表示されます。ターミナルが狭いと、項目は1行に1つずつ折り返されます。
 - 有効なプラグインがスイッチを宣言していなければ、何も表示されません。
 - `/dashboard:audit`（Claude Code）または `$dashboard:audit`（Codex）は、同じ行に加えて、各スイッチについてプロジェクトレベルとグローバルレベルで設定された値を表示します。何も変更しません。
 
@@ -46,10 +47,10 @@ status_line = ["model-with-reasoning", "weekly-limit"]
 プラグインは、ルートの `dashboard.json` でスイッチを宣言します。`mode` スキルを持つ because-i-needed プラグインはすべて宣言が必須で、それ以外のプラグインも宣言できます（リポジトリの Rule 11）。
 
 ```json
-{ "entries": [ { "label": "peer-coding", "status": ["bash", "scripts/mode.sh", "status", "--json"] } ] }
+{ "entries": [ { "label": "peer-coding", "icon": "🤝", "status": ["bash", "scripts/mode.sh", "status", "--json"] } ] }
 ```
 
-`status` コマンドは読み取り専用で、プロジェクトのディレクトリで実行され、JSON オブジェクトを1つ出力します。内容は `value`、`source`（`env`、`project`、`global` または `default`）、`project` と `global`（各レベルの値。なければ `null`）、任意の `detail` です。失敗する、2秒を超える、または別の内容を出力するコマンドは `error` と表示されます。あとから追加されたプラグインは、dashboard のリリースなしで表示されます。
+`icon` はラベルの前に付く絵文字1つです（ない場合は `🔹`）。`status` コマンドは読み取り専用で、プロジェクトのディレクトリで実行され、JSON オブジェクトを1つ出力します。内容は `value`、`source`（`env`、`project`、`global` または `default`）、`project` と `global`（各レベルの値。なければ `null`）、任意の `detail` です。失敗する、2秒を超える、または別の内容を出力するコマンドは `error` と表示されます。あとから追加されたプラグインは、dashboard のリリースなしで表示されます。
 
 `claude --plugin-dir` でフォルダーから読み込んだプラグインは Claude Code のインストール記録にありません。表示するには、そのフォルダーを `BECAUSE_I_NEEDED_PLUGIN_DIRS`（`PATH` と同じ区切り）に列挙してください。
 
@@ -60,8 +61,9 @@ Claude Code 2.1.299 と Codex 0.162.1 で、ケースごとに1回ずつ測定�
 - Claude Code では、上の行に budget、free-hands、peer-coding が表示され、`/dashboard:audit` は各レベルを出力しました。宣言するプラグインがなければ行は表示されませんでした（D01–D03）。
 - Codex では、`$dashboard:audit` がインストール済みのプラグインから同じ項目を出力し、budget の項目には7日ウィンドウが表示されました。宣言するプラグインがなければ、その旨を表示しました（D04–D05）。
 - Codex の `weekly-limit` 項目は `weekly 28% left` と表示されました（C02）。
+- 0.2.0 から（[`run-0.2.0`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab/run-0.2.0)、Claude Code 2.1.300）: 200桁では区切り線と `{icon}label: value` の項目が1行に並び、80桁では項目が切れずに1行に1つずつ折り返されました。Codex の audit も同じ項目を出力しました（D06–D08）。
 
-未測定: Claude Code のマーケットプレイス経由でインストールしたプラグイン（測定した行は `--plugin-dir` のフォルダーを読み取っており、インストール記録は単体テストのみ）、セッション途中でスイッチが変わったときの行の更新、デスクトップと IDE のサーフェス。
+未測定: tmux 以外のターミナル、太字と薄い表示のスタイル、Claude Code のマーケットプレイス経由でインストールしたプラグイン（測定した行は `--plugin-dir` のフォルダーを読み取っており、インストール記録は単体テストのみ）、セッション途中でスイッチが変わったときの行の更新、デスクトップと IDE のサーフェス。
 
 行を描画する Claude Code のプラグインフックモジュール API は早期アクセスとされており、リリース間で変更される可能性があります。
 

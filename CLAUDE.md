@@ -212,8 +212,8 @@ Host adapters make those choices explicit while keeping each workflow in one sha
 ## Rule 11 — Every mode shows on the dashboard
 
 - A plugin with a `mode` skill — any switch a user turns on or off and that stays set — declares that state to the
-  dashboard plugin in `dashboard.json` at the plugin root: one entry per switch, each with a `label` and a `status`
-  command (an argv list, paths relative to the plugin root).
+  dashboard plugin in `dashboard.json` at the plugin root: one entry per switch, each with a `label`, an `icon` (one
+  emoji the dashboard puts before the label) and a `status` command (an argv list, paths relative to the plugin root).
 - The `status` command is read-only, runs offline in under a second on both hosts (`python3` or `sh`), and prints one
   JSON object: `value` (what is in effect), `source` (`env`, `project`, `global` or `default`), and `project` and
   `global` (the value set at each level, or `null`), with an optional `detail` string. Other persistent state a user

@@ -4,7 +4,7 @@
 
 <p align="center"><strong>用一行看到你開啟的每個 because-i-needed 模式，以及每個值的來源。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="授權：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 外掛"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="授權：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 外掛"></a></p>
 
 <p align="center"><a href="#顯示內容">顯示內容</a> &bull; <a href="#claude-code">Claude Code</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#外掛如何加入">外掛如何加入</a> &bull; <a href="#限制與狀態">限制與狀態</a> &bull; <a href="#安裝">安裝</a></p>
 
@@ -19,10 +19,11 @@ because-i-needed 的外掛有一些會持續保持設定的開關——peer-codi
 ## 顯示內容
 
 ```
-because-i-needed │ budget 80% · 5h now 20% │ free-hands active 0/40 · 1 open (project) · owner lab-sess │ peer-coding on (project)
+────────────────────────────────────────────────────────────────────────────────────────────────
+💰budget: 80% · 5h now 24%   🙌free-hands: active 0/40 · 1 open (project) · owner lab-sess   🤝peer-coding: on (project)
 ```
 
-- 每個已啟用的 because-i-needed 外掛所宣告的開關各佔一項：它的值、由哪個層級決定時顯示 `(project)` 或 `(env)`，以及一項細節，例如最近一次測得的用量額度或目標所屬的工作階段。
+- 一條淡色分隔線下方，每個已啟用的 because-i-needed 外掛所宣告的開關各佔一項 `{icon}label: value`；由哪個層級決定時附上 `(project)` 或 `(env)`，以及一項細節，例如最近一次測得的用量額度或目標所屬的工作階段。終端機較窄時，各項會換行，每行一項。
 - 沒有任何已啟用的外掛宣告開關時，不顯示任何內容。
 - `/dashboard:audit`（Claude Code）或 `$dashboard:audit`（Codex）會印出同一行，並針對每個開關印出專案層級與全域層級所設定的值。它不會變更任何東西。
 
@@ -46,10 +47,10 @@ status_line = ["model-with-reasoning", "weekly-limit"]
 外掛在其根目錄的 `dashboard.json` 中宣告自己的開關。每個具有 `mode` 技能的 because-i-needed 外掛都必須宣告，其他外掛可以自行選擇（本儲存庫的 Rule 11）：
 
 ```json
-{ "entries": [ { "label": "peer-coding", "status": ["bash", "scripts/mode.sh", "status", "--json"] } ] }
+{ "entries": [ { "label": "peer-coding", "icon": "🤝", "status": ["bash", "scripts/mode.sh", "status", "--json"] } ] }
 ```
 
-`status` 命令是唯讀的，在專案目錄中執行，並印出一個 JSON 物件：`value`、`source`（`env`、`project`、`global` 或 `default`）、`project` 與 `global`（各層級的值，或 `null`），以及選用的 `detail`。命令失敗、執行超過兩秒或印出其他內容時，會顯示為 `error`。之後新增的外掛不需要 dashboard 發佈新版本就會出現。
+`icon` 是顯示在名稱前的一個表情符號（缺少時為 `🔹`）。`status` 命令是唯讀的，在專案目錄中執行，並印出一個 JSON 物件：`value`、`source`（`env`、`project`、`global` 或 `default`）、`project` 與 `global`（各層級的值，或 `null`），以及選用的 `detail`。命令失敗、執行超過兩秒或印出其他內容時，會顯示為 `error`。之後新增的外掛不需要 dashboard 發佈新版本就會出現。
 
 以 `claude --plugin-dir` 從資料夾載入的外掛不在 Claude Code 的安裝紀錄中；若要顯示它們，請把它們的資料夾列在 `BECAUSE_I_NEEDED_PLUGIN_DIRS`（分隔方式與 `PATH` 相同）。
 
@@ -60,8 +61,9 @@ status_line = ["model-with-reasoning", "weekly-limit"]
 - 在 Claude Code 上，上方那一行顯示了 budget、free-hands 和 peer-coding，`/dashboard:audit` 印出了各個層級；沒有宣告開關的外掛時就沒有那一行（D01–D03）。
 - 在 Codex 上，`$dashboard:audit` 從已安裝的外掛印出了相同的項目，其中 budget 項目帶有 7 天額度；沒有宣告開關的外掛時，它會如此說明（D04–D05）。
 - Codex 的 `weekly-limit` 項目顯示了 `weekly 28% left`（C02）。
+- 自 0.2.0 起（[`run-0.2.0`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab/run-0.2.0)，Claude Code 2.1.300）：在 200 欄下，分隔線與 `{icon}label: value` 各項排在一行；在 80 欄下，各項完整換行，每行一項；Codex 的 audit 也印出相同的各項（D06–D08）。
 
-未測量：透過 Claude Code 市集安裝的外掛（受測的那一行讀取的是 `--plugin-dir` 資料夾；安裝紀錄有單元測試）；工作階段中途開關變更後那一行是否更新；桌面與 IDE 介面。
+未測量：tmux 以外的終端機，以及粗體與淡色樣式；透過 Claude Code 市集安裝的外掛（受測的那一行讀取的是 `--plugin-dir` 資料夾；安裝紀錄有單元測試）；工作階段中途開關變更後那一行是否更新；桌面與 IDE 介面。
 
 繪製那一行的 Claude Code 外掛 hooks 模組 API 標示為搶先體驗，各版本之間可能變動。
 
