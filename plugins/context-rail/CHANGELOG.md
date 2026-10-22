@@ -44,6 +44,9 @@ Every experiment below is in z-lab `precedent-lab/`, measured on Claude Code wit
 - **`build`** — adopted in `build-fidelity-0.1.0` B1–B3; the harness canary is `build-canary-0.1.0`.
   - Five headless runs each moved 14/14 items correctly and passed the four verification checks.
   - Each wrote nothing before the user's answer, and shrank `CLAUDE.md` from 1,906 to 540 characters.
+- **`audit`** — adopted in `audit-canary-0.1.0` U1–U3.
+  - Four runs changed no file and ran all five checks plus the asset comparison.
+  - They named 3/3 planted defects and reported none on a healthy copy.
 - **Normalization helps on this fixture** (`fresh-project-0.1.0` F1–F4).
   - Authority traps broke 12/12 with the decisions only in `CLAUDE.md`, and 0/12 after `build`.
   - False stops were 0/15 in both.
@@ -63,6 +66,7 @@ These are hypotheses, not claims:
 - large repositories and resident files with blurry item boundaries;
 - whether a user's partial approval of the table is applied faithfully.
 
-On Codex, only delivery was measured (Codex 0.163.0, `platform-2.1.306-0.163.0` P5–P8): hook output reaches the model,
-reads arrive as `Bash` and edits as `apply_patch`, and there is no failure event. Behavior on Codex is unmeasured by
+On Codex, only the platform was measured, with a probe hook rather than this plugin's hook (Codex 0.163.0,
+`platform-2.1.306-0.163.0` P5–P8): hook output reaches the model, reads arrive as `Bash` and edits as `apply_patch`,
+and there is no failure event. Behavior on Codex is unmeasured by
 the maintainer's decision D5.

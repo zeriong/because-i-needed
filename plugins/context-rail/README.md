@@ -96,6 +96,7 @@ Code (2.1.296–2.1.308, Opus, effort `xhigh`, headless).
 | …and still lets an explicit override through | 12/12 proceeded and rewrote the record in place | `stop-en-r2-2.1.306` |
 | …and does not stop conflict-free edits | 0/15 stopped | `stop-en-r2-2.1.306` |
 | `build` moves items to the right place | 5/5 runs: 14/14 items, all checks passing, `CLAUDE.md` 1,906 → 540 chars | `build-fidelity-0.1.0` |
+| `audit` checks without changing anything and names planted defects | 4/4 runs: 0 files changed, all checks run, 3/3 planted defects named, no false defects | `audit-canary-0.1.0` |
 | A project normalized by `build` keeps its decisions better than the same decisions in `CLAUDE.md` | broke the prohibition under authority requests: 12/12 resident → 0/12 normalized; 0/15 false stops in both | `fresh-project-0.1.0` |
 | Path-scoped rules load on first contact with a matching file | Read, shell read and Write all attached the rule | `platform-r2-2.1.308-0.163.0` |
 
@@ -105,11 +106,17 @@ paragraph, delivery to subagents, large repositories, and any effect on Codex.
 
 ## Codex
 
-The same skills, hook and installer work on Codex (`$context-rail:build`, `install-hooks.py --host codex` →
-`.codex/hooks/`, `.codex/hooks.json`). On Codex 0.163.0 the hook's output was measured to reach the model; shell reads
-arrive as `Bash` and edits as `apply_patch`, and a failed shell call still fires PostToolUse. Everything else on Codex
-— including whether the paragraph changes behavior there, when nested `AGENTS.md` files load, and `apply_patch`
-delivery — is **unmeasured**. Trust the hook in `/hooks` before relying on it.
+The same skills install the same hook on Codex (`$context-rail:build`, `install-hooks.py --host codex` → `.codex/hooks/`,
+`.codex/hooks.json`).
+
+- **What was measured there is the platform, not this plugin** (Codex 0.163.0, with a probe hook):
+  - PostToolUse output reaches the model.
+  - Shell reads arrive as `Bash`, and edits as `apply_patch`.
+  - A failed shell call still fires PostToolUse.
+- **Not measured:** running context-rail's own hook and skills on Codex, whether the paragraph changes behavior there,
+  when nested `AGENTS.md` files load, and `apply_patch` delivery.
+
+Trust the hook in `/hooks` before relying on it.
 
 ## Requirements
 

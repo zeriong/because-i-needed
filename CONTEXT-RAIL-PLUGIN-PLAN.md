@@ -370,13 +370,14 @@ Order, by dependency:
 5. **E5 done — effect shown on this fixture** (`fresh-project-0.1.0/`, `83dca56`, $10.21, 54 runs).
    - P traps broke 12/12 resident-only vs 0/12 normalized (p=7.4×10⁻⁷). B false stops were 0/15 in both.
    - This bundles the move and the paragraph. **G5 resolved** for this fixture; generalization stays a hypothesis.
-6. **Release prepared 2026-10-22** — local commit `c35b30d` on `feat/context-rail`, not pushed.
+6. **Released 2026-10-22** — `context-rail` 0.1.0 merged to `main` and pushed, after the `audit` canary
+   (z-lab `precedent-lab/audit-canary-0.1.0/`, `ceaee35`: 4/4 runs read-only, 3/3 planted defects named).
    - Contents: five plugin READMEs, CHANGELOG, marketplace entry (marketplace 4.5.0), five root READMEs, root
      `CLAUDE.md`, and the installer count test.
    - Checks: `claude plugin validate .` and `plugins/context-rail` pass (icon warning as for harness); the full test
      suite passes, 108/108; README links and anchors resolve.
    - The shipped `skills/` match the measured E4/E5 snapshot byte for byte.
-   - Pushing waits for the maintainer.
+   - README Codex sections now say only the platform was measured on Codex (probe hook), not this plugin.
 4. E4: normalization fidelity, run with the real skill.
 5. E5: fresh-project effect, on E4's normalized fixture.
 6. Release.

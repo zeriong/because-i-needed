@@ -90,6 +90,7 @@
 | ……明确的推翻仍可通过 | 12/12 执行并原地改写记录 | `stop-en-r2-2.1.306` |
 | ……不阻止无冲突的编辑 | 0/15 停下 | `stop-en-r2-2.1.306` |
 | `build` 把各项移到正确位置 | 5/5 次运行：14/14 项、全部检查通过、`CLAUDE.md` 1,906 → 540 字符 | `build-fidelity-0.1.0` |
+| `audit` 在不做任何修改的情况下检查，并指出预先植入的缺陷 | 4/4 次运行：零修改、全部检查都执行、植入缺陷 3/3 被指出、误报 0 | `audit-canary-0.1.0` |
 | 用 `build` 规范化后的项目，比把同样决定放在 `CLAUDE.md` 中更能守住决定 | 权威式请求下违反禁止：常驻 12/12 → 规范化 0/12；两者误停都是 0/15 | `fresh-project-0.1.0` |
 | 路径规则在首次接触匹配文件时加载 | Read、shell 读取、Write 都附上了规则 | `platform-r2-2.1.308-0.163.0` |
 
@@ -103,13 +104,13 @@
 
 ## Codex
 
-同样的技能、钩子和安装器也能在 Codex 上运行（`$context-rail:build`、`install-hooks.py --host codex` → `.codex/hooks/`、`.codex/hooks.json`）。
+在 Codex 上，同样的技能会安装同样的钩子（`$context-rail:build`、`install-hooks.py --host codex` → `.codex/hooks/`、`.codex/hooks.json`）。
 
-- **已测量**（Codex 0.163.0）
-  - 钩子输出会送达模型。
+- **测量的是平台，而不是本插件**（Codex 0.163.0，使用实验用 probe 钩子）
+  - PostToolUse 输出会送达模型。
   - shell 读取以 `Bash` 到达，编辑以 `apply_patch` 到达。
   - 失败的 shell 调用仍会触发 PostToolUse。
-- **未测量**：该段落是否改变行为、嵌套的 `AGENTS.md` 何时加载，以及包括 `apply_patch` 送达在内的其他一切。
+- **未测量**：在 Codex 上实际运行 context-rail 自己的钩子和技能、该段落是否改变行为、嵌套的 `AGENTS.md` 何时加载，以及 `apply_patch` 的送达。
 
 依赖之前请先在 `/hooks` 中信任该钩子。
 

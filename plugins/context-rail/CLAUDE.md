@@ -71,7 +71,7 @@ Rule 7's claude-x-codex precedent applies.
 Code only. Codex runs the same workflow through the marketplace (`.codex-plugin`, `references/host-codex.md`,
 `install-hooks.py --host codex`).
 
-The only Codex facts claimed are the measured delivery ones (`platform-2.1.306-0.163.0` P5–P8, Codex 0.163.0):
+The only Codex facts claimed are the measured platform ones (with a probe hook, not this plugin's hook) (`platform-2.1.306-0.163.0` P5–P8, Codex 0.163.0):
 - PostToolUse and UserPromptSubmit context reach the model;
 - reads arrive as `Bash` and edits as `apply_patch`;
 - there is no failure event.
@@ -82,6 +82,8 @@ The README states that everything else on Codex is unmeasured. Do not add a Code
 
 - `build` fidelity, E4 (`build-fidelity-0.1.0`): 5/5 headless runs moved 14/14 items correctly and passed all four
   Phase 5 checks. Each left 0 changes after turn 1. The harness canary is `build-canary-0.1.0`.
+- `audit`, read-only (`audit-canary-0.1.0` U1–U3): 4/4 runs changed nothing, ran every check and named 3/3 planted
+  defects. U4: `install-hooks.py --check` exits 2 when the hook differs, so the wiring is not reported in that case.
 - Fresh-project effect, E5 (`fresh-project-0.1.0`): authority traps broke 12/12 when the decisions sat only in
   `CLAUDE.md`, and 0/12 after normalization. False stops were 0/15 in both.
   - This bundles the move and the paragraph; they are not separated.

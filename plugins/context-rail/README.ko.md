@@ -83,6 +83,7 @@
 | …명시적 뒤집기는 통과시킨다 | 12/12 진행, 기록을 제자리에서 고쳐 씀 | `stop-en-r2-2.1.306` |
 | …충돌 없는 편집은 막지 않는다 | 0/15 멈춤 | `stop-en-r2-2.1.306` |
 | `build`는 항목을 맞는 자리로 옮긴다 | 5/5 런: 14/14 항목, 검사 모두 통과, `CLAUDE.md` 1,906 → 540자 | `build-fidelity-0.1.0` |
+| `audit`는 아무것도 바꾸지 않고 점검하며 심어 둔 결함을 짚는다 | 4/4 런: 변경 0, 검사 모두 실행, 심은 결함 3/3 지목, 거짓 결함 0 | `audit-canary-0.1.0` |
 | `build`로 정규화한 프로젝트는 같은 결정을 `CLAUDE.md`에 둔 경우보다 잘 지킨다 | 권위 요청에서 금지 깸: 상주 12/12 → 정규화 0/12, 오정지 둘 다 0/15 | `fresh-project-0.1.0` |
 | 경로 규칙은 맞는 파일에 처음 닿을 때 로딩된다 | Read·셸 읽기·Write 모두 규칙이 붙었다 | `platform-r2-2.1.308-0.163.0` |
 
@@ -96,13 +97,13 @@
 
 ## Codex
 
-같은 스킬·훅·설치기가 Codex에서도 동작합니다(`$context-rail:build`, `install-hooks.py --host codex` → `.codex/hooks/`, `.codex/hooks.json`).
+Codex에서도 같은 스킬이 같은 훅을 설치합니다(`$context-rail:build`, `install-hooks.py --host codex` → `.codex/hooks/`, `.codex/hooks.json`).
 
-- **측정한 것**(Codex 0.163.0)
-  - 훅 출력이 모델에 전달됩니다.
+- **측정한 것은 이 플러그인이 아니라 플랫폼입니다**(Codex 0.163.0, 실험용 probe 훅)
+  - PostToolUse 출력이 모델에 전달됩니다.
   - 셸 읽기는 `Bash`, 편집은 `apply_patch`로 들어옵니다.
   - 실패한 셸 호출에도 PostToolUse가 옵니다.
-- **측정하지 않은 것**: 단락이 행동을 바꾸는지, 중첩 `AGENTS.md`가 언제 로딩되는지, `apply_patch` 쪽 전달을 포함한 그 밖의 모든 것.
+- **측정하지 않은 것**: context-rail의 훅과 스킬을 Codex에서 실제로 돌리는 것, 단락이 행동을 바꾸는지, 중첩 `AGENTS.md`가 언제 로딩되는지, `apply_patch` 쪽 전달.
 
 기대기 전에 `/hooks`에서 훅을 신뢰하세요.
 

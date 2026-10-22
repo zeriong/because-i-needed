@@ -6,9 +6,8 @@ names the ones that bite. Written 2026-10-22; not committed.
 - **Measured files to ship:** z-lab `precedent-lab/build-canary-0.1.0/plugin/context-rail/`.
   - `plugin.sha256` lists their hashes. The hook asset is A′, sha256 `3c31c65f…`.
   - E4 and E5 measured exactly these bytes. Changing a skill, script or hook means a new z-lab experiment (Rule 9).
-- **Reference implementation (optional):** local branch `feat/context-rail`, commit `c35b30d`, not pushed.
-  - It is a complete release: plugin folder, five READMEs, CHANGELOG, marketplace 4.5.0, root READMEs, tests 108/108.
-  - Diff against it, cherry-pick it, or delete it (`git branch -D feat/context-rail`).
+- **Released 2026-10-22:** `plugins/context-rail/` 0.1.0 is on `main`, with marketplace 4.5.0, the five READMEs, the
+  CHANGELOG and the tests. Use this guide to change or extend it, not to rebuild it.
 - **History and evidence log:** `CONTEXT-RAIL-PLUGIN-PLAN.md`, which holds the gap list G1–G8 and the experiment log.
 
 ---
@@ -201,8 +200,9 @@ grep -rn --include='*.md' --include='*.json' -F '4.4.0' . | grep -v CHANGELOG   
 | …does not stop conflict-free edits | 0/15 | `stop-en-r2-2.1.306` R3 |
 | `build` moves items correctly | 5/5 runs, 14/14 items, 4/4 checks; `CLAUDE.md` 1,906 → 540 chars | `build-fidelity-0.1.0` B1–B3 |
 | A normalized project keeps decisions better than the same decisions in `CLAUDE.md` | 12/12 → 0/12 broke; 0/15 false stops in both | `fresh-project-0.1.0` F1–F4 |
+| `audit` stays read-only and names planted defects | 4/4 runs: 0 changes, all checks, 3/3 defects, no false defects | `audit-canary-0.1.0` U1–U3 |
 | Path-scoped rules attach on first contact (Read, shell read, Write); a 12k rule arrives whole | — | `platform-r2-2.1.308-0.163.0` Q1–Q2 |
-| Codex 0.163.0 delivers PostToolUse context; reads arrive as `Bash`, edits as `apply_patch`; there is no failure event | — | `platform-2.1.306-0.163.0` P5–P8 |
+| Codex 0.163.0 (platform, probe hook) delivers PostToolUse context; reads arrive as `Bash`, edits as `apply_patch`; there is no failure event | — | `platform-2.1.306-0.163.0` P5–P8 |
 
 Two caveats:
 - The E5 effect bundles the move and the paragraph; they were not separated.
