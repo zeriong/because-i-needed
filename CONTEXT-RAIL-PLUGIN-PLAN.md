@@ -360,7 +360,7 @@ Order, by dependency:
      - both manifests (`claude plugin validate` passes);
      - `tests/test_context_rail.py`. 7/7 pass; the full suite is 108/108.
    - READMEs, CHANGELOG and the marketplace entry wait for the experiment results.
-4. **E4 done — `build` adopted** (z-lab `precedent-lab/build-fidelity-0.1.0/`, `4df0d83`, $8.18). Headless, 2 turns,
+4. **E4 done — `build` adopted** (z-lab `precedent-lab/build-fidelity-0.1.0/`, `4df0d83`, $8.20). Headless, 2 turns,
    5 runs. **G4 resolved** on this fixture.
    - Preceded by a 1-run harness canary (`build-canary-0.1.0/`, `6a374cd`) confirming the skill loads, the script
      paths resolve, the skill asks before writing in `-p` mode, and `--resume` works.
