@@ -5,7 +5,7 @@
 <p align="center">Works only with <strong>Claude Code</strong> and <strong>Codex CLI</strong>.</p>
 
 <p align="center">
-  <strong>Claude Code and Codex plugins I built because I needed them — project harnesses, measured UI, Claude × Codex orchestration, autonomous goal runs, a dashboard of every mode, and a usage gate.</strong>
+  <strong>Claude Code and Codex plugins I built because I needed them — project harnesses, measured UI, Claude × Codex orchestration, autonomous goal runs, a dashboard of every mode, a usage gate, and decision records that arrive with the file.</strong>
 </p>
 
 <p align="center">
@@ -23,14 +23,14 @@
 
 ---
 
-This repository is a Claude Code and Codex **plugin marketplace** with six independent plugins. Install only the ones you need.
+This repository is a Claude Code and Codex **plugin marketplace** with seven independent plugins. Install only the ones you need.
 
 ## Codex
 
-The same six plugins also support Codex CLI 0.158.0 or later. Install a chosen subset:
+The same seven plugins also support Codex CLI 0.158.0 or later. Install a chosen subset:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands,dashboard,budget
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands,dashboard,budget,context-rail
 ```
 
 Or use the CLI directly:
@@ -43,9 +43,10 @@ codex plugin add peer-coding@because-i-needed
 codex plugin add free-hands@because-i-needed
 codex plugin add dashboard@because-i-needed
 codex plugin add budget@because-i-needed
+codex plugin add context-rail@because-i-needed
 ```
 
-Start a new Codex session and invoke `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$peer-coding:run`, or `$free-hands:run`. Use `$peer-coding:mode on` for automatic orchestration, `$peer-coding:audit` to inspect context parity, `$dashboard:audit` to see every mode, and `$budget:mode 80` to stop at a usage threshold. Review and trust installed hooks with `/hooks` before relying on automatic routing, the UI commit gate, free-hands enforcement, or the budget gate.
+Start a new Codex session and invoke `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$peer-coding:run`, or `$free-hands:run`. Use `$peer-coding:mode on` for automatic orchestration, `$peer-coding:audit` to inspect context parity, `$dashboard:audit` to see every mode, `$budget:mode 80` to stop at a usage threshold, and `$context-rail:build` to set up decision records. Review and trust installed hooks with `/hooks` before relying on automatic routing, the UI commit gate, free-hands enforcement, or the budget gate.
 
 The installer defaults to Claude Code; `--host codex` selects Codex. Codex installs at user scope: omit `--scope` or use `--scope user`; project/local scope is rejected. Skills, scripts and workflow contracts are shared; each plugin includes a Codex manifest. Codex execution uses its own questions and independent agents. The harness generates `.codex/hooks.json`, `.codex/hooks/`, `.codex/scripts/review-gate.sh`, `.codex/scripts/latest-model.py` and `.agents/skills/`; existing Claude artifacts are preserved. UI measurement still requires the relevant browser/mobile tools. See each plugin's Codex section for details.
 
@@ -112,6 +113,16 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the budget README →](plugins/budget)
 
+### [context-rail](plugins/context-rail) · `v0.1.0`
+
+**Recorded decisions reach the agent when it opens the file they govern, not on every turn.** It moves file-specific decisions out of `CLAUDE.md`/`AGENTS.md` into `PRECEDENT.md` records beside the code, and installs a project hook that injects a file's decisions — with a paragraph that makes the agent stop and ask before overturning one — when the agent reads or edits the file.
+
+- **Use it when** your instruction files keep growing with decisions about specific files, or agents reverse a recorded decision because someone asked.
+- **Entry:** `/context-rail:build` · `$context-rail:build`; `/context-rail:audit` · `$context-rail:audit` to check
+- **Heads-up:** the plugin adds no hooks of its own; `build` writes a hook and settings into your project after you confirm. Behavior is measured on Claude Code only.
+
+[Read the context-rail README →](plugins/context-rail)
+
 ## Retired plugins
 
 ### plan-smith — retired 2026-09-30 (last version 1.8.0)
@@ -143,6 +154,7 @@ claude plugin install peer-coding@because-i-needed
 claude plugin install free-hands@because-i-needed
 claude plugin install dashboard@because-i-needed
 claude plugin install budget@because-i-needed
+claude plugin install context-rail@because-i-needed
 ```
 
 Or in Claude Code: `/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git`, then install from the list.
@@ -162,7 +174,8 @@ Or wire it directly in `~/.claude/settings.json`:
     "peer-coding@because-i-needed": true,
     "free-hands@because-i-needed": true,
     "dashboard@because-i-needed": true,
-    "budget@because-i-needed": true
+    "budget@because-i-needed": true,
+    "context-rail@because-i-needed": true
   }
 }
 ```
@@ -220,7 +233,7 @@ Every command reads **subject : action** — `/<plugin>:<skill>`.
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # lists the six plugins
+├── .claude-plugin/marketplace.json   # lists the seven plugins
 ├── install.sh                        # interactive installer (--host claude|codex)
 └── plugins/
     ├── harness/                      # skill
@@ -228,7 +241,8 @@ because-i-needed/
     ├── peer-coding/                  # 3 skills + prompt hook + 3 scripts
     ├── free-hands/                   # 1 skill + 5 agents + 4 hooks + 4 scripts
     ├── dashboard/                    # 1 skill + hooks module + 1 script
-    └── budget/                       # 1 skill + hooks module + 2 Codex hooks + 2 scripts
+    ├── budget/                       # 1 skill + hooks module + 2 Codex hooks + 2 scripts
+    └── context-rail/                 # 2 skills + project hook asset + 3 scripts
 ```
 
 Each plugin folder is self-contained: its README, manifest, and everything it ships live under `plugins/<name>/`.

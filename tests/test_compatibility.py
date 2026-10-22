@@ -64,8 +64,8 @@ class CompatibilityTests(unittest.TestCase):
         installer = ["bash", str(ROOT / "install.sh")]
         result = run(installer + ["--host=codex", "--all", "--dry-run"], self.repo)
         self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.stdout.count("+ codex plugin add "), 6)
-        for name in ("harness", "ux-ui", "peer-coding", "free-hands", "dashboard", "budget"):
+        self.assertEqual(result.stdout.count("+ codex plugin add "), 7)
+        for name in ("harness", "ux-ui", "peer-coding", "free-hands", "dashboard", "budget", "context-rail"):
             self.assertIn(f"+ codex plugin add {name}@", result.stdout)
         self.assertNotIn("plan-smith", result.stdout)
         self.assertNotIn("+ claude", result.stdout)

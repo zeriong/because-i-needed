@@ -1,7 +1,7 @@
 # because-i-needed — repository rules
 
-This repository is a Claude Code and Codex marketplace holding six plugins (harness, ux-ui, peer-coding, free-hands,
-dashboard, budget).
+This repository is a Claude Code and Codex marketplace holding seven plugins (harness, ux-ui, peer-coding, free-hands,
+dashboard, budget, context-rail).
 **Shared rules live in this file**; **per-plugin rules live in `plugins/<name>/CLAUDE.md`** (loaded automatically when you read that plugin's files).
 A plugin file does not repeat this file — it holds only what applies to that plugin. If the two conflict, fix both.
 

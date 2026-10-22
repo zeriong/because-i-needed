@@ -5,7 +5,7 @@
 <p align="center"><strong>Claude Code</strong> と <strong>Codex CLI</strong> でのみ動作します。</p>
 
 <p align="center">
-  <strong>必要だから作った Claude Code と Codex プラグイン集 — プロジェクトハーネス、実測ベースの UI、Claude × Codex のオーケストレーション、自律ゴール実行、全モードのダッシュボード、使用量ゲート。</strong>
+  <strong>必要だから作った Claude Code と Codex プラグイン集 — プロジェクトハーネス、実測ベースの UI、Claude × Codex のオーケストレーション、自律ゴール実行、全モードのダッシュボード、使用量ゲート、ファイルと一緒に届く決定記録。</strong>
 </p>
 
 <p align="center">
@@ -23,14 +23,14 @@
 
 ---
 
-このリポジトリは、独立した6つのプラグインを収めた Claude Code と Codex の**プラグインマーケットプレイス**です。必要なものだけをインストールしてください。
+このリポジトリは、独立した7つのプラグインを収めた Claude Code と Codex の**プラグインマーケットプレイス**です。必要なものだけをインストールしてください。
 
 ## Codex
 
-同じ6つのプラグインを Codex CLI 0.158.0 以降でも使用できます。必要なものを選んでインストールします。
+同じ7つのプラグインを Codex CLI 0.158.0 以降でも使用できます。必要なものを選んでインストールします。
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands,dashboard,budget
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands,dashboard,budget,context-rail
 ```
 
 CLI から直接インストールすることもできます。
@@ -43,9 +43,10 @@ codex plugin add peer-coding@because-i-needed
 codex plugin add free-hands@because-i-needed
 codex plugin add dashboard@because-i-needed
 codex plugin add budget@because-i-needed
+codex plugin add context-rail@because-i-needed
 ```
 
-新しい Codex セッションで `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$peer-coding:run`、`$free-hands:run` を呼び出します。自動オーケストレーションは `$peer-coding:mode on`、コンテキスト点検は `$peer-coding:audit`、すべてのモードの確認は `$dashboard:audit`、使用量の割合での停止は `$budget:mode 80` です。自動ルーティング、UI コミットゲート、free-hands の強制動作、budget ゲートを使う前に、`/hooks` でフックを確認して信頼してください。
+新しい Codex セッションで `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$peer-coding:run`、`$free-hands:run` を呼び出します。自動オーケストレーションは `$peer-coding:mode on`、コンテキスト点検は `$peer-coding:audit`、すべてのモードの確認は `$dashboard:audit`、使用量の割合での停止は `$budget:mode 80`、決定記録の設定は `$context-rail:build` です。自動ルーティング、UI コミットゲート、free-hands の強制動作、budget ゲートを使う前に、`/hooks` でフックを確認して信頼してください。
 
 インストーラーの既定は Claude Code です。`--host codex` で Codex を選択します。Codex はユーザースコープのみで、`--scope` を省略するか `--scope user` を指定します。project/local は拒否されます。スキル、スクリプト、作業手順は共有し、各プラグインに Codex マニフェストを同梱します。Codex では独自の質問ツールと独立したエージェントを使用します。ハーネスは `.codex/hooks.json`、`.codex/hooks/`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py`、`.agents/skills/` を生成し、既存の Claude ファイルを保持します。UI の実測には対応するブラウザー・モバイルツールが必要です。詳細は各プラグインの Codex 節を参照してください。
 
@@ -112,6 +113,16 @@ codex plugin add budget@because-i-needed
 
 [budget の日本語 README を読む →](plugins/budget/README.ja.md)
 
+### [context-rail](plugins/context-rail) · `v0.1.0`
+
+**記録された決定は毎ターンではなく、エージェントがその決定の対象ファイルを開いたときに届きます。** ファイルごとの決定を `CLAUDE.md`/`AGENTS.md` からコードの隣の `PRECEDENT.md` 記録へ移し、エージェントがそのファイルを読む・編集するときに決定を入れるプロジェクトフックを入れます。決定の後には、覆す前に止まって確認させる段落が続きます。
+
+- **使いどころ:** 指示ファイルが特定ファイルについての決定で膨らみ続けるとき、またはエージェントが依頼一つで記録された決定を覆してしまうとき。
+- **エントリーポイント:** `/context-rail:build` · `$context-rail:build`。点検は `/context-rail:audit` · `$context-rail:audit`
+- **注意:** プラグイン自体はフックを追加しません。`build` が確認を得たうえでプロジェクトにフックと設定を書き込みます。振る舞いの効果は Claude Code でのみ測定しました。
+
+[context-rail の日本語 README を読む →](plugins/context-rail/README.ja.md)
+
 ## 退役したプラグイン
 
 ### plan-smith — 2026-09-30 退役（最終バージョン 1.8.0）
@@ -143,6 +154,7 @@ claude plugin install peer-coding@because-i-needed
 claude plugin install free-hands@because-i-needed
 claude plugin install dashboard@because-i-needed
 claude plugin install budget@because-i-needed
+claude plugin install context-rail@because-i-needed
 ```
 
 または Claude Code 内で `/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git` と進み、一覧からインストールします。
@@ -162,7 +174,8 @@ claude plugin install budget@because-i-needed
     "peer-coding@because-i-needed": true,
     "free-hands@because-i-needed": true,
     "dashboard@because-i-needed": true,
-    "budget@because-i-needed": true
+    "budget@because-i-needed": true,
+    "context-rail@because-i-needed": true
   }
 }
 ```
@@ -228,7 +241,8 @@ because-i-needed/
     ├── peer-coding/                  # スキル 3 + プロンプトフック + スクリプト 3
     ├── free-hands/                   # スキル 1 + エージェント 5 + フック 4 + スクリプト 4
     ├── dashboard/                    # スキル 1 + フックモジュール + スクリプト 1
-    └── budget/                       # スキル 1 + フックモジュール + Codex フック 2 + スクリプト 2
+    ├── budget/                       # スキル 1 + フックモジュール + Codex フック 2 + スクリプト 2
+    └── context-rail/                 # スキル 2 + プロジェクトフック資産 + スクリプト 3
 ```
 
 各プラグインフォルダは自己完結しています。README、マニフェスト、配布されるすべてのファイルが `plugins/<名前>/` の下にあります。

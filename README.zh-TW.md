@@ -5,7 +5,7 @@
 <p align="center">僅適用於 <strong>Claude Code</strong> 和 <strong>Codex CLI</strong>。</p>
 
 <p align="center">
-  <strong>因為需要才自己做的 Claude Code 與 Codex 外掛——專案 harness、實測驅動的 UI、Claude × Codex 協作編排與自主目標執行、所有模式的儀表板與用量閘門。</strong>
+  <strong>因為需要才自己做的 Claude Code 與 Codex 外掛——專案 harness、實測驅動的 UI、Claude × Codex 協作編排與自主目標執行、所有模式的儀表板、用量閘門，以及隨檔案送達的決定紀錄。</strong>
 </p>
 
 <p align="center">
@@ -23,14 +23,14 @@
 
 ---
 
-本儲存庫是一個 Claude Code 與 Codex **外掛市集**，收錄六個彼此獨立的外掛。只要安裝你需要的即可。
+本儲存庫是一個 Claude Code 與 Codex **外掛市集**，收錄七個彼此獨立的外掛。只要安裝你需要的即可。
 
 ## Codex
 
-這6個外掛也支援 Codex CLI 0.158.0 及以上版本。選擇需要的外掛安裝：
+這7個外掛也支援 Codex CLI 0.158.0 及以上版本。選擇需要的外掛安裝：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands,dashboard,budget
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands,dashboard,budget,context-rail
 ```
 
 也可以直接使用 CLI：
@@ -43,9 +43,10 @@ codex plugin add peer-coding@because-i-needed
 codex plugin add free-hands@because-i-needed
 codex plugin add dashboard@because-i-needed
 codex plugin add budget@because-i-needed
+codex plugin add context-rail@because-i-needed
 ```
 
-在新的 Codex 工作階段中呼叫 `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$peer-coding:run` 或 `$free-hands:run`。使用 `$peer-coding:mode on` 開啟自動協作，使用 `$peer-coding:audit` 檢查上下文，使用 `$dashboard:audit` 查看所有模式，使用 `$budget:mode 80` 在用量門檻處停止。在依賴自動路由、UI 提交閘門、free-hands 強制執行和 budget 閘門之前，請透過 `/hooks` 審核並信任已安裝的掛鉤。
+在新的 Codex 工作階段中呼叫 `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$peer-coding:run` 或 `$free-hands:run`。使用 `$peer-coding:mode on` 開啟自動協作，使用 `$peer-coding:audit` 檢查上下文，使用 `$dashboard:audit` 查看所有模式，使用 `$budget:mode 80` 在用量門檻處停止，使用 `$context-rail:build` 設定決定紀錄。在依賴自動路由、UI 提交閘門、free-hands 強制執行和 budget 閘門之前，請透過 `/hooks` 審核並信任已安裝的掛鉤。
 
 安裝器預設使用 Claude Code；`--host codex` 選擇 Codex。Codex 僅支援使用者範圍：省略 `--scope` 或使用 `--scope user`，project/local 範圍會被拒絕。兩個宿主共用技能、腳本和工作流程，每個外掛另附 Codex 清單。Codex 使用自己的提問工具和獨立代理。產生的 harness 使用 `.codex/hooks.json`、`.codex/hooks/`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py` 和 `.agents/skills/`，保留現有 Claude 檔案。UI 實測仍需要對應的瀏覽器或行動工具。詳情參閱各外掛的 Codex 章節。
 
@@ -112,6 +113,16 @@ codex plugin add budget@because-i-needed
 
 [閱讀 budget 繁體中文 README →](plugins/budget/README.zh-TW.md)
 
+### [context-rail](plugins/context-rail) · `v0.1.0`
+
+**已記錄的決定不是每一輪都載入，而是在代理打開它所管轄的檔案時送達。** 它把針對特定檔案的決定從 `CLAUDE.md`/`AGENTS.md` 移到程式碼旁的 `PRECEDENT.md` 紀錄中，並安裝一個專案 hook：當代理讀取或編輯該檔案時注入這些決定，後面附上一段讓代理在推翻決定前先停下詢問的說明。
+
+- **適用時機：** 指令檔案因針對特定檔案的決定而不斷膨脹，或代理因一個請求就推翻已記錄的決定時。
+- **進入點：** `/context-rail:build` · `$context-rail:build`；檢查用 `/context-rail:audit` · `$context-rail:audit`
+- **注意：** 外掛本身不新增 hook；`build` 在你確認後把 hook 和設定寫入專案。行為效果只在 Claude Code 上測量過。
+
+[閱讀 context-rail 繁體中文 README →](plugins/context-rail/README.zh-TW.md)
+
 ## 已退役的外掛
 
 ### plan-smith — 於 2026-09-30 退役（最後版本 1.8.0）
@@ -143,6 +154,7 @@ claude plugin install peer-coding@because-i-needed
 claude plugin install free-hands@because-i-needed
 claude plugin install dashboard@because-i-needed
 claude plugin install budget@because-i-needed
+claude plugin install context-rail@because-i-needed
 ```
 
 或在 Claude Code 中：`/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git`，然後從清單中安裝。
@@ -162,7 +174,8 @@ claude plugin install budget@because-i-needed
     "peer-coding@because-i-needed": true,
     "free-hands@because-i-needed": true,
     "dashboard@because-i-needed": true,
-    "budget@because-i-needed": true
+    "budget@because-i-needed": true,
+    "context-rail@because-i-needed": true
   }
 }
 ```
@@ -220,7 +233,7 @@ codex plugin remove claude-x-codex@because-i-needed
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # 列出六個外掛
+├── .claude-plugin/marketplace.json   # 列出七個外掛
 ├── install.sh                        # 互動式安裝腳本（--host claude|codex）
 └── plugins/
     ├── harness/                      # 技能
@@ -228,7 +241,8 @@ because-i-needed/
     ├── peer-coding/                  # 3 個技能 + 提示 hook + 3 個腳本
     ├── free-hands/                   # 1 個技能 + 5 個代理 + 4 個 hooks + 4 個腳本
     ├── dashboard/                    # 1 個技能 + hooks 模組 + 1 個腳本
-    └── budget/                       # 1 個技能 + hooks 模組 + 2 個 Codex hooks + 2 個腳本
+    ├── budget/                       # 1 個技能 + hooks 模組 + 2 個 Codex hooks + 2 個腳本
+    └── context-rail/                 # 2 個技能 + 專案 hook 資產 + 3 個腳本
 ```
 
 每個外掛資料夾都是自給自足的：它的 README、manifest，以及所有隨附的內容，都放在 `plugins/<name>/` 之下。

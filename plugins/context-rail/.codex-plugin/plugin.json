@@ -1,0 +1,34 @@
+{
+  "name": "context-rail",
+  "description": "Context rail: moves file-specific decisions out of always-loaded CLAUDE.md/AGENTS.md into PRECEDENT.md records beside the code, and installs an arrival hook that injects a file's recorded decisions — with a confirm-before-changing paragraph — when an agent reads or edits it. Resident instructions only shrink.",
+  "version": "0.1.0",
+  "author": {
+    "name": "zeriong"
+  },
+  "homepage": "https://github.com/zeriong/because-i-needed/tree/main/plugins/context-rail",
+  "repository": "https://github.com/zeriong/because-i-needed",
+  "keywords": [
+    "context",
+    "precedent",
+    "decision-records",
+    "arrival-hook",
+    "claude-md",
+    "agents-md"
+  ],
+  "skills": "./skills/",
+  "license": "MIT",
+  "interface": {
+    "displayName": "context-rail",
+    "shortDescription": "Deliver recorded decisions when a file is opened",
+    "longDescription": "Context rail: moves file-specific decisions out of always-loaded CLAUDE.md/AGENTS.md into PRECEDENT.md records beside the code, and installs an arrival hook that injects a file's recorded decisions — with a confirm-before-changing paragraph — when an agent reads or edits it. Resident instructions only shrink.",
+    "developerName": "zeriong",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use context-rail to set up decision records for this project."
+    ]
+  }
+}

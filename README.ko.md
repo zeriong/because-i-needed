@@ -5,7 +5,7 @@
 <p align="center"><strong>Claude Code</strong>와 <strong>Codex CLI</strong>에서만 동작합니다.</p>
 
 <p align="center">
-  <strong>필요해서 만든 Claude Code와 Codex 플러그인 모음 — 프로젝트 하네스, 실측 기반 UI, Claude × Codex 오케스트레이션, 자율 목표 실행, 모든 모드를 보여 주는 대시보드, 사용량 게이트.</strong>
+  <strong>필요해서 만든 Claude Code와 Codex 플러그인 모음 — 프로젝트 하네스, 실측 기반 UI, Claude × Codex 오케스트레이션, 자율 목표 실행, 모든 모드를 보여 주는 대시보드, 사용량 게이트, 파일과 함께 도착하는 결정 기록.</strong>
 </p>
 
 <p align="center">
@@ -23,14 +23,14 @@
 
 ---
 
-이 레포는 독립된 플러그인 6개를 담은 Claude Code와 Codex **플러그인 마켓플레이스**입니다. 필요한 것만 골라 설치하면 됩니다.
+이 레포는 독립된 플러그인 7개를 담은 Claude Code와 Codex **플러그인 마켓플레이스**입니다. 필요한 것만 골라 설치하면 됩니다.
 
 ## Codex
 
-같은 플러그인 6개를 Codex CLI 0.158.0 이상에서도 사용할 수 있습니다. 필요한 플러그인을 골라 설치하세요:
+같은 플러그인 7개를 Codex CLI 0.158.0 이상에서도 사용할 수 있습니다. 필요한 플러그인을 골라 설치하세요:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands,dashboard,budget
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands,dashboard,budget,context-rail
 ```
 
 또는 CLI로 직접 설치합니다:
@@ -43,9 +43,10 @@ codex plugin add peer-coding@because-i-needed
 codex plugin add free-hands@because-i-needed
 codex plugin add dashboard@because-i-needed
 codex plugin add budget@because-i-needed
+codex plugin add context-rail@because-i-needed
 ```
 
-새 Codex 세션에서 `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$peer-coding:run`, `$free-hands:run`을 호출합니다. 자동 오케스트레이션은 `$peer-coding:mode on`, 컨텍스트 점검은 `$peer-coding:audit`, 모든 모드 확인은 `$dashboard:audit`, 사용량 임계값에서 멈추려면 `$budget:mode 80`입니다. 자동 라우팅, UI 커밋 게이트, free-hands 강제, budget 게이트를 사용하기 전에 `/hooks`에서 설치된 훅을 검토하고 신뢰해야 합니다.
+새 Codex 세션에서 `$harness:build`, `$ux-ui:build`, `$ux-ui:build-mobile`, `$peer-coding:run`, `$free-hands:run`을 호출합니다. 자동 오케스트레이션은 `$peer-coding:mode on`, 컨텍스트 점검은 `$peer-coding:audit`, 모든 모드 확인은 `$dashboard:audit`, 사용량 임계값에서 멈추려면 `$budget:mode 80`, 결정 기록을 설치하려면 `$context-rail:build`입니다. 자동 라우팅, UI 커밋 게이트, free-hands 강제, budget 게이트를 사용하기 전에 `/hooks`에서 설치된 훅을 검토하고 신뢰해야 합니다.
 
 설치 스크립트의 기본 대상은 Claude Code이며, `--host codex`로 Codex를 선택합니다. Codex는 사용자 범위로 설치하므로 `--scope`를 생략하거나 `--scope user`를 사용하세요. project/local 범위는 거부합니다. 스킬·스크립트·작업 절차를 공유하고 플러그인별 Codex 명세를 함께 제공합니다. Codex에서는 자체 질문 도구와 독립 에이전트를 사용합니다. 하네스는 `.codex/hooks.json`, `.codex/hooks/`, `.codex/scripts/review-gate.sh`, `.codex/scripts/latest-model.py`, `.agents/skills/`를 생성하며 기존 Claude 파일을 보존합니다. UI 실측에는 해당 브라우저·모바일 도구가 필요합니다. 자세한 내용은 각 플러그인의 Codex 절을 참고하세요.
 
@@ -112,6 +113,16 @@ codex plugin add budget@because-i-needed
 
 [budget 한국어 README 보기 →](plugins/budget/README.ko.md)
 
+### [context-rail](plugins/context-rail) · `v0.1.0`
+
+**기록된 결정이 매 턴이 아니라, 에이전트가 그 결정이 관할하는 파일을 열 때 도착합니다.** 파일별 결정을 `CLAUDE.md`/`AGENTS.md`에서 코드 옆 `PRECEDENT.md` 기록으로 옮기고, 에이전트가 그 파일을 읽거나 고칠 때 결정을 넣어 주는 프로젝트 훅을 설치합니다. 결정 뒤에는 뒤집기 전에 멈추고 묻게 하는 단락이 붙습니다.
+
+- **이럴 때** 지시 파일이 특정 파일에 관한 결정으로 계속 불어날 때, 또는 에이전트가 요청 하나로 기록된 결정을 뒤집을 때.
+- **진입점:** `/context-rail:build` · `$context-rail:build`, 점검은 `/context-rail:audit` · `$context-rail:audit`
+- **참고:** 플러그인 자체는 훅을 추가하지 않습니다. `build`가 확인을 받은 뒤 프로젝트에 훅과 설정을 씁니다. 행동 효과는 Claude Code에서만 쟀습니다.
+
+[context-rail 한국어 README 보기 →](plugins/context-rail/README.ko.md)
+
 ## 은퇴한 플러그인
 
 ### plan-smith — 2026-09-30 은퇴 (마지막 버전 1.8.0)
@@ -143,6 +154,7 @@ claude plugin install peer-coding@because-i-needed
 claude plugin install free-hands@because-i-needed
 claude plugin install dashboard@because-i-needed
 claude plugin install budget@because-i-needed
+claude plugin install context-rail@because-i-needed
 ```
 
 또는 Claude Code에서: `/plugin` → Marketplaces → Add Marketplace → `https://github.com/zeriong/because-i-needed.git` 입력 후 목록에서 설치.
@@ -162,7 +174,8 @@ claude plugin install budget@because-i-needed
     "peer-coding@because-i-needed": true,
     "free-hands@because-i-needed": true,
     "dashboard@because-i-needed": true,
-    "budget@because-i-needed": true
+    "budget@because-i-needed": true,
+    "context-rail@because-i-needed": true
   }
 }
 ```
@@ -220,7 +233,7 @@ codex plugin remove claude-x-codex@because-i-needed
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # 플러그인 6개 등록
+├── .claude-plugin/marketplace.json   # 플러그인 7개 등록
 ├── install.sh                        # 대화형 설치 스크립트 (--host claude|codex)
 └── plugins/
     ├── harness/                      # 스킬
@@ -228,7 +241,8 @@ because-i-needed/
     ├── peer-coding/                  # 스킬 3 + 프롬프트 훅 + 스크립트 3
     ├── free-hands/                   # 스킬 1 + 에이전트 5 + 훅 4 + 스크립트 4
     ├── dashboard/                    # 스킬 1 + 훅 모듈 + 스크립트 1
-    └── budget/                       # 스킬 1 + 훅 모듈 + Codex 훅 2 + 스크립트 2
+    ├── budget/                       # 스킬 1 + 훅 모듈 + Codex 훅 2 + 스크립트 2
+    └── context-rail/                 # 스킬 2 + 프로젝트 훅 자산 + 스크립트 3
 ```
 
 각 플러그인 폴더는 자기완결적입니다: README, 매니페스트, 배포되는 모든 파일이 `plugins/<이름>/` 아래에 있습니다.

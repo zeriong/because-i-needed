@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Claude Code plugins built because I needed them — harness, ux-ui, peer-coding, free-hands",
-    "version": "4.4.0"
+    "version": "4.5.0"
   },
   "plugins": [
     {
@@ -115,6 +115,24 @@
         "codex"
       ],
       "category": "productivity"
+    },
+    {
+      "name": "context-rail",
+      "source": "./plugins/context-rail",
+      "description": "Moves file-specific decisions out of always-loaded CLAUDE.md/AGENTS.md into PRECEDENT.md records beside the code and installs a project hook that injects a file's recorded decisions — with a confirm-before-changing paragraph — when an agent reads or edits it. Resident instructions only shrink. (writes project files only; the plugin itself adds no hooks)",
+      "version": "0.1.0",
+      "author": {
+        "name": "zeriong"
+      },
+      "keywords": [
+        "context",
+        "precedent",
+        "decision-records",
+        "arrival-hook",
+        "claude-md",
+        "agents-md"
+      ],
+      "category": "development"
     }
   ]
 }

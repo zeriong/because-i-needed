@@ -5,7 +5,7 @@
 <p align="center">仅适用于 <strong>Claude Code</strong> 和 <strong>Codex CLI</strong>。</p>
 
 <p align="center">
-  <strong>因为自己需要而做的 Claude Code 和 Codex 插件——项目 harness、基于实测的 UI、Claude × Codex 编排和自主目标执行、全部模式的仪表盘和用量门禁。</strong>
+  <strong>因为自己需要而做的 Claude Code 和 Codex 插件——项目 harness、基于实测的 UI、Claude × Codex 编排和自主目标执行、全部模式的仪表盘、用量门禁，以及随文件送达的决定记录。</strong>
 </p>
 
 <p align="center">
@@ -23,14 +23,14 @@
 
 ---
 
-本仓库是一个 Claude Code 和 Codex **插件市场**，包含六个相互独立的插件。按需安装即可。
+本仓库是一个 Claude Code 和 Codex **插件市场**，包含七个相互独立的插件。按需安装即可。
 
 ## Codex
 
-这6个插件也支持 Codex CLI 0.158.0 及以上版本。选择需要的插件安装：
+这7个插件也支持 Codex CLI 0.158.0 及以上版本。选择需要的插件安装：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands,dashboard,budget
+curl -fsSL https://raw.githubusercontent.com/zeriong/because-i-needed/main/install.sh | bash -s -- --host codex --only harness,ux-ui,peer-coding,free-hands,dashboard,budget,context-rail
 ```
 
 也可以直接使用 CLI：
@@ -43,9 +43,10 @@ codex plugin add peer-coding@because-i-needed
 codex plugin add free-hands@because-i-needed
 codex plugin add dashboard@because-i-needed
 codex plugin add budget@because-i-needed
+codex plugin add context-rail@because-i-needed
 ```
 
-在新的 Codex 会话中调用 `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$peer-coding:run` 或 `$free-hands:run`。使用 `$peer-coding:mode on` 开启自动编排，使用 `$peer-coding:audit` 检查上下文，使用 `$dashboard:audit` 查看全部模式，使用 `$budget:mode 80` 在达到用量阈值时停止。在依赖自动路由、UI 提交门禁、free-hands 强制执行和 budget 门禁之前，请通过 `/hooks` 审核并信任已安装的钩子。
+在新的 Codex 会话中调用 `$harness:build`、`$ux-ui:build`、`$ux-ui:build-mobile`、`$peer-coding:run` 或 `$free-hands:run`。使用 `$peer-coding:mode on` 开启自动编排，使用 `$peer-coding:audit` 检查上下文，使用 `$dashboard:audit` 查看全部模式，使用 `$budget:mode 80` 在达到用量阈值时停止，使用 `$context-rail:build` 设置决定记录。在依赖自动路由、UI 提交门禁、free-hands 强制执行和 budget 门禁之前，请通过 `/hooks` 审核并信任已安装的钩子。
 
 安装器默认使用 Claude Code；`--host codex` 选择 Codex。Codex 仅支持用户范围：省略 `--scope` 或使用 `--scope user`，project/local 范围会被拒绝。两个宿主共享技能、脚本和工作流程，每个插件另附 Codex 清单。Codex 使用自己的提问工具和独立代理。生成的 harness 使用 `.codex/hooks.json`、`.codex/hooks/`、`.codex/scripts/review-gate.sh`、`.codex/scripts/latest-model.py` 和 `.agents/skills/`，保留现有 Claude 文件。UI 实测仍需要对应的浏览器或移动工具。详情参阅各插件的 Codex 章节。
 
@@ -112,6 +113,16 @@ codex plugin add budget@because-i-needed
 
 [查看 budget 简体中文 README →](plugins/budget/README.zh-CN.md)
 
+### [context-rail](plugins/context-rail) · `v0.1.0`
+
+**已记录的决定不是每一轮都加载，而是在智能体打开它所管辖的文件时送达。** 它把针对具体文件的决定从 `CLAUDE.md`/`AGENTS.md` 移到代码旁的 `PRECEDENT.md` 记录中，并安装一个项目钩子：当智能体读取或编辑该文件时注入这些决定，后面附上一段让智能体在推翻决定前先停下询问的说明。
+
+- **适用场景：** 指令文件因针对具体文件的决定而不断膨胀，或智能体因一个请求就推翻已记录的决定时。
+- **入口：** `/context-rail:build` · `$context-rail:build`；检查用 `/context-rail:audit` · `$context-rail:audit`
+- **注意：** 插件本身不添加钩子；`build` 在你确认后把钩子和设置写入项目。行为效果只在 Claude Code 上测量过。
+
+[查看 context-rail 简体中文 README →](plugins/context-rail/README.zh-CN.md)
+
 ## 已退役的插件
 
 ### plan-smith — 于 2026-09-30 退役（最后版本 1.8.0）
@@ -143,6 +154,7 @@ claude plugin install peer-coding@because-i-needed
 claude plugin install free-hands@because-i-needed
 claude plugin install dashboard@because-i-needed
 claude plugin install budget@because-i-needed
+claude plugin install context-rail@because-i-needed
 ```
 
 或者在 Claude Code 中：`/plugin` → Marketplaces → Add Marketplace → 输入 `https://github.com/zeriong/because-i-needed.git`，然后从列表中安装。
@@ -162,7 +174,8 @@ claude plugin install budget@because-i-needed
     "peer-coding@because-i-needed": true,
     "free-hands@because-i-needed": true,
     "dashboard@because-i-needed": true,
-    "budget@because-i-needed": true
+    "budget@because-i-needed": true,
+    "context-rail@because-i-needed": true
   }
 }
 ```
@@ -220,7 +233,7 @@ codex plugin remove claude-x-codex@because-i-needed
 
 ```
 because-i-needed/
-├── .claude-plugin/marketplace.json   # 登记六个插件
+├── .claude-plugin/marketplace.json   # 登记七个插件
 ├── install.sh                        # 交互式安装脚本（--host claude|codex）
 └── plugins/
     ├── harness/                      # 技能
@@ -228,7 +241,8 @@ because-i-needed/
     ├── peer-coding/                  # 3 个技能 + 提示钩子 + 3 个脚本
     ├── free-hands/                   # 1 个技能 + 5 个智能体 + 4 个钩子 + 4 个脚本
     ├── dashboard/                    # 1 个技能 + 钩子模块 + 1 个脚本
-    └── budget/                       # 1 个技能 + 钩子模块 + 2 个 Codex 钩子 + 2 个脚本
+    ├── budget/                       # 1 个技能 + 钩子模块 + 2 个 Codex 钩子 + 2 个脚本
+    └── context-rail/                 # 2 个技能 + 项目钩子资产 + 3 个脚本
 ```
 
 每个插件目录都是自包含的：它的 README、清单文件以及随插件发布的所有内容都位于 `plugins/<名称>/` 下。
