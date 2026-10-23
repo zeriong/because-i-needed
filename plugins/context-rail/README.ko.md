@@ -4,7 +4,7 @@
 
 <p align="center"><strong>기록된 결정이 매 턴이 아니라, 에이전트가 그 결정이 관할하는 파일을 여는 순간 도착합니다.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#시작하기">시작하기</a> &bull; <a href="#무엇을-쓰는가">무엇을 쓰는가</a> &bull; <a href="#기록">기록</a> &bull; <a href="#도착-훅">도착 훅</a> &bull; <a href="#결정-바꾸기">결정 바꾸기</a> &bull; <a href="#측정한-것">측정한 것</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#요구사항">요구사항</a> &bull; <a href="#설치">설치</a></p>
 
@@ -71,10 +71,11 @@
 
 - 기록된 결정을 이름으로 지목하며 뒤집으라고 하면, 에이전트는 변경하고 결정 블록을 제자리에서 고쳐 쓰며 사용자가 뒤집었다고 남깁니다. 예: 「`src/tabs/PRECEDENT.md` §stable-tab-keys가 막고 있지만 뒤집겠다」.
 - 그 밖에 결정과 충돌하는 요청은, 아무리 단호해도, 에이전트가 편집 전에 멈춥니다. 결정과 충돌 지점을 말하고 묻습니다. 이때 상류 변경, 새 측정, 보고된 결함, 다른 축 중 해당하는 것이 있는지도 짚습니다.
+- 다른 에이전트가 맡긴 일(서브에이전트, peer-coding 같은 작업자)이라면, 그 위임은 사용자가 결정을 지목해 뒤집으라고 했다고 전할 때만 확인으로 칩니다. 「그래도 진행하라」나 「새 결정이 기록을 대체한다」는 위임은 확인이 아니며, 에이전트는 멈추고 일을 맡긴 에이전트에게 보고해 사용자에게 묻게 합니다.
 
 ## 측정한 것
 
-측정은 모두 [z-lab `precedent-lab/`](https://github.com/zeriong/z-lab/tree/main/precedent-lab)에 있습니다. 조건은 Claude Code 2.1.296–2.1.308, Opus, effort `xhigh`, headless입니다.
+측정은 모두 [z-lab `precedent-lab/`](https://github.com/zeriong/z-lab/tree/main/precedent-lab)에 있습니다. 조건은 Claude Code 2.1.296–2.1.309와 Codex 0.163.0, headless이고, 행에 다른 에이전트가 적혀 있지 않으면 Opus, effort `xhigh`입니다.
 
 | 주장 | 결과 | 실험 |
 |---|---|---|
@@ -86,24 +87,27 @@
 | `audit`는 아무것도 바꾸지 않고 점검하며 심어 둔 결함을 짚는다 | 4/4 런: 변경 0, 검사 모두 실행, 심은 결함 3/3 지목, 거짓 결함 0 | `audit-canary-0.1.0` |
 | `build`로 정규화한 프로젝트는 같은 결정을 `CLAUDE.md`에 둔 경우보다 잘 지킨다 | 권위 요청에서 금지 깸: 상주 12/12 → 정규화 0/12, 오정지 둘 다 0/15 | `fresh-project-0.1.0` |
 | 경로 규칙은 맞는 파일에 처음 닿을 때 로딩된다 | Read·셸 읽기·Write 모두 규칙이 붙었다 | `platform-r2-2.1.308-0.163.0` |
+| 다른 에이전트의 위임은 사용자의 지목을 전할 때만 확인이다 | 메인이 쓴 「그래도 진행하라」 위임에서 0.1.0 단락의 Sonnet 서브에이전트가 6/9 깸. 같은 문장을 고정한 위임에서 0.1.0 단락 12/12 → 0.2.0 단락 0/12 | `leaf-2.1.309`, `leaf-r2-2.1.309` |
+| 일을 위임받은 에이전트도 규칙을 지킨다 | Opus·Sonnet 서브에이전트, Sonnet `claude -p`·Codex `gpt-6-luna` 작업자 모든 경로에서 금지 깸 0/12, 뒤집기 진행 12/12, 멈춤 0/15 | `leaf-r2-2.1.309` |
 
 함정과 build 결과는 합성 fixture와 비공개 레포 하나에서 나왔고, 칸당 12–15런입니다.
 
 **측정하지 않은 것**
 - 다른 모델·effort, 대화형 세션
 - 다른 언어로 쓴 기록과 이 단락의 조합
-- 서브에이전트 전달, 큰 레포
-- Codex에서의 모든 효과
+- 큰 레포, Orca의 양방향 작업자
+- Codex에서 `build`·`audit`를 돌리는 것
 
 ## Codex
 
 Codex에서도 같은 스킬이 같은 훅을 설치합니다(`$context-rail:build`, `install-hooks.py --host codex` → `.codex/hooks/`, `.codex/hooks.json`).
 
-- **측정한 것은 이 플러그인이 아니라 플랫폼입니다**(Codex 0.163.0, 실험용 probe 훅)
+- **플랫폼**(Codex 0.163.0, 실험용 probe 훅)
   - PostToolUse 출력이 모델에 전달됩니다.
   - 셸 읽기는 `Bash`, 편집은 `apply_patch`로 들어옵니다.
   - 실패한 셸 호출에도 PostToolUse가 옵니다.
-- **측정하지 않은 것**: context-rail의 훅과 스킬을 Codex에서 실제로 돌리는 것, 단락이 행동을 바꾸는지, 중첩 `AGENTS.md`가 언제 로딩되는지, `apply_patch` 쪽 전달.
+- **Codex에서 이 플러그인의 훅**(`install-hooks.py --host codex`로 설치): Codex 작업자(`gpt-6-luna`, effort high, peer-coding의 위임)가 규칙을 지켰습니다. 금지 깸 0/12, 뒤집기 진행 12/12, 멈춤 0/15(`leaf-r2-2.1.309`).
+- **측정하지 않은 것**: Codex에서 `build`·`audit`를 돌리는 것, 중첩 `AGENTS.md`가 언제 로딩되는지, `apply_patch` 쪽 전달.
 
 기대기 전에 `/hooks`에서 훅을 신뢰하세요.
 

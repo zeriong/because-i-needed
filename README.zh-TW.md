@@ -113,13 +113,13 @@ codex plugin add context-rail@because-i-needed
 
 [閱讀 budget 繁體中文 README →](plugins/budget/README.zh-TW.md)
 
-### [context-rail](plugins/context-rail) · `v0.1.0`
+### [context-rail](plugins/context-rail) · `v0.2.0`
 
 **已記錄的決定不是每一輪都載入，而是在代理打開它所管轄的檔案時送達。** 它把針對特定檔案的決定從 `CLAUDE.md`/`AGENTS.md` 移到程式碼旁的 `PRECEDENT.md` 紀錄中，並安裝一個專案 hook：當代理讀取或編輯該檔案時注入這些決定，後面附上一段讓代理在推翻決定前先停下詢問的說明。
 
 - **適用時機：** 指令檔案因針對特定檔案的決定而不斷膨脹，或代理因一個請求就推翻已記錄的決定時。
 - **進入點：** `/context-rail:build` · `$context-rail:build`；檢查用 `/context-rail:audit` · `$context-rail:audit`
-- **注意：** 外掛本身不新增 hook；`build` 在你確認後把 hook 和設定寫入專案。行為效果只在 Claude Code 上測量過。
+- **注意：** 外掛本身不新增 hook；`build` 在你確認後把 hook 和設定寫入專案。行為效果在 Claude Code 上測量過，段落也在 Codex 工作者上測量過。
 
 [閱讀 context-rail 繁體中文 README →](plugins/context-rail/README.zh-TW.md)
 

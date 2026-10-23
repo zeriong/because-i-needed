@@ -4,7 +4,7 @@
 
 <p align="center"><strong>記録された決定は毎ターンではなく、エージェントがその決定の対象ファイルを開いた瞬間に届きます。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#開始">開始</a> &bull; <a href="#書き込むもの">書き込むもの</a> &bull; <a href="#記録">記録</a> &bull; <a href="#到着フック">到着フック</a> &bull; <a href="#決定を変える">決定を変える</a> &bull; <a href="#測定したこと">測定したこと</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#必要条件">必要条件</a> &bull; <a href="#インストール">インストール</a></p>
 
@@ -78,10 +78,11 @@
 
 - 記録された決定を名指しして覆すよう指示した場合、エージェントは変更を行い、決定ブロックをその場で書き直して、ユーザーが覆したことを記します。例:「`src/tabs/PRECEDENT.md` §stable-tab-keys がこれを禁じているが、覆す」。
 - それ以外の、決定と衝突する依頼は、どれほど強く言われても、エージェントが編集の前に止まります。決定と衝突点を示して確認を求め、上流の変更、新しい測定、報告された不具合、異なる軸のどれかが当てはまるかにも触れます。
+- 別のエージェントから任された作業(サブエージェントや peer-coding のようなワーカー)なら、その依頼は、ユーザーが決定を名指しして覆すよう言ったと伝える場合にだけ確認として扱われます。「それでも進めて」や「新しい決定が記録を置き換える」という依頼は確認ではなく、エージェントは止まって依頼元のエージェントに報告し、ユーザーに確認してもらいます。
 
 ## 測定したこと
 
-測定はすべて [z-lab `precedent-lab/`](https://github.com/zeriong/z-lab/tree/main/precedent-lab) にあります。条件は Claude Code 2.1.296–2.1.308、Opus、effort `xhigh`、headless です。
+測定はすべて [z-lab `precedent-lab/`](https://github.com/zeriong/z-lab/tree/main/precedent-lab) にあります。条件は Claude Code 2.1.296–2.1.309 と Codex 0.163.0、headless で、行にほかのエージェントが書かれていなければ Opus、effort `xhigh` です。
 
 | 主張 | 結果 | 実験 |
 |---|---|---|
@@ -93,24 +94,27 @@
 | `audit` は何も変更せずに点検し、仕込んだ不具合を指摘する | 4/4 ラン: 変更 0、検査をすべて実行、仕込んだ不具合 3/3 を指摘、誤検出 0 | `audit-canary-0.1.0` |
 | `build` で正規化したプロジェクトは、同じ決定を `CLAUDE.md` に置いた場合より決定を守る | 権威的な依頼での禁止破り: 常駐 12/12 → 正規化 0/12、誤停止は両方 0/15 | `fresh-project-0.1.0` |
 | パス単位のルールは、一致するファイルに初めて触れたときに読み込まれる | Read・シェル読み込み・Write のいずれでもルールが付いた | `platform-r2-2.1.308-0.163.0` |
+| 別のエージェントの依頼は、ユーザーの名指しを伝えるときだけ確認になる | メインが書いた「それでも進めて」の依頼で、0.1.0 の段落の Sonnet サブエージェントが 6/9 破った。同じ文を固定した依頼では 0.1.0 の段落 12/12 → 0.2.0 の段落 0/12 | `leaf-2.1.309`、`leaf-r2-2.1.309` |
+| 作業を任されたエージェントもルールを守る | Opus・Sonnet サブエージェント、Sonnet `claude -p`・Codex `gpt-6-luna` ワーカーのすべての経路で禁止破り 0/12、上書きの実行 12/12、停止 0/15 | `leaf-r2-2.1.309` |
 
 罠と build の結果は合成 fixture と非公開リポジトリ一つから得たもので、セルあたり 12–15 ランです。
 
 **測定していないこと**
 - ほかのモデル・effort、対話型セッション
 - ほかの言語で書いた記録とこの段落の組み合わせ
-- サブエージェントへの配信、大きなリポジトリ
-- Codex でのあらゆる効果
+- 大きなリポジトリ、Orca の双方向ワーカー
+- Codex で `build`・`audit` を動かすこと
 
 ## Codex
 
 Codex でも同じスキルが同じフックをインストールします(`$context-rail:build`、`install-hooks.py --host codex` → `.codex/hooks/`、`.codex/hooks.json`)。
 
-- **測定したのはこのプラグインではなくプラットフォームです**(Codex 0.163.0、実験用の probe フック)
+- **プラットフォーム**(Codex 0.163.0、実験用の probe フック)
   - PostToolUse の出力がモデルに届きます。
   - シェルの読み込みは `Bash`、編集は `apply_patch` として届きます。
   - 失敗したシェル呼び出しでも PostToolUse が発火します。
-- **測定していないこと**: context-rail 自体のフックとスキルを Codex で実際に動かすこと、段落が振る舞いを変えるか、入れ子の `AGENTS.md` がいつ読み込まれるか、`apply_patch` 側の配信。
+- **Codex でのこのプラグインのフック**(`install-hooks.py --host codex` でインストール): Codex ワーカー(`gpt-6-luna`、effort high、peer-coding の依頼)はルールを守りました。禁止破り 0/12、上書きの実行 12/12、停止 0/15(`leaf-r2-2.1.309`)。
+- **測定していないこと**: Codex で `build`・`audit` を動かすこと、入れ子の `AGENTS.md` がいつ読み込まれるか、`apply_patch` 側の配信。
 
 頼る前に `/hooks` でフックを信頼してください。
 

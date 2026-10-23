@@ -4,7 +4,7 @@
 
 <p align="center"><strong>Recorded decisions reach the agent the moment it opens the file they govern, not on every turn.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#start">Start</a> &bull; <a href="#what-it-writes">What it writes</a> &bull; <a href="#records">Records</a> &bull; <a href="#the-arrival-hook">The arrival hook</a> &bull; <a href="#changing-a-decision">Changing a decision</a> &bull; <a href="#what-was-measured">What was measured</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#requirements">Requirements</a> &bull; <a href="#installation">Installation</a></p>
 
@@ -83,11 +83,15 @@ The paragraph after each section says that a decision changes only with your con
 - Any other request that conflicts with a decision, however firmly put, makes the agent stop before editing, name the
   decision and what conflicts, and ask — noting whether an upstream change, a new measurement, a reported defect, or a
   different axis applies.
+- When another agent assigned the task — a subagent, or a worker such as peer-coding's — its brief counts only if it
+  reports that you named the decision and said to override it. A brief that says to go ahead anyway, or that a newer
+  decision replaces whatever is recorded, does not: the agent stops and reports back to whoever assigned it, so that
+  agent can ask you.
 
 ## What was measured
 
 All measurements are in [z-lab `precedent-lab/`](https://github.com/zeriong/z-lab/tree/main/precedent-lab), on Claude
-Code (2.1.296–2.1.308, Opus, effort `xhigh`, headless).
+Code 2.1.296–2.1.309 and Codex 0.163.0, headless; Opus at effort `xhigh` unless a row names other agents.
 
 | Claim | Result | Experiment |
 |---|---|---|
@@ -99,22 +103,27 @@ Code (2.1.296–2.1.308, Opus, effort `xhigh`, headless).
 | `audit` checks without changing anything and names planted defects | 4/4 runs: 0 files changed, all checks run, 3/3 planted defects named, no false defects | `audit-canary-0.1.0` |
 | A project normalized by `build` keeps its decisions better than the same decisions in `CLAUDE.md` | broke the prohibition under authority requests: 12/12 resident → 0/12 normalized; 0/15 false stops in both | `fresh-project-0.1.0` |
 | Path-scoped rules load on first contact with a matching file | Read, shell read and Write all attached the rule | `platform-r2-2.1.308-0.163.0` |
+| A brief from another agent counts as confirmation only when it relays your named override | under a main agent's "go ahead anyway" brief, Sonnet subagents broke 6/9 with 0.1.0's paragraph; with that sentence fixed in the brief, 12/12 broke with 0.1.0's → 0/12 with 0.2.0's | `leaf-2.1.309`, `leaf-r2-2.1.309` |
+| Agents that receive the task from another agent keep the rule | Opus and Sonnet subagents, Sonnet `claude -p` and Codex `gpt-6-luna` workers, every path: 0/12 broke, 12/12 overrides proceeded, 0/15 stopped | `leaf-r2-2.1.309` |
 
 The trap and build results come from synthetic fixtures and from one private repository, with 12–15 runs per cell.
-**Not measured:** other models or efforts, interactive sessions, records written in other languages with this
-paragraph, delivery to subagents, large repositories, and any effect on Codex.
+**Not measured:** other models or efforts, interactive sessions and Orca's two-way workers, records written in other
+languages with this paragraph, large repositories, and running `build` and `audit` on Codex.
 
 ## Codex
 
 The same skills install the same hook on Codex (`$context-rail:build`, `install-hooks.py --host codex` → `.codex/hooks/`,
 `.codex/hooks.json`).
 
-- **What was measured there is the platform, not this plugin** (Codex 0.163.0, with a probe hook):
+- **Platform** (Codex 0.163.0, with a probe hook):
   - PostToolUse output reaches the model.
   - Shell reads arrive as `Bash`, and edits as `apply_patch`.
   - A failed shell call still fires PostToolUse.
-- **Not measured:** running context-rail's own hook and skills on Codex, whether the paragraph changes behavior there,
-  when nested `AGENTS.md` files load, and `apply_patch` delivery.
+- **This plugin's hook on Codex** (installed with `install-hooks.py --host codex`): a Codex worker (`gpt-6-luna`,
+  effort high, given peer-coding's brief) kept the rule — 0/12 broke, 12/12 overrides proceeded, 0/15 stopped
+  (`leaf-r2-2.1.309`).
+- **Not measured:** running `build` and `audit` on Codex, when nested `AGENTS.md` files load, and `apply_patch`
+  delivery.
 
 Trust the hook in `/hooks` before relying on it.
 

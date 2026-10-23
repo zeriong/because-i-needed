@@ -113,13 +113,13 @@ codex plugin add context-rail@because-i-needed
 
 [查看 budget 简体中文 README →](plugins/budget/README.zh-CN.md)
 
-### [context-rail](plugins/context-rail) · `v0.1.0`
+### [context-rail](plugins/context-rail) · `v0.2.0`
 
 **已记录的决定不是每一轮都加载，而是在智能体打开它所管辖的文件时送达。** 它把针对具体文件的决定从 `CLAUDE.md`/`AGENTS.md` 移到代码旁的 `PRECEDENT.md` 记录中，并安装一个项目钩子：当智能体读取或编辑该文件时注入这些决定，后面附上一段让智能体在推翻决定前先停下询问的说明。
 
 - **适用场景：** 指令文件因针对具体文件的决定而不断膨胀，或智能体因一个请求就推翻已记录的决定时。
 - **入口：** `/context-rail:build` · `$context-rail:build`；检查用 `/context-rail:audit` · `$context-rail:audit`
-- **注意：** 插件本身不添加钩子；`build` 在你确认后把钩子和设置写入项目。行为效果只在 Claude Code 上测量过。
+- **注意：** 插件本身不添加钩子；`build` 在你确认后把钩子和设置写入项目。行为效果在 Claude Code 上测量过，段落也在 Codex 工作者上测量过。
 
 [查看 context-rail 简体中文 README →](plugins/context-rail/README.zh-CN.md)
 

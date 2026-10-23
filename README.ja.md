@@ -113,13 +113,13 @@ codex plugin add context-rail@because-i-needed
 
 [budget の日本語 README を読む →](plugins/budget/README.ja.md)
 
-### [context-rail](plugins/context-rail) · `v0.1.0`
+### [context-rail](plugins/context-rail) · `v0.2.0`
 
 **記録された決定は毎ターンではなく、エージェントがその決定の対象ファイルを開いたときに届きます。** ファイルごとの決定を `CLAUDE.md`/`AGENTS.md` からコードの隣の `PRECEDENT.md` 記録へ移し、エージェントがそのファイルを読む・編集するときに決定を入れるプロジェクトフックを入れます。決定の後には、覆す前に止まって確認させる段落が続きます。
 
 - **使いどころ:** 指示ファイルが特定ファイルについての決定で膨らみ続けるとき、またはエージェントが依頼一つで記録された決定を覆してしまうとき。
 - **エントリーポイント:** `/context-rail:build` · `$context-rail:build`。点検は `/context-rail:audit` · `$context-rail:audit`
-- **注意:** プラグイン自体はフックを追加しません。`build` が確認を得たうえでプロジェクトにフックと設定を書き込みます。振る舞いの効果は Claude Code でのみ測定しました。
+- **注意:** プラグイン自体はフックを追加しません。`build` が確認を得たうえでプロジェクトにフックと設定を書き込みます。振る舞いの効果は Claude Code で、段落は Codex ワーカーでも測定しました。
 
 [context-rail の日本語 README を読む →](plugins/context-rail/README.ja.md)
 

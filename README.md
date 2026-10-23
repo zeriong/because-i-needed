@@ -113,13 +113,13 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the budget README →](plugins/budget)
 
-### [context-rail](plugins/context-rail) · `v0.1.0`
+### [context-rail](plugins/context-rail) · `v0.2.0`
 
 **Recorded decisions reach the agent when it opens the file they govern, not on every turn.** It moves file-specific decisions out of `CLAUDE.md`/`AGENTS.md` into `PRECEDENT.md` records beside the code, and installs a project hook that injects a file's decisions — with a paragraph that makes the agent stop and ask before overturning one — when the agent reads or edits the file.
 
 - **Use it when** your instruction files keep growing with decisions about specific files, or agents reverse a recorded decision because someone asked.
 - **Entry:** `/context-rail:build` · `$context-rail:build`; `/context-rail:audit` · `$context-rail:audit` to check
-- **Heads-up:** the plugin adds no hooks of its own; `build` writes a hook and settings into your project after you confirm. Behavior is measured on Claude Code only.
+- **Heads-up:** the plugin adds no hooks of its own; `build` writes a hook and settings into your project after you confirm. Behavior is measured on Claude Code, and on a Codex worker for the paragraph.
 
 [Read the context-rail README →](plugins/context-rail)
 

@@ -4,7 +4,7 @@
 
 <p align="center"><strong>已记录的决定不是每一轮都加载，而是在智能体打开它所管辖的文件时送达。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#开始">开始</a> &bull; <a href="#写入的内容">写入的内容</a> &bull; <a href="#记录">记录</a> &bull; <a href="#到达钩子">到达钩子</a> &bull; <a href="#修改决定">修改决定</a> &bull; <a href="#测量了什么">测量了什么</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#要求">要求</a> &bull; <a href="#安装">安装</a></p>
 
@@ -78,10 +78,11 @@
 
 - 如果你点名已记录的决定并要求推翻它，智能体会执行修改，并原地改写该决定块，注明是你推翻的。例如：“`src/tabs/PRECEDENT.md` §stable-tab-keys 禁止这样做；我要推翻它”。
 - 其他与决定冲突的请求，无论语气多坚决，智能体都会在编辑前停下。它会说明是哪条决定、冲突在哪里，并请你确认，同时指出是否涉及上游变化、新的测量、已报告的缺陷或不同的维度。
+- 如果任务是另一个智能体分派的（子智能体，或 peer-coding 这类工作者），只有当分派说明转述了你点名该决定并要求推翻时，才算确认。“照样执行”或“新决定取代已记录的内容”这类说明不算确认：智能体会停下，并向分派任务的智能体报告，由它来问你。
 
 ## 测量了什么
 
-所有测量都在 [z-lab `precedent-lab/`](https://github.com/zeriong/z-lab/tree/main/precedent-lab)。条件为 Claude Code 2.1.296–2.1.308、Opus、effort `xhigh`、headless。
+所有测量都在 [z-lab `precedent-lab/`](https://github.com/zeriong/z-lab/tree/main/precedent-lab)。条件为 Claude Code 2.1.296–2.1.309 和 Codex 0.163.0、headless；除非该行写明其他智能体，否则为 Opus、effort `xhigh`。
 
 | 结论 | 结果 | 实验 |
 |---|---|---|
@@ -93,24 +94,27 @@
 | `audit` 在不做任何修改的情况下检查，并指出预先植入的缺陷 | 4/4 次运行：零修改、全部检查都执行、植入缺陷 3/3 被指出、误报 0 | `audit-canary-0.1.0` |
 | 用 `build` 规范化后的项目，比把同样决定放在 `CLAUDE.md` 中更能守住决定 | 权威式请求下违反禁止：常驻 12/12 → 规范化 0/12；两者误停都是 0/15 | `fresh-project-0.1.0` |
 | 路径规则在首次接触匹配文件时加载 | Read、shell 读取、Write 都附上了规则 | `platform-r2-2.1.308-0.163.0` |
+| 另一个智能体的分派说明，只有转述了你的点名推翻才算确认 | 主智能体写的“照样执行”说明下，0.1.0 段落的 Sonnet 子智能体违反 6/9；固定同一句说明时，0.1.0 段落 12/12 → 0.2.0 段落 0/12 | `leaf-2.1.309`、`leaf-r2-2.1.309` |
+| 被分派任务的智能体也守住规则 | Opus、Sonnet 子智能体以及 Sonnet `claude -p`、Codex `gpt-6-luna` 工作者，所有路径：违反禁止 0/12，推翻执行 12/12，停下 0/15 | `leaf-r2-2.1.309` |
 
 陷阱和 build 的结果来自合成 fixture 和一个私有仓库，每格 12–15 次运行。
 
 **未测量**
 - 其他模型或 effort、交互式会话
 - 用其他语言写的记录与该段落的组合
-- 向子智能体的送达、大型仓库
-- 在 Codex 上的任何效果
+- 大型仓库、Orca 的双向工作者
+- 在 Codex 上运行 `build` 和 `audit`
 
 ## Codex
 
 在 Codex 上，同样的技能会安装同样的钩子（`$context-rail:build`、`install-hooks.py --host codex` → `.codex/hooks/`、`.codex/hooks.json`）。
 
-- **测量的是平台，而不是本插件**（Codex 0.163.0，使用实验用 probe 钩子）
+- **平台**（Codex 0.163.0，使用实验用 probe 钩子）
   - PostToolUse 输出会送达模型。
   - shell 读取以 `Bash` 到达，编辑以 `apply_patch` 到达。
   - 失败的 shell 调用仍会触发 PostToolUse。
-- **未测量**：在 Codex 上实际运行 context-rail 自己的钩子和技能、该段落是否改变行为、嵌套的 `AGENTS.md` 何时加载，以及 `apply_patch` 的送达。
+- **本插件的钩子在 Codex 上**（用 `install-hooks.py --host codex` 安装）：Codex 工作者（`gpt-6-luna`、effort high、使用 peer-coding 的分派说明）守住了规则：违反禁止 0/12，推翻执行 12/12，停下 0/15（`leaf-r2-2.1.309`）。
+- **未测量**：在 Codex 上运行 `build` 和 `audit`、嵌套的 `AGENTS.md` 何时加载，以及 `apply_patch` 的送达。
 
 依赖之前请先在 `/hooks` 中信任该钩子。
 

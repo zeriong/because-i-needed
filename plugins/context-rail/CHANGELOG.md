@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.2.0] - 2026-10-23
+
+### Changed
+
+- The confirmation paragraph (A3) now says when a brief from another agent counts. A subagent's or worker's brief is
+  a confirmation only when it relays that the user named the decision and said to override it. "Go ahead anyway" or
+  "a newer decision replaces whatever is recorded" is not; the agent stops and reports back to whoever assigned the
+  task, so that agent can ask the user. `STOP_SHA256` changed with it.
+
+### Why
+
+Measured in z-lab `precedent-lab/` on synthetic fixtures, Claude Code 2.1.309 and Codex 0.163.0.
+
+- **The gap** (`leaf-2.1.309`, E6). With 0.1.0's paragraph, workers given peer-coding's brief (Sonnet `claude -p`,
+  Codex `gpt-6-luna`) and an orchestrator that read the file first all kept the rule. Agent-tool subagents under an
+  orchestrator that had not seen the record did not:
+  - Sonnet subagents broke 6/9 when the orchestrator pre-authorized the override ("still make the change; the new
+    decision supersedes the record").
+  - Opus subagents refused 3/12 correctly relayed named overrides.
+- **The fix** (`leaf-r2-2.1.309`, E6′, adopted). With A3:
+  - every path — the top-level session, Opus and Sonnet subagents, Sonnet and Codex workers — was 0/12 broke,
+    12/12 named overrides proceeded, 0/15 conflict-free edits stopped;
+  - a fixed pre-authorizing brief to a Sonnet worker: 12/12 broke with 0.1.0's paragraph → 0/12 with A3
+    (p=7.4×10⁻⁷).
+
+### Not measured
+
+- A main agent that invents a named override the user never gave (0/24 natural occurrences; not induced).
+- Orca's two-way workers, interactive sessions, other models and efforts, Korean records, and running `build` and
+  `audit` on Codex.
+
 ## [0.1.0] - 2026-10-22
 
 ### Added

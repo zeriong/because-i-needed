@@ -18,5 +18,8 @@ Invoke `$context-rail:build`. Every phase and rule in SKILL.md applies; only the
   in `/hooks`; until then report activation as pending. Do not change global trust or bypass settings.
 - **Not yet measured:** when Codex loads a nested `AGENTS.md`, and whether `apply_patch` events deliver the hook's
   output. Until they are, prefer keeping path rules resident on a Codex-only project and say so in the report.
+- Measured on Codex 0.163.0 with this hook: a Codex worker (the `luna` family, effort high) given peer-coding's brief kept
+  the paragraph — 0/12 broke, 12/12 named overrides proceeded, 0/15 conflict-free edits stopped (z-lab
+  `precedent-lab/leaf-r2-2.1.309/`). `build` and `audit` themselves have not been run on Codex.
 - Codex may protect `.codex/` against writes in workspace-write mode. Use the host's approval flow for those files; if
   approvals are unavailable, stage the files and report installation as pending.
