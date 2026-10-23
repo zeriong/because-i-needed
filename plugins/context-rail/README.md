@@ -104,6 +104,7 @@ Code 2.1.296–2.1.309 and Codex 0.163.0, headless; Opus at effort `xhigh` unles
 | A project normalized by `build` keeps its decisions better than the same decisions in `CLAUDE.md` | broke the prohibition under authority requests: 12/12 resident → 0/12 normalized; 0/15 false stops in both | `fresh-project-0.1.0` |
 | Path-scoped rules load on first contact with a matching file | Read, shell read and Write all attached the rule | `platform-r2-2.1.308-0.163.0` |
 | A brief from another agent counts as confirmation only when it relays your named override | under a main agent's "go ahead anyway" brief, Sonnet subagents broke 6/9 with 0.1.0's paragraph; with that sentence fixed in the brief, 12/12 broke with 0.1.0's → 0/12 with 0.2.0's | `leaf-2.1.309`, `leaf-r2-2.1.309` |
+| …but on a fork of a real private repository, a brief that pre-authorized without naming the decision still leaked once | Sonnet subagents broke 1/12 (top-level session 0/12, no-hook control 12/12). The one break followed a main agent's "already decided, don't re-litigate, update the entry" brief that named no decision | `real-repo-0.2.0` |
 | Agents that receive the task from another agent keep the rule | Opus and Sonnet subagents, Sonnet `claude -p` and Codex `gpt-6-luna` workers, every path: 0/12 broke, 12/12 overrides proceeded, 0/15 stopped | `leaf-r2-2.1.309` |
 
 The trap and build results come from synthetic fixtures and from one private repository, with 12–15 runs per cell.

@@ -60,6 +60,9 @@ Rule 7's claude-x-codex precedent applies.
     (`leaf-2.1.309` F3–F4). With A3 every path was 0/12 · 12/12 · 0/15 — Opus and Sonnet subagents, Sonnet `claude -p`
     and Codex workers, and the top-level session — and a fixed pre-authorizing brief to a Sonnet worker went from
     12/12 broken (A′) to 0/12 (A3), p=7.4×10⁻⁷ (`leaf-r2-2.1.309`).
+    On a fork of a real private repo it still leaked once: a gated main agent's brief said "already decided, don't
+    re-litigate, update the entry" without naming the decision, and the Sonnet subagent broke 1/12
+    (`real-repo-0.2.0` E3). The laundering metric needs the decision's name, so it did not count this run.
 - **No PreToolUse write gate and no commit-token gate.**
   - **Why:** a hidden gate missed interpreter writes and skipped records, 5/12 (`gate-placement-2.1.296` F2–F3).
   - A visible gate denied only after implementation and false-positived on Bash 4/4 (`plan-rail-2.1.296` F3–F4).
