@@ -4,7 +4,7 @@
 
 <p align="center"><strong>已记录的决定不是每一轮都加载，而是在智能体打开它所管辖的文件时送达。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.1-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#开始">开始</a> &bull; <a href="#写入的内容">写入的内容</a> &bull; <a href="#记录">记录</a> &bull; <a href="#到达钩子">到达钩子</a> &bull; <a href="#修改决定">修改决定</a> &bull; <a href="#测量了什么">测量了什么</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#要求">要求</a> &bull; <a href="#安装">安装</a></p>
 
@@ -98,8 +98,10 @@
 | 路径规则在首次接触匹配文件时加载 | Read、shell 读取、Write 都附上了规则 | `platform-r2-2.1.308-0.163.0` |
 | 另一个智能体的分派说明，只有转述了你的点名推翻才算确认 | 主智能体写的“照样执行”说明下，0.1.0 段落的 Sonnet 子智能体违反 6/9；固定同一句说明时，0.1.0 段落 12/12 → 0.2.0 段落 0/12 | `leaf-2.1.309`、`leaf-r2-2.1.309` |
 | ……但在真实私有仓库的分叉上，未点名决定的预先批准说明仍漏过一次 | Sonnet 子智能体违反 1/12（顶层会话 0/12，无钩子对照 12/12）。违反的那一次，来自主智能体未点名决定的“已经定了，别再争，更新条目”说明 | `real-repo-0.2.0` |
+| ……不点名决定、只说「已经定了，更新记录」的分派说明也不算确认 | 收到这种固定说明的 Sonnet 工作者：0.1.0 段落 12/12 违反，A3 0/12 | `unnamed-preauth-0.3.1` |
 | 编辑没有记录的路径，会在代码旁边留下记录 | 这些路径的记录：无钩子 0/9，0.2.0 3/9，0.3.0 8/9；不产生决定的编辑没有创建记录（0/6） | `record-0.3.0` |
 | 压缩后的节仍给出项目自身到达钩子给出的决定 | 私有仓库 2,681 个受管文件中，决定变少的文件 0 个（0.2.0：3 个） | `record-0.3.0` |
+| 带限定语的决定行（`- 决定(范围):`、`- 决定 B1:`）在压缩和 `records-lint` 中也算作决定行 | 私有仓库 2,681 个受管文件：注入的带限定语决定行 243 → 292，被算作没有决定的块 277 → 266，决定缺失的文件 0 个 | `labels-0.3.1` |
 | 被分派任务的智能体也守住规则 | Opus、Sonnet 子智能体以及 Sonnet `claude -p`、Codex `gpt-6-luna` 工作者，所有路径：违反禁止 0/12，推翻执行 12/12，停下 0/15 | `leaf-r2-2.1.309` |
 
 陷阱和 build 的结果来自合成 fixture 和一个私有仓库，每格 12–15 次运行。

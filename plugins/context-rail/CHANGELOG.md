@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.3.1] - 2026-10-29
+
+### Fixed
+
+- A decision line with a qualifier before the colon — `- Decision (range):`, `- Decision B1:` — is now a decision
+  line. Compression keeps it, and `records-lint` no longer flags its block as missing a decision. Both use one
+  pattern; a word that merely starts with the label (`- Decisive:`) is still not a field.
+
+`STOP` and `STOP_SHA256` are unchanged.
+
+### Why
+
+Measured in z-lab `precedent-lab/`, Claude Code 2.1.312:
+
+- **Qualified labels** (`labels-0.3.1`, E9, deterministic, 2,681 governed files of a private repository). Qualified
+  decision lines injected rose from 243 to 292, in the 8 compressed files where they differed; blocks flagged
+  without a decision fell from 277 to 266. No file lost a decision or fell to a lower mode, against 0.3.0 and
+  against that project's own hook.
+- **A brief that says the decision is already made, without naming it** (`unnamed-preauth-0.3.1`, E10). The
+  paragraph is unchanged; this measures it. A fixed brief — "already decided; don't re-litigate it; update the
+  entry" — to a Sonnet worker broke the prohibition 12/12 with 0.1.0's paragraph and 0/12 with A3.
+
+### Not measured
+
+- The Agent-tool subagent path with a long natural brief, where one such run leaked in `real-repo-0.2.0`.
+
 ## [0.3.0] - 2026-10-29
 
 ### Added

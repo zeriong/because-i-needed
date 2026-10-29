@@ -39,7 +39,7 @@ def main():
                 governed.setdefault(r, []).append(f)
     report = {"records": len(records), "orphan_headings": [], "blocks_without_decision": [],
               "governed_files": sum(len(v) for v in governed.values()), "governed_without_section": 0}
-    label = cfg["fieldLabels"][0]
+    decision = hook.field_line(cfg["fieldLabels"][:1])
     for r in records:
         lines = open(r, encoding="utf-8").read().split("\n")
         rel = os.path.relpath(r, root)
@@ -54,7 +54,7 @@ def main():
                 if block and not block[1]:
                     report["blocks_without_decision"].append(f"{rel}:{block[0]}")
                 block = (i, False) if line.startswith("### ") else None
-            elif block and line.startswith(f"- {label}:"):
+            elif block and decision.match(line):
                 block = (block[0], True)
         report["governed_without_section"] += sum(1 for f in files if not hook.sections(r, f))
     print(json.dumps(report, indent=2))

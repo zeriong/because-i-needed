@@ -113,7 +113,7 @@ codex plugin add context-rail@because-i-needed
 
 [budget の日本語 README を読む →](plugins/budget/README.ja.md)
 
-### [context-rail](plugins/context-rail) · `v0.3.0`
+### [context-rail](plugins/context-rail) · `v0.3.1`
 
 **記録された決定は毎ターンではなく、エージェントがその決定の対象ファイルを開いたときに届きます。** ファイルごとの決定を `CLAUDE.md`/`AGENTS.md` からコードの隣の `PRECEDENT.md` 記録へ移し、エージェントがそのファイルを読む・編集するときに決定を入れるプロジェクトフックを入れます。決定の後には、覆す前に止まって確認させる段落が続きます。
 

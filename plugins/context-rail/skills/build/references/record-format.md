@@ -50,7 +50,11 @@ The arrival hook (`assets/precedent-context.py`) parses exactly this format. Kee
 | `Reason` | Why — an incident, a measurement, a constraint. Not "it looks better" |
 | `Evidence` | A test, a measurement path, a ticket |
 
-- Continuation lines are indented two spaces. Compression joins them onto the field line.
+- Continuation lines are indented two spaces. Compression joins them onto the field line, and stops at the first
+  line it drops.
+- A label may carry a qualifier before the colon — `- Decision (range):`, `- Decision B1:`. Compression and
+  `records-lint` read it as that field. A word that merely starts with the label (`- Decisive:`) is not a field.
+  Write the plain label when one decision line is enough.
 - The labels are `fieldLabels` in `context-rail.json`. A project may use labels in another language; the hook
   compresses on whatever labels are configured.
 

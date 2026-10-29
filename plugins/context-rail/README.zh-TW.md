@@ -4,7 +4,7 @@
 
 <p align="center"><strong>已記錄的決定不是每一輪都載入，而是在代理打開它所管轄的檔案時送達。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.1-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#開始">開始</a> &bull; <a href="#寫入的內容">寫入的內容</a> &bull; <a href="#紀錄">紀錄</a> &bull; <a href="#到達鉤子">到達鉤子</a> &bull; <a href="#修改決定">修改決定</a> &bull; <a href="#測量了什麼">測量了什麼</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#需求">需求</a> &bull; <a href="#安裝">安裝</a></p>
 
@@ -98,8 +98,10 @@
 | 路徑規則在首次接觸相符的檔案時載入 | Read、shell 讀取、Write 都附上了規則 | `platform-r2-2.1.308-0.163.0` |
 | 另一個代理的分派說明，只有轉述了你的點名推翻才算確認 | 主代理寫的「照樣執行」說明下，0.1.0 段落的 Sonnet 子代理違反 6/9；固定同一句說明時，0.1.0 段落 12/12 → 0.2.0 段落 0/12 | `leaf-2.1.309`、`leaf-r2-2.1.309` |
 | ……但在真實私有倉庫的分叉上，未點名決定的預先批准說明仍漏過一次 | Sonnet 子代理違反 1/12（頂層會話 0/12，無鉤子對照 12/12）。違反的那一次，來自主代理未點名決定的「已經定了，別再爭，更新條目」說明 | `real-repo-0.2.0` |
+| ……不點名決定、只說「已經定了，更新紀錄」的分派說明也不算確認 | 收到這種固定說明的 Sonnet 工作者：0.1.0 段落 12/12 違反，A3 0/12 | `unnamed-preauth-0.3.1` |
 | 編輯沒有紀錄的路徑，會在程式碼旁邊留下紀錄 | 這些路徑的紀錄：無鉤子 0/9，0.2.0 3/9，0.3.0 8/9；不產生決定的編輯沒有建立紀錄（0/6） | `record-0.3.0` |
 | 壓縮後的節仍給出專案自身到達鉤子給出的決定 | 私有倉庫 2,681 個受管檔案中，決定變少的檔案 0 個（0.2.0：3 個） | `record-0.3.0` |
+| 帶限定語的決定行（`- 決定(範圍):`、`- 決定 B1:`）在壓縮和 `records-lint` 中也算作決定行 | 私有倉庫 2,681 個受管檔案：注入的帶限定語決定行 243 → 292，被算作沒有決定的區塊 277 → 266，決定缺失的檔案 0 個 | `labels-0.3.1` |
 | 被分派任務的代理也守住規則 | Opus、Sonnet 子代理以及 Sonnet `claude -p`、Codex `gpt-6-luna` 工作者，所有路徑：違反禁止 0/12，推翻執行 12/12，停下 0/15 | `leaf-r2-2.1.309` |
 
 陷阱和 build 的結果來自合成 fixture 和一個私有儲存庫，每格 12–15 次執行。

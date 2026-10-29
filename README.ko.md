@@ -113,7 +113,7 @@ codex plugin add context-rail@because-i-needed
 
 [budget 한국어 README 보기 →](plugins/budget/README.ko.md)
 
-### [context-rail](plugins/context-rail) · `v0.3.0`
+### [context-rail](plugins/context-rail) · `v0.3.1`
 
 **기록된 결정이 매 턴이 아니라, 에이전트가 그 결정이 관할하는 파일을 열 때 도착합니다.** 파일별 결정을 `CLAUDE.md`/`AGENTS.md`에서 코드 옆 `PRECEDENT.md` 기록으로 옮기고, 에이전트가 그 파일을 읽거나 고칠 때 결정을 넣어 주는 프로젝트 훅을 설치합니다. 결정 뒤에는 뒤집기 전에 멈추고 묻게 하는 단락이 붙습니다.
 

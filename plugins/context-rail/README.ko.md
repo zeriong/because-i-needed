@@ -4,7 +4,7 @@
 
 <p align="center"><strong>기록된 결정이 매 턴이 아니라, 에이전트가 그 결정이 관할하는 파일을 여는 순간 도착합니다.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.1-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#시작하기">시작하기</a> &bull; <a href="#무엇을-쓰는가">무엇을 쓰는가</a> &bull; <a href="#기록">기록</a> &bull; <a href="#도착-훅">도착 훅</a> &bull; <a href="#결정-바꾸기">결정 바꾸기</a> &bull; <a href="#측정한-것">측정한 것</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#요구사항">요구사항</a> &bull; <a href="#설치">설치</a></p>
 
@@ -91,8 +91,10 @@
 | 경로 규칙은 맞는 파일에 처음 닿을 때 로딩된다 | Read·셸 읽기·Write 모두 규칙이 붙었다 | `platform-r2-2.1.308-0.163.0` |
 | 다른 에이전트의 위임은 사용자의 지목을 전할 때만 확인이다 | 메인이 쓴 「그래도 진행하라」 위임에서 0.1.0 단락의 Sonnet 서브에이전트가 6/9 깸. 같은 문장을 고정한 위임에서 0.1.0 단락 12/12 → 0.2.0 단락 0/12 | `leaf-2.1.309`, `leaf-r2-2.1.309` |
 | …다만 실제 비공개 레포 포크에서는 결정 이름 없이 미리 승인한 위임이 한 번 새었다 | Sonnet 서브에이전트 1/12 깸(최상위 세션 0/12, 훅 없는 대조 12/12). 깬 1건은 결정을 지목하지 않은 메인의 「이미 결정됐다, 다시 따지지 말고 항목을 갱신하라」 위임 뒤였다 | `real-repo-0.2.0` |
+| …결정을 지목하지 않고 「이미 결정됐다, 기록을 갱신하라」고만 하는 위임도 확인이 아니다 | 그 모양의 고정 위임을 받은 Sonnet 작업자: 0.1.0 단락 12/12 깸, A3 0/12 | `unnamed-preauth-0.3.1` |
 | 기록이 없는 경로를 고치면 코드 옆에 기록이 생긴다 | 그 경로의 기록: 훅 없음 0/9, 0.2.0 3/9, 0.3.0 8/9. 결정이 없는 편집은 기록을 만들지 않음(0/6) | `record-0.3.0` |
 | 압축된 절도 프로젝트 자체 도착 훅이 주던 결정을 그대로 준다 | 비공개 레포 관할 파일 2,681개에서 결정이 줄어든 파일 0개(0.2.0: 3개) | `record-0.3.0` |
+| 한정어가 붙은 결정 줄(`- 결정(범위):`, `- 결정 B1:`)도 압축과 `records-lint` 에서 결정 줄로 센다 | 비공개 레포 관할 파일 2,681개: 주입된 한정어 결정 줄 243 → 292, 결정 없는 블록으로 센 수 277 → 266, 결정이 빠진 파일 0 | `labels-0.3.1` |
 | 일을 위임받은 에이전트도 규칙을 지킨다 | Opus·Sonnet 서브에이전트, Sonnet `claude -p`·Codex `gpt-6-luna` 작업자 모든 경로에서 금지 깸 0/12, 뒤집기 진행 12/12, 멈춤 0/15 | `leaf-r2-2.1.309` |
 
 함정과 build 결과는 합성 fixture와 비공개 레포 하나에서 나왔고, 칸당 12–15런입니다.
