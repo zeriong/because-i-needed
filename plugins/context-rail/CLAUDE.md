@@ -36,6 +36,14 @@ Rule 7's claude-x-codex precedent applies.
 - **`cd` resolution handles both hook conventions.**
   - **Why:** Claude reports the post-command `cwd` (`platform-2.1.306-0.163.0` P4). The Codex probe ran no `cd`.
   - The hook tries the other base when a path does not resolve. Self-test covers both.
+- **Compression keeps a field's continuation lines and stops at the first line it drops.**
+  - **Why:** joining a dropped field's continuation onto the decision line above made long records fall to truncated
+    and lose decisions — 3 files of a private repository's 2,681, against that project's own hook
+    (`record-0.3.0` D).
+- **An edit with no governing record says where to create one; edits always get the record reminder.**
+  - **Why:** with no recording rule, a project without the hook recorded 0/9 on paths without a record; 0.2.0 3/9;
+    0.3.0 8/9, with no records on edits that made no decision (0/6) (`record-0.3.0` W).
+  - The line is once per directory, on edits only; reads get nothing.
 - **The confirmation paragraph is pinned by sha256** (`STOP_SHA256`, checked in `--self-test`).
   - **Why:** the wording is the measured variable. Any edit is a new experiment.
   - The shipped text is A3 (`leaf-r2-2.1.309`, adopted 2026-10-23). It is A′ (`stop-en-r2-2.1.306`, adopted
@@ -111,7 +119,15 @@ The README states that everything else on Codex is unmeasured. Do not add a Code
 - A3, E6′ (`leaf-r2-2.1.309`): adopted under the rules frozen in its SPEC, including maintainer decision D7 (hold the
   release if only the Opus subagent's overrides missed; it did not trigger).
 
+## Measured for 0.3.0
+
+- Write side and compression, E8 (`record-0.3.0`): adopted on all four conditions frozen in its SPEC (deterministic
+  parity with a project's own hook; paths without a record ≥ 6/9 and 3 more than 0.2.0 and no hook; over-recording
+  ≤ 1/6; files with a section no worse than 0.2.0 minus one). The keep side was checked deterministically, not rerun.
+
 ## Not yet measured (README and CHANGELOG must say so)
+- Shell writes (`cat > file`, `sed -i`) are not treated as edits, so they get no record reminder (E8: every unrecorded
+  0.3.0 run wrote the file that way).
 - Effort high/max for the main agent, Korean records with the English paragraph (E3b). Subagent and worker behavior
   is measured (`leaf-*`).
 - A main agent that invents a named override the user never gave — the path A3 leaves open. It occurred 0/24 times in

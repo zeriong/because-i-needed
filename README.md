@@ -113,7 +113,7 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the budget README →](plugins/budget)
 
-### [context-rail](plugins/context-rail) · `v0.2.0`
+### [context-rail](plugins/context-rail) · `v0.3.0`
 
 **Recorded decisions reach the agent when it opens the file they govern, not on every turn.** It moves file-specific decisions out of `CLAUDE.md`/`AGENTS.md` into `PRECEDENT.md` records beside the code, and installs a project hook that injects a file's decisions — with a paragraph that makes the agent stop and ask before overturning one — when the agent reads or edits the file.
 

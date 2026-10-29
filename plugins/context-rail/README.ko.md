@@ -4,7 +4,7 @@
 
 <p align="center"><strong>기록된 결정이 매 턴이 아니라, 에이전트가 그 결정이 관할하는 파일을 여는 순간 도착합니다.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#시작하기">시작하기</a> &bull; <a href="#무엇을-쓰는가">무엇을 쓰는가</a> &bull; <a href="#기록">기록</a> &bull; <a href="#도착-훅">도착 훅</a> &bull; <a href="#결정-바꾸기">결정 바꾸기</a> &bull; <a href="#측정한-것">측정한 것</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#요구사항">요구사항</a> &bull; <a href="#설치">설치</a></p>
 
@@ -65,6 +65,8 @@
 - git이 무시하는 파일에는 아무것도 주지 않습니다.
 - 내부 오류는 조용히 종료하고 에이전트를 막지 않습니다.
 
+관할 파일을 고치면 기록당 한 번, 「이 변경이 새 결정을 만들면 같은 변경에서 그 기록에 적으라(파일의 `## ` 절이 없으면 추가)」는 한 줄을 받습니다. 어떤 `PRECEDENT.md` 도 관할하지 않는 파일을 고치면, 그 한 줄이 대신 어디에 만들지 알려 줍니다. 파일 옆 `<dir>/PRECEDENT.md` 에 `## <파일>` 절과 결정 블록을 쓰라는 내용이고, 디렉터리당 한 번입니다. 그런 파일을 읽기만 하면 아무것도 주지 않습니다.
+
 ## 결정 바꾸기
 
 각 절 뒤의 단락은 결정이 사용자의 확인으로만 바뀐다고 말합니다.
@@ -75,7 +77,7 @@
 
 ## 측정한 것
 
-측정은 모두 [z-lab `precedent-lab/`](https://github.com/zeriong/z-lab/tree/main/precedent-lab)에 있습니다. 조건은 Claude Code 2.1.296–2.1.309와 Codex 0.163.0, headless이고, 행에 다른 에이전트가 적혀 있지 않으면 Opus, effort `xhigh`입니다.
+측정은 모두 [z-lab `precedent-lab/`](https://github.com/zeriong/z-lab/tree/main/precedent-lab)에 있습니다. 조건은 Claude Code 2.1.296–2.1.312와 Codex 0.163.0, headless이고, 행에 다른 에이전트가 적혀 있지 않으면 Opus, effort `xhigh`입니다.
 
 | 주장 | 결과 | 실험 |
 |---|---|---|
@@ -89,9 +91,13 @@
 | 경로 규칙은 맞는 파일에 처음 닿을 때 로딩된다 | Read·셸 읽기·Write 모두 규칙이 붙었다 | `platform-r2-2.1.308-0.163.0` |
 | 다른 에이전트의 위임은 사용자의 지목을 전할 때만 확인이다 | 메인이 쓴 「그래도 진행하라」 위임에서 0.1.0 단락의 Sonnet 서브에이전트가 6/9 깸. 같은 문장을 고정한 위임에서 0.1.0 단락 12/12 → 0.2.0 단락 0/12 | `leaf-2.1.309`, `leaf-r2-2.1.309` |
 | …다만 실제 비공개 레포 포크에서는 결정 이름 없이 미리 승인한 위임이 한 번 새었다 | Sonnet 서브에이전트 1/12 깸(최상위 세션 0/12, 훅 없는 대조 12/12). 깬 1건은 결정을 지목하지 않은 메인의 「이미 결정됐다, 다시 따지지 말고 항목을 갱신하라」 위임 뒤였다 | `real-repo-0.2.0` |
+| 기록이 없는 경로를 고치면 코드 옆에 기록이 생긴다 | 그 경로의 기록: 훅 없음 0/9, 0.2.0 3/9, 0.3.0 8/9. 결정이 없는 편집은 기록을 만들지 않음(0/6) | `record-0.3.0` |
+| 압축된 절도 프로젝트 자체 도착 훅이 주던 결정을 그대로 준다 | 비공개 레포 관할 파일 2,681개에서 결정이 줄어든 파일 0개(0.2.0: 3개) | `record-0.3.0` |
 | 일을 위임받은 에이전트도 규칙을 지킨다 | Opus·Sonnet 서브에이전트, Sonnet `claude -p`·Codex `gpt-6-luna` 작업자 모든 경로에서 금지 깸 0/12, 뒤집기 진행 12/12, 멈춤 0/15 | `leaf-r2-2.1.309` |
 
 함정과 build 결과는 합성 fixture와 비공개 레포 하나에서 나왔고, 칸당 12–15런입니다.
+
+셸 명령(`cat > file`, `sed -i`)으로 고친 파일은 편집으로 보지 않아 기록 알림을 받지 못합니다. `record-0.3.0` 에서 기록을 남기지 않은 0.3.0 런 3개는 모두 그렇게 파일을 썼습니다.
 
 **측정하지 않은 것**
 - 다른 모델·effort, 대화형 세션

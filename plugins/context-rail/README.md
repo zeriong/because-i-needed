@@ -4,7 +4,7 @@
 
 <p align="center"><strong>Recorded decisions reach the agent the moment it opens the file they govern, not on every turn.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#start">Start</a> &bull; <a href="#what-it-writes">What it writes</a> &bull; <a href="#records">Records</a> &bull; <a href="#the-arrival-hook">The arrival hook</a> &bull; <a href="#changing-a-decision">Changing a decision</a> &bull; <a href="#what-was-measured">What was measured</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#requirements">Requirements</a> &bull; <a href="#installation">Installation</a></p>
 
@@ -73,6 +73,8 @@ compressed to their headings and decision lines. Above 10,000 characters Claude 
 cut off the paragraph at the end. Git-ignored files get nothing. Any internal error exits silently and never blocks
 the agent.
 
+When the agent edits a governed file, it also gets one line, once per record: if the change makes a new decision about the file, record it there in the same change, adding the file's `## ` section if it is missing. When no `PRECEDENT.md` governs an edited file, the line instead says where to create one — `<dir>/PRECEDENT.md` beside the file, with a `## <file>` section and a decision block — once per directory. Reading such a file gets nothing.
+
 ## Changing a decision
 
 The paragraph after each section says that a decision changes only with your confirmation:
@@ -91,7 +93,7 @@ The paragraph after each section says that a decision changes only with your con
 ## What was measured
 
 All measurements are in [z-lab `precedent-lab/`](https://github.com/zeriong/z-lab/tree/main/precedent-lab), on Claude
-Code 2.1.296–2.1.309 and Codex 0.163.0, headless; Opus at effort `xhigh` unless a row names other agents.
+Code 2.1.296–2.1.312 and Codex 0.163.0, headless; Opus at effort `xhigh` unless a row names other agents.
 
 | Claim | Result | Experiment |
 |---|---|---|
@@ -105,9 +107,13 @@ Code 2.1.296–2.1.309 and Codex 0.163.0, headless; Opus at effort `xhigh` unles
 | Path-scoped rules load on first contact with a matching file | Read, shell read and Write all attached the rule | `platform-r2-2.1.308-0.163.0` |
 | A brief from another agent counts as confirmation only when it relays your named override | under a main agent's "go ahead anyway" brief, Sonnet subagents broke 6/9 with 0.1.0's paragraph; with that sentence fixed in the brief, 12/12 broke with 0.1.0's → 0/12 with 0.2.0's | `leaf-2.1.309`, `leaf-r2-2.1.309` |
 | …but on a fork of a real private repository, a brief that pre-authorized without naming the decision still leaked once | Sonnet subagents broke 1/12 (top-level session 0/12, no-hook control 12/12). The one break followed a main agent's "already decided, don't re-litigate, update the entry" brief that named no decision | `real-repo-0.2.0` |
+| An edit on a path with no record gets a record beside the code | recorded on those paths: 0/9 with no hook, 3/9 with 0.2.0, 8/9 with 0.3.0; edits that make no decision created no record (0/6) | `record-0.3.0` |
+| Compressed sections keep the decisions a project's own arrival hook kept | over 2,681 governed files of a private repository: 0 files with fewer decisions (0.2.0: 3) | `record-0.3.0` |
 | Agents that receive the task from another agent keep the rule | Opus and Sonnet subagents, Sonnet `claude -p` and Codex `gpt-6-luna` workers, every path: 0/12 broke, 12/12 overrides proceeded, 0/15 stopped | `leaf-r2-2.1.309` |
 
 The trap and build results come from synthetic fixtures and from one private repository, with 12–15 runs per cell.
+Edits made with shell commands (`cat > file`, `sed -i`) are not seen as edits, so they get no record reminder: in `record-0.3.0` all three 0.3.0 runs that recorded nothing wrote the file that way.
+
 **Not measured:** other models or efforts, interactive sessions and Orca's two-way workers, records written in other
 languages with this paragraph, large repositories, and running `build` and `audit` on Codex.
 

@@ -4,7 +4,7 @@
 
 <p align="center"><strong>已记录的决定不是每一轮都加载，而是在智能体打开它所管辖的文件时送达。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#开始">开始</a> &bull; <a href="#写入的内容">写入的内容</a> &bull; <a href="#记录">记录</a> &bull; <a href="#到达钩子">到达钩子</a> &bull; <a href="#修改决定">修改决定</a> &bull; <a href="#测量了什么">测量了什么</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#要求">要求</a> &bull; <a href="#安装">安装</a></p>
 
@@ -72,6 +72,8 @@
 - 被 git 忽略的文件不会收到任何内容。
 - 内部错误会静默退出，绝不会阻塞智能体。
 
+编辑受管文件时，每份记录还会收到一次一行提示：如果这次修改产生了关于该文件的新决定，就在同一次修改里记进那份记录（缺少该文件的 `## ` 节就补上）。编辑不受任何 `PRECEDENT.md` 管辖的文件时，这一行改为说明在哪里创建：在文件旁边的 `<dir>/PRECEDENT.md` 写一个 `## <文件>` 节和一个决定块，每个目录一次。只读这类文件则不会收到任何内容。
+
 ## 修改决定
 
 每个章节后的段落说明：决定只有经过你的确认才能修改。
@@ -82,7 +84,7 @@
 
 ## 测量了什么
 
-所有测量都在 [z-lab `precedent-lab/`](https://github.com/zeriong/z-lab/tree/main/precedent-lab)。条件为 Claude Code 2.1.296–2.1.309 和 Codex 0.163.0、headless；除非该行写明其他智能体，否则为 Opus、effort `xhigh`。
+所有测量都在 [z-lab `precedent-lab/`](https://github.com/zeriong/z-lab/tree/main/precedent-lab)。条件为 Claude Code 2.1.296–2.1.312 和 Codex 0.163.0、headless；除非该行写明其他智能体，否则为 Opus、effort `xhigh`。
 
 | 结论 | 结果 | 实验 |
 |---|---|---|
@@ -96,9 +98,13 @@
 | 路径规则在首次接触匹配文件时加载 | Read、shell 读取、Write 都附上了规则 | `platform-r2-2.1.308-0.163.0` |
 | 另一个智能体的分派说明，只有转述了你的点名推翻才算确认 | 主智能体写的“照样执行”说明下，0.1.0 段落的 Sonnet 子智能体违反 6/9；固定同一句说明时，0.1.0 段落 12/12 → 0.2.0 段落 0/12 | `leaf-2.1.309`、`leaf-r2-2.1.309` |
 | ……但在真实私有仓库的分叉上，未点名决定的预先批准说明仍漏过一次 | Sonnet 子智能体违反 1/12（顶层会话 0/12，无钩子对照 12/12）。违反的那一次，来自主智能体未点名决定的“已经定了，别再争，更新条目”说明 | `real-repo-0.2.0` |
+| 编辑没有记录的路径，会在代码旁边留下记录 | 这些路径的记录：无钩子 0/9，0.2.0 3/9，0.3.0 8/9；不产生决定的编辑没有创建记录（0/6） | `record-0.3.0` |
+| 压缩后的节仍给出项目自身到达钩子给出的决定 | 私有仓库 2,681 个受管文件中，决定变少的文件 0 个（0.2.0：3 个） | `record-0.3.0` |
 | 被分派任务的智能体也守住规则 | Opus、Sonnet 子智能体以及 Sonnet `claude -p`、Codex `gpt-6-luna` 工作者，所有路径：违反禁止 0/12，推翻执行 12/12，停下 0/15 | `leaf-r2-2.1.309` |
 
 陷阱和 build 的结果来自合成 fixture 和一个私有仓库，每格 12–15 次运行。
+
+用 shell 命令（`cat > file`、`sed -i`）写入的文件不会被视为编辑，因此收不到记录提示。在 `record-0.3.0` 中，0.3.0 没有留下记录的 3 次运行都是这样写文件的。
 
 **未测量**
 - 其他模型或 effort、交互式会话

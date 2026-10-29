@@ -48,6 +48,19 @@ class HookTests(unittest.TestCase):
             broken = run(HOOK, stdin="not json")
             self.assertEqual((broken.returncode, broken.stdout), (0, ""))
 
+    def test_an_edit_with_no_record_says_where_to_create_one(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = repo(tmp)
+            (root / "lib").mkdir()
+            (root / "lib" / "b.ts").write_text("x\n")
+            event = {"hook_event_name": "PostToolUse", "tool_name": "Read", "session_id": "t2",
+                     "tool_input": {"file_path": str(root / "lib" / "b.ts")}, "cwd": str(root)}
+            self.assertEqual(run(HOOK, stdin=json.dumps(event)).stdout, "")
+            event["tool_name"] = "Edit"
+            out = json.loads(run(HOOK, stdin=json.dumps(event)).stdout)["hookSpecificOutput"]["additionalContext"]
+            self.assertIn("create lib/PRECEDENT.md with a `## b.ts` section", out)
+            self.assertEqual(run(HOOK, stdin=json.dumps(event)).stdout, "")
+
     def test_worst_case_output_stays_under_the_cap(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = repo(tmp)

@@ -113,7 +113,7 @@ codex plugin add context-rail@because-i-needed
 
 [閱讀 budget 繁體中文 README →](plugins/budget/README.zh-TW.md)
 
-### [context-rail](plugins/context-rail) · `v0.2.0`
+### [context-rail](plugins/context-rail) · `v0.3.0`
 
 **已記錄的決定不是每一輪都載入，而是在代理打開它所管轄的檔案時送達。** 它把針對特定檔案的決定從 `CLAUDE.md`/`AGENTS.md` 移到程式碼旁的 `PRECEDENT.md` 紀錄中，並安裝一個專案 hook：當代理讀取或編輯該檔案時注入這些決定，後面附上一段讓代理在推翻決定前先停下詢問的說明。
 

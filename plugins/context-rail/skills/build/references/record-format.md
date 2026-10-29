@@ -9,6 +9,8 @@ The arrival hook (`assets/precedent-context.py`) parses exactly this format. Kee
 - A source file is governed by the **nearest** record file in its own directory or an ancestor, up to the repository
   root. A record never governs a sibling directory.
 - Git-ignored files get nothing, even when a record file is above them.
+- A record is created where the first decision is made, not up front. When an edit lands on a file that no record
+  governs, the hook says to create `<dir>/PRECEDENT.md` beside it, with a `## <file>` section and a decision block.
 
 ## Sections: `## <file>`
 
