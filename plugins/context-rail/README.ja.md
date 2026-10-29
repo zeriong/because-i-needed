@@ -4,7 +4,7 @@
 
 <p align="center"><strong>記録された決定は毎ターンではなく、エージェントがその決定の対象ファイルを開いた瞬間に届きます。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#開始">開始</a> &bull; <a href="#書き込むもの">書き込むもの</a> &bull; <a href="#記録">記録</a> &bull; <a href="#到着フック">到着フック</a> &bull; <a href="#決定を変える">決定を変える</a> &bull; <a href="#測定したこと">測定したこと</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#必要条件">必要条件</a> &bull; <a href="#インストール">インストール</a></p>
 
@@ -72,6 +72,8 @@
 - git が無視するファイルには何も渡しません。
 - 内部エラーは黙って終了し、エージェントを止めません。
 
+管轄ファイルを編集すると、記録ごとに 1 回、「この変更が新しい決定を生むなら、同じ変更でその記録に書く(ファイルの `## ` 節がなければ追加する)」という 1 行が届きます。どの `PRECEDENT.md` にも管轄されないファイルを編集すると、その 1 行が代わりに作る場所を伝えます。ファイルの隣の `<dir>/PRECEDENT.md` に `## <ファイル>` 節と決定ブロックを書く、という内容で、ディレクトリごとに 1 回です。そのようなファイルを読むだけなら何も届きません。
+
 ## 決定を変える
 
 各節の後の段落は、決定はユーザーの確認によってのみ変わると伝えます。
@@ -82,7 +84,7 @@
 
 ## 測定したこと
 
-測定はすべて [z-lab `precedent-lab/`](https://github.com/zeriong/z-lab/tree/main/precedent-lab) にあります。条件は Claude Code 2.1.296–2.1.309 と Codex 0.163.0、headless で、行にほかのエージェントが書かれていなければ Opus、effort `xhigh` です。
+測定はすべて [z-lab `precedent-lab/`](https://github.com/zeriong/z-lab/tree/main/precedent-lab) にあります。条件は Claude Code 2.1.296–2.1.312 と Codex 0.163.0、headless で、行にほかのエージェントが書かれていなければ Opus、effort `xhigh` です。
 
 | 主張 | 結果 | 実験 |
 |---|---|---|
@@ -96,9 +98,13 @@
 | パス単位のルールは、一致するファイルに初めて触れたときに読み込まれる | Read・シェル読み込み・Write のいずれでもルールが付いた | `platform-r2-2.1.308-0.163.0` |
 | 別のエージェントの依頼は、ユーザーの名指しを伝えるときだけ確認になる | メインが書いた「それでも進めて」の依頼で、0.1.0 の段落の Sonnet サブエージェントが 6/9 破った。同じ文を固定した依頼では 0.1.0 の段落 12/12 → 0.2.0 の段落 0/12 | `leaf-2.1.309`、`leaf-r2-2.1.309` |
 | …ただし実際の非公開リポジトリのフォークでは、決定を名指ししない事前承認の依頼が 1 回漏れた | Sonnet サブエージェントが 1/12 破った(トップレベルのセッション 0/12、フックなしの対照 12/12)。破った 1 件は、決定を名指ししないメインの「もう決まった、蒸し返さずに項目を更新して」という依頼の後だった | `real-repo-0.2.0` |
+| 記録のないパスを編集すると、コードの隣に記録ができる | そのパスの記録: フックなし 0/9、0.2.0 3/9、0.3.0 8/9。決定のない編集は記録を作らなかった(0/6) | `record-0.3.0` |
+| 圧縮された節も、プロジェクト自身の到着フックが渡していた決定をそのまま渡す | 非公開リポジトリの管轄ファイル 2,681 件で、決定が減ったファイル 0 件(0.2.0: 3 件) | `record-0.3.0` |
 | 作業を任されたエージェントもルールを守る | Opus・Sonnet サブエージェント、Sonnet `claude -p`・Codex `gpt-6-luna` ワーカーのすべての経路で禁止破り 0/12、上書きの実行 12/12、停止 0/15 | `leaf-r2-2.1.309` |
 
 罠と build の結果は合成 fixture と非公開リポジトリ一つから得たもので、セルあたり 12–15 ランです。
+
+シェルコマンド(`cat > file`、`sed -i`)で書いたファイルは編集とみなされず、記録の案内が届きません。`record-0.3.0` で記録を残さなかった 0.3.0 の 3 回は、すべてその方法でファイルを書いていました。
 
 **測定していないこと**
 - ほかのモデル・effort、対話型セッション

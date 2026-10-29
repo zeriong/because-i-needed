@@ -1,5 +1,42 @@
 # Changelog
 
+## [0.3.0] - 2026-10-29
+
+### Added
+
+- **A record where none exists.** An edit to a governed file that no `PRECEDENT.md` covers gets one line, once per
+  directory: if the change makes a decision, create `<dir>/PRECEDENT.md` beside the file with a `## <file>` section and
+  a decision block. Reading such a file still gets nothing.
+- The edit reminder ("if this change makes a new decision, record it there") now comes once per record even when the
+  file has no section yet; before, only files with a section got it.
+
+### Fixed
+
+- Compression no longer attaches a dropped field's continuation lines to the decision line above it. That bloat made
+  long records fall from compressed to truncated and lose decisions.
+- The remaining-decision list of a truncated record ends on a whole slug, using the space that is left.
+- A shell read of several files skips a file already injected and reaches the next one, instead of saying nothing.
+
+`STOP` and `STOP_SHA256` are unchanged.
+
+### Why
+
+Measured in z-lab `precedent-lab/record-0.3.0/` (E8), Claude Code 2.1.312:
+
+- **Write side** (synthetic project with no recording rule, 72 runs). Edits on paths without a record were recorded
+  0/9 with no hook, 3/9 with 0.2.0 and 8/9 with 0.3.0. Edits that made no decision created no record (0/6). Files with
+  a section were recorded 7/9 (0.2.0 8/9, no hook 2/9).
+- **Compression** (deterministic, every governed file of a private repository, 2,681 files). Against that project's
+  own arrival hook, 0.2.0 gave fewer decisions in 3 files and dropped 2 from compressed to truncated; 0.3.0 gave the
+  same decisions in every file.
+
+### Not measured
+
+- Edits made with shell commands (`cat > file`, `sed -i`) are not seen as edits, so they get no reminder. All three
+  0.3.0 runs in E8 that recorded nothing wrote the file that way.
+- The keep side (traps, overrides, conflict-free edits) was not rerun with models; the paragraph is unchanged and the
+  deterministic comparison above stands in for it.
+
 ## [0.2.0] - 2026-10-23
 
 ### Changed

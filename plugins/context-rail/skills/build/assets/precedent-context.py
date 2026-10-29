@@ -2,8 +2,8 @@
 """context-rail arrival hook: when an agent reads or edits a file, put the governing PRECEDENT section into context.
 
 Copied by the build skill to <project>/.claude/hooks/ or .codex/hooks/. Events: PostToolUse (Claude: Read, Edit,
-Write, MultiEdit, Bash; Codex: Bash, apply_patch) and PostToolUseFailure (Claude Bash). Every internal error exits 0
-with no output.
+Write, MultiEdit, Bash; Codex: Bash, apply_patch) and PostToolUseFailure (Claude Bash). An edit to a file that no
+record governs gets one line saying where to create one. Every internal error exits 0 with no output.
 
 usage: precedent-context.py                     hook mode (event JSON on stdin)
        precedent-context.py --self-test         run the built-in cases
@@ -41,6 +41,7 @@ DEFAULTS = {
 READ_VERB = re.compile(r"(^|[\s;&|(])(cat|sed|head|tail|awk|less|more|grep|rg|nl|bat)\s")
 EDIT_TOOLS = {"Edit", "Write", "MultiEdit"}
 PATCH_FILE = re.compile(r"^\*\*\* (?:Update|Add) File: (.+)$", re.M)
+CONTINUATION = re.compile(r"^\s{2,}\S")
 LINE_CAP = 350
 
 
@@ -106,14 +107,18 @@ def sections(record, target):
 
 
 def compact(block, labels):
-    keep, field = [], re.compile(r"^- (" + "|".join(map(re.escape, labels)) + r"):")
+    keep, joining, field = [], False, re.compile(r"^- (" + "|".join(map(re.escape, labels)) + r"):")
     for line in block:
         if line.startswith(("## ", "### ")):
             keep.append(line)
+            joining = False
         elif field.match(line):
             keep.append(line)
-        elif line.startswith("  ") and keep and field.match(keep[-1]):
+            joining = True
+        elif joining and CONTINUATION.match(line):
             keep[-1] = keep[-1] + " " + line.strip()
+        else:
+            joining = False  # a dropped line's continuation must not join the kept line above it
     return [l if len(l) <= LINE_CAP else l[:LINE_CAP - 1] + "…" for l in keep]
 
 
@@ -136,8 +141,13 @@ def render(record, root, target, cfg):
         return "compressed", head + comp
     tail_note = "\n… (cut) remaining decisions: {} — full text: " + f"{rel} {ranges}"
     cut = comp[: max(0, cap - len(head) - 600)]
-    rest = " ".join(re.findall(r"^### (§\S+)", comp[len(cut):], re.M))[:400]
-    return "truncated", head + cut + tail_note.format(rest)
+    budget, rest = cap - len(head) - len(cut) - len(tail_note.format("")) - 2, []
+    for slug in re.findall(r"^### (§\S+)", comp[len(cut):], re.M):
+        if len(" ".join(rest + [slug])) > budget:
+            rest.append("…")
+            break
+        rest.append(slug)
+    return "truncated", head + cut + tail_note.format(" ".join(rest))
 
 
 def split_cd(command, cwd):
@@ -217,29 +227,43 @@ def respond(event, cfg):
     marker_dir = os.path.join(tempfile.gettempdir(), f"context-rail-{event.get('session_id') or 'nosession'}",
                               str(event.get("agent_id") or "main"))
     os.makedirs(marker_dir, exist_ok=True)
-    found, noline = [], None
+    found, noline, governing, bare = [], None, None, None
     for f in files:
         root = repo_root(f)
-        record = nearest_record(f, root, cfg["recordFile"]) if root else None
-        if not record or ignored(root, f):
+        if not root or ignored(root, f):
             continue
+        record = nearest_record(f, root, cfg["recordFile"])
+        if not record:
+            bare = bare or (root, f)
+            continue
+        governing = governing or (record, root)
         mode, text = render(record, root, f, cfg)
         if mode == "noline":
             noline = noline or (record, root, text)
         else:
             found.append((record, root, f, mode, text))
     msgs = []
-    if found:
-        record, root, f, mode, text = found[0]
-        if edit and once(marker_dir, "edit|" + record):
-            rel = os.path.relpath(record, root)
-            msgs.append(f"context-rail: {rel} governs this file. If this change makes a new decision about it, add it "
-                        f"there as a new block in the same change.")
-        if once(marker_dir, "body|" + record + "|" + f):
-            msgs.append(text + "\n" + STOP)
-    elif noline and once(marker_dir, "noline|" + noline[0]):
+    if edit and governing and once(marker_dir, "edit|" + governing[0]):
+        rel = os.path.relpath(governing[0], governing[1])
+        msgs.append(f"context-rail: {rel} governs this file. If this change makes a new decision about it, record it "
+                    f"there in the same change: a new block under the file's `## ` section, adding the section if "
+                    f"it is missing.")
+    fresh = next((x for x in found if once(marker_dir, "body|" + x[0] + "|" + x[2])), None)
+    if fresh:
+        msgs.append(fresh[4] + "\n" + STOP)
+    elif not found and noline and once(marker_dir, "noline|" + noline[0]):
         msgs.append(noline[2])
+    elif edit and not governing and bare and once(marker_dir, "norecord|" + os.path.dirname(bare[1])):
+        msgs.append(no_record(bare[0], bare[1], cfg))
     return "\n".join(msgs) or None
+
+
+def no_record(root, f, cfg):
+    d = os.path.relpath(os.path.dirname(f), root)
+    path = cfg["recordFile"] if d == "." else f"{d}/{cfg['recordFile']}"
+    return (f"context-rail: no {cfg['recordFile']} governs this file. If this change makes a decision about it, "
+            f"record it in the same change: create {path} with a `## {os.path.basename(f)}` section and a "
+            f"`### §<slug> — <one line>` block that starts with `- {cfg['fieldLabels'][0]}:`.")
 
 
 def hook():
@@ -334,11 +358,36 @@ def self_test():
         check("non-read Bash commands are ignored", out == "")
         out = run({"tool_name": "Read", "tool_input": {"file_path": f"{t}/src/ui/a.ts"}, "cwd": t, "agent_id": "sub"}, "s1")
         check("a subagent still receives a section its parent already read", "§keep" in out)
-        big = "## ui/a.ts\n" + "".join(f"\n### §d{i} — d\n- Decision: {'w ' * 120}\n- Reason: {'r ' * 400}\n" for i in range(40))
+        out = run({"tool_name": "Bash", "tool_input": {"command": "cat src/ui/a.ts src/other/a.ts"}, "cwd": t}, "s1")
+        check("a multi-file read skips a file already injected and reaches the next", "§other" in out)
+        out = run({"tool_name": "Edit", "tool_input": {"file_path": f"{t}/src/ui/c.ts"}, "cwd": t}, "s14")
+        check("Edit of a file with no section still gets the record reminder", "governs this file" in out
+              and "adding the section if it is missing" in out)
+        os.makedirs(f"{t}/tools/sub")
+        for p in ("tools/run.sh", "tools/sub/x.sh"):
+            open(f"{t}/{p}", "w").write("x\n")
+        check("Read of a file with no record is silent",
+              run({"tool_name": "Read", "tool_input": {"file_path": f"{t}/tools/run.sh"}, "cwd": t}, "s15") == "")
+        out = run({"tool_name": "Write", "tool_input": {"file_path": f"{t}/tools/run.sh"}, "cwd": t}, "s15")
+        check("Edit with no record says where to create one", "create tools/PRECEDENT.md" in out
+              and "`## run.sh`" in out and "- Decision:" in out and STOP not in out)
+        check("the no-record line is once per directory",
+              run({"tool_name": "Edit", "tool_input": {"file_path": f"{t}/tools/run.sh"}, "cwd": t}, "s15") == ""
+              and "create tools/sub/PRECEDENT.md" in run({"tool_name": "Edit", "tool_input": {
+                  "file_path": f"{t}/tools/sub/x.sh"}, "cwd": t}, "s15"))
+        kr = "## ui/a.ts\n\n### §k — k\n- 결정: 유지.\n  이어지는 결정.\n- 근거: 이유.\n  근거의 이어짐.\n- 금지: 삭제.\n"
+        kept = compact(kr.split("\n"), ["결정", "금지", "기각", "기준"])
+        check("compression joins a field's continuation and stops at a dropped line",
+              "- 결정: 유지. 이어지는 결정." in kept and not any("근거" in k for k in kept) and "- 금지: 삭제." in kept)
+        big = "## ui/a.ts\n" + "".join(f"\n### §d{i}-{'x' * 30} — d\n- Decision: {'w ' * 120}\n- Reason: {'r ' * 400}\n"
+                                       for i in range(40))
         open(f"{t}/src/PRECEDENT.md", "w").write(big)
         out = run({"tool_name": "Read", "tool_input": {"file_path": f"{t}/src/ui/a.ts"}, "cwd": t}, "s12")
         check("oversized record stays under 10,000 chars with the paragraph last",
               len(out) < 10000 and out.endswith(STOP) and "Reason:" not in out)
+        listed = re.search(r"remaining decisions: (.*) — full text", out)
+        check("the remaining-decision list holds whole slugs only", listed and all(
+            s == "…" or re.fullmatch(r"§d\d+-x{30}", s) for s in listed.group(1).split()))
     return ok
 
 
