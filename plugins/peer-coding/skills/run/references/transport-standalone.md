@@ -6,8 +6,10 @@ the return's "Uncertain" section carries what's left. Blocking for the user (Gat
 and 4, escalations) means stopping and asking in the conversation.
 
 These forms were checked on Codex CLI 0.157.1 and Claude Code 2.1.283, and ids resolved by
-`latest-model.py` ran on Codex CLI 0.159.0 and Claude Code 2.1.284. CLI flags differ
-between versions; check `codex exec --help` / `claude --help` once per session and adapt.
+`latest-model.py` ran on Codex CLI 0.159.0 and Claude Code 2.1.284. The settings line and the
+subshell of the Codex worker, Codex reviewer and Claude worker blocks were run up to the resolved
+id on Codex CLI 0.166.0 and Claude Code 2.1.314. CLI flags differ between versions; check
+`codex exec --help` / `claude --help` once per session and adapt.
 
 Rules that hold for every call below:
 
