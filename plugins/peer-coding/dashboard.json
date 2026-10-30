@@ -4,6 +4,16 @@
       "label": "peer-coding",
       "icon": "🤝",
       "status": ["bash", "scripts/mode.sh", "status", "--json"]
+    },
+    {
+      "label": "peer workers",
+      "icon": "🛠",
+      "status": ["python3", "scripts/settings.py", "status", "--json", "--role", "worker"]
+    },
+    {
+      "label": "peer reviewers",
+      "icon": "🔍",
+      "status": ["python3", "scripts/settings.py", "status", "--json", "--role", "reviewer"]
     }
   ]
 }

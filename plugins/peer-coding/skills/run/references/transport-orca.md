@@ -55,10 +55,10 @@ A wait timeout is not a failure; long tasks are normal. Wait again.
 ## Model per worker
 
 `worker-start` takes the model and reasoning effort directly — `--model <id>` and
-`--effort <level>` (effort requires model) for Claude and Codex agents. Pass the id
-`latest-model.py` printed for this dispatch from the lane's family (`CXC_WORKER_MODEL`,
-`CXC_CLAUDE_WORKER`; SKILL.md, "Newest model per family") and
-`--effort "${CXC_WORKER_EFFORT:-high}"`. Then compare the start receipt's `launch.requested`
+`--effort <level>` (effort requires model) for Claude and Codex agents. Load the settings in
+a subshell around the `worker-start` call first (SKILL.md, Configuration), then pass the id `latest-model.py`
+printed for this dispatch from the lane's family (`CXC_WORKER_MODEL`, `CXC_CLAUDE_WORKER`;
+SKILL.md, "Newest model per family") and `--effort "$CXC_WORKER_EFFORT"`. Then compare the start receipt's `launch.requested`
 and `launch.effective` and log the effective model — never assume a model from the
 arguments alone.
 

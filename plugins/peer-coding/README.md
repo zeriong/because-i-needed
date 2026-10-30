@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.1.1-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -49,13 +49,13 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add peer-coding@because-i-needed
 ```
 
-Use `$peer-coding:run`, `$peer-coding:mode on|off|status|clear`, and `$peer-coding:audit`. The mode skill requires an explicit user request on both hosts. Codex can be the main agent; the existing Codex host adapter keeps review routing across vendors. The audit includes `.codex/hooks.json` and uncommitted `.codex/` and `.agents/` context. For automatic mode, trust the UserPromptSubmit hook; explicit run does not depend on it. Claude CLI is needed for cross-vendor work when Codex is main; without it, the documented single-vendor fallback applies.
+Use `$peer-coding:run`, `$peer-coding:mode on|off|status|clear`, `$peer-coding:mode <setting> <value>`, and `$peer-coding:audit`. The mode skill requires an explicit user request on both hosts. Codex can be the main agent; the existing Codex host adapter keeps review routing across vendors. The audit includes `.codex/hooks.json` and uncommitted `.codex/` and `.agents/` context. For automatic mode, trust the UserPromptSubmit hook; explicit run does not depend on it. Claude CLI is needed for cross-vendor work when Codex is main; without it, the documented single-vendor fallback applies.
 
 ### Codex settings
 
-The same `CXC_*` settings, mode scopes and cross-vendor review routing apply on both hosts. Mode state is locally excluded in linked Git worktrees too. The audit reports `AGENTS.override.md` precedence and malformed hook declarations without changing configuration.
+The same model settings, mode scopes and cross-vendor review routing apply on both hosts. Codex has no settings menu for plugins, so on Codex you set the models and efforts with `$peer-coding:mode <setting> <value>` (see [Configuration](#configuration)); a choice made in Claude Code's `/config` applies here too. Mode state is locally excluded in linked Git worktrees too. The audit reports `AGENTS.override.md` precedence and malformed hook declarations without changing configuration.
 
-Host routing uses the configured CXC reviewer model and effort; names in parentheses are defaults. A filename mention or fallback setting alone is reported as CHECK until the effective instructions are verified.
+Host routing uses the configured reviewer models and effort; names in parentheses are defaults. A filename mention or fallback setting alone is reported as CHECK until the effective instructions are verified.
 
 ## Commands
 
@@ -63,9 +63,10 @@ Host routing uses the configured CXC reviewer model and effort; names in parenth
 |---|---|
 | `/peer-coding:run` | Orchestrate a task: the main agent plans and owns every gate decision, routes work to the `claude-fast` / `codex-bulk` / `main` lanes, and has each vendor review the other's work |
 | `/peer-coding:mode on\|off\|status\|clear [--global]` | One-line switch for automatic orchestration. User-only: the model cannot flip it |
+| `/peer-coding:mode <setting> <value>\|unset [--global]` | Choose the model family or effort of a worker lane or a reviewer ([Configuration](#configuration)); `status` lists all six |
 | `/peer-coding:audit` | Read-only check that both vendors start from the same project context; proposes fixes, changes nothing |
 
-`on` and `off` write this project's flag (`.claude-x-codex/mode`, git-excluded); `--global` writes your default for every project (`~/.config/claude-x-codex/mode`); `clear` drops the project flag; `CXC_MODE=on|off` overrides both for one shell. With the mode off, `run` starts only when you ask for it. The [dashboard](../dashboard) plugin shows the mode in effect and where it comes from (`mode.sh status --json`, declared in `dashboard.json`).
+`on` and `off` write this project's flag (`.claude-x-codex/mode`, git-excluded); `--global` writes your default for every project (`~/.config/claude-x-codex/mode`); `clear` drops the project flag; `CXC_MODE=on|off` overrides both for one shell. With the mode off, `run` starts only when you ask for it. The [dashboard](../dashboard) plugin shows the mode in effect and where it comes from, and the workers' and reviewers' models and efforts (`mode.sh status --json` and `settings.py status --json`, declared in `dashboard.json`).
 
 ## Installation
 
@@ -103,13 +104,13 @@ claude plugin install peer-coding@because-i-needed
 - **Claude Code** (or Codex as the main agent), a **git** repository, and bash 3.2+.
 - **Optional — Codex CLI** (`codex`). Without it, `run` switches to single-vendor mode — every review goes to a separate reviewer instance of your own vendor — and tells you so.
 - **Optional — Orca** with orchestration enabled. Workers can then ask questions mid-task and gates block on your decision; without it, workers run one-way as subagents or CLI calls.
-- `python3` for the audit's hook table, and `jq` when a Codex main agent runs Claude reviewers.
-- Checked against Claude Code 2.1.283, Codex CLI 0.157.1, and Orca 1.4.215.
+- `python3` for the model settings, the newest-model resolver and the audit's hook table, and `jq` when a Codex main agent runs Claude reviewers.
+- Checked against Claude Code 2.1.283, Codex CLI 0.157.1, and Orca 1.4.215; the model settings and the `/config` pickers against Claude Code 2.1.314 and Codex CLI 0.166.0.
 
 ## How it works
 
-- **Lanes** — workers run at effort `high`. `claude-fast` (Claude's newest Sonnet: UI, interaction, code taste, Claude-side tools), `codex-bulk` (Codex's newest `luna`: fully specified work such as tests for an existing contract, types, and mechanical migrations), and `main` (the main agent: tightly coupled work, or a spec still being discovered).
-- **Cross-vendor review** — the reviewer's vendor always differs from the author's, and the main agent's own plan and triage decisions go to the other vendor too. Claude reviews with the newest Opus and Codex with its newest `sol`, both at effort `xhigh` — the rung just below `max` on both CLIs. For a high-risk phase (auth, payments, data migrations, …), `run` asks you before adding a review by a top model (Codex's newest `astra` or Claude's newest Opus at `max`); it never escalates on its own. Reviewers run read-only and return JSON that both CLIs enforce with a schema.
+- **Lanes** — workers run at the worker effort (`high` by default). `claude-fast` (Claude's newest Sonnet by default: UI, interaction, code taste, Claude-side tools), `codex-bulk` (Codex's newest `terra` by default: fully specified work such as tests for an existing contract, types, and mechanical migrations), and `main` (the main agent: tightly coupled work, or a spec still being discovered).
+- **Cross-vendor review** — the reviewer's vendor always differs from the author's, and the main agent's own plan and triage decisions go to the other vendor too. By default Claude reviews with the newest Opus and Codex with its newest `sol`, both at effort `xhigh` — the rung just below `max` on both CLIs; each of these is a setting ([Configuration](#configuration)), and a model or effort you set — `astra` as the Codex reviewer, say — runs as set. For a high-risk phase (auth, payments, data migrations, …), `run` asks you before adding a review by a top model (Codex's newest `astra` or Claude's newest Opus at `max`), and doesn't offer it when your reviewer setting already is that; it never escalates beyond your settings on its own. Reviewers run read-only and return JSON that both CLIs enforce with a schema.
 - **One rebuttal round** — a rejected blocking or major finding goes back to its reviewer once, with the reason. The reviewer concedes or counters with new evidence; if it's still unresolved, it comes to you as DISPUTED with both arguments.
 - **Evidence decides** — a test, a reproduction, or a trace settles a disagreement, whichever side has it. Without evidence, you decide.
 - **Context bridge** — the audit finds where the two vendors read different instruction files, hooks that bind only one vendor, and uncommitted context that worker worktrees would lack. The Codex calls `run` makes read `CLAUDE.md` through Codex's fallback setting, with no repo change; interactive Codex sessions (Orca workers, or Codex as the main agent) need the same setting in your Codex config. Anything that would change your config or the repo is proposed at plan approval.
@@ -119,17 +120,37 @@ When a dedicated planning skill is available, `run` hands planning to it.
 
 ## Configuration
 
-`run` reads these from the environment and falls back to the defaults:
+Six settings choose the models and efforts. Each one is persistent, like the mode, and resolves first match wins:
+
+1. its `CXC_*` variable — for one shell;
+2. this project — `.claude-x-codex/settings` (git-excluded), written by `/peer-coding:mode <setting> <value>`;
+3. **Claude Code's `/config`** — the six are pickers there (type `peer-coding` to find them); a choice is your default for every project;
+4. your global file — `~/.config/claude-x-codex/settings`, written by `/peer-coding:mode <setting> <value> --global` (the route on Codex, which has no settings menu for plugins);
+5. the default.
+
+| Setting | Variable | Default | Chooses |
+|---|---|---|---|
+| `codex-worker` | `CXC_WORKER_MODEL` | `terra` | the `codex-bulk` lane's model |
+| `codex-reviewer` | `CXC_REVIEW_MODEL` | `sol` | the Codex reviewer's model |
+| `claude-worker` | `CXC_CLAUDE_WORKER` | `sonnet` | the `claude-fast` lane's model |
+| `claude-reviewer` | `CXC_CLAUDE_REVIEWER` | `opus` | the Claude reviewer's model |
+| `worker-effort` | `CXC_WORKER_EFFORT` | `high` | both vendors' workers |
+| `review-effort` | `CXC_REVIEW_EFFORT` | `xhigh` | both vendors' reviewers |
+
+```text
+/peer-coding:mode codex-reviewer astra          # this project
+/peer-coding:mode worker-effort xhigh --global  # every project
+/peer-coding:mode codex-reviewer unset          # back to the next level
+/peer-coding:mode status                        # the mode and all six, with where each comes from
+```
+
+Codex families: `terra`, `luna`, `sol`, `astra`; Claude families: `sonnet`, `opus`, `haiku`, `fable`; efforts `low`, `medium`, `high`, `xhigh`, `max`. `/config` offers exactly these; the command also takes a family it doesn't list, with a note. When a higher level shadows what you just set, the command says which one. Settings passed for one session only (`--settings`, managed settings) are not read. Until 1.2.0 the Codex worker default was `luna`; `/peer-coding:mode codex-worker luna --global` keeps it.
+
+These stay environment-only:
 
 | Variable | Default |
 |---|---|
-| `CXC_WORKER_MODEL` | `luna` |
-| `CXC_REVIEW_MODEL` | `sol` |
 | `CXC_FINAL_MODEL` | `astra` |
-| `CXC_CLAUDE_WORKER` | `sonnet` |
-| `CXC_CLAUDE_REVIEWER` | `opus` |
-| `CXC_REVIEW_EFFORT` | `xhigh` |
-| `CXC_WORKER_EFFORT` | `high` |
 | `CXC_MAX_CYCLES` | `3` |
 | `CXC_PARALLEL` | `3` |
 

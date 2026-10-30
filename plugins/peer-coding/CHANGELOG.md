@@ -1,5 +1,39 @@
 # Changelog
 
+## [1.2.0] - 2026-10-30
+
+### Added
+
+- Six persistent settings choose the lanes' and reviewers' models and efforts: `codex-worker`, `codex-reviewer`,
+  `claude-worker`, `claude-reviewer`, `worker-effort`, `review-effort` (the `CXC_*` variables of the same meaning keep
+  working). Each resolves like the mode: its `CXC_*` variable → this project (`.claude-x-codex/settings`) → Claude
+  Code's `/config` → your global file (`~/.config/claude-x-codex/settings`) → the default (`scripts/settings.py`).
+- Set them with `/peer-coding:mode <setting> <value>|unset [--global]` (Codex `$peer-coding:mode …`); `status` lists
+  all six with where each comes from, and a `note:` says when a higher level shadows what you set.
+- On Claude Code the six are pickers in `/config` (plugin `userConfig` options). Codex has no settings menu for
+  plugins, so the command is the route there.
+- The dashboard shows the workers' and reviewers' models and efforts next to the mode (two `dashboard.json` entries).
+
+### Changed
+
+- The Codex worker default is now `terra` (was `luna`). `/peer-coding:mode codex-worker luna --global` keeps the old one.
+- A model or effort the user set runs as set, `astra` or `max` included; `run` still asks before any escalation of its
+  own, and doesn't offer the high-risk extra review when the configured reviewer already is that model.
+- Every documented dispatch loads the settings in its own subshell, before any `cd` into a worker's worktree.
+
+### Why
+
+The models and efforts were environment variables only, so a choice lasted one shell and nothing showed which models
+ran. User decisions (2026-10-30): persistent like the mode, `/config` above the global file, efforts per role; Codex
+worker default `terra` (maintainer decision — no quality comparison was measured).
+
+Evidence: z-lab `claude-x-codex-lab/model-settings-probes-1.2.0` (P01–P09: `/config` draws `userConfig` options as
+pickers and saves them to the user settings file, P03; project settings files carry no plugin options, P05; Codex has
+no plugin options, P06; terra and astra run in the documented forms, P08), `model-settings-probes-r2-1.2.0` (R01), and
+`model-settings-1.2.0` (M01 resolution order 16/16, M02 dashboard on both hosts, M03 the mode skill on Claude Code and
+Codex, M04 the standalone Codex worker, Codex reviewer and Claude worker blocks resolve the configured model and effort;
+the Claude reviewer block and the Orca form were not run).
+
 ## [1.1.1] - 2026-10-16
 
 ### Changed

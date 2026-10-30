@@ -1,7 +1,7 @@
 {
   "name": "peer-coding",
   "description": "Claude × Codex peer orchestration: the two plan, build, and review each other's work as peers, with shared project context and a one-line on/off switch. Unofficial community plugin.",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "author": {
     "name": "zeriong"
   },
@@ -14,5 +14,49 @@
     "code-review",
     "orca"
   ],
-  "hooks": "./hooks/hooks.json"
+  "hooks": "./hooks/hooks.json",
+  "userConfig": {
+    "codex_worker": {
+      "type": "string",
+      "title": "Codex worker model",
+      "description": "codex-bulk lane; the newest of the family runs",
+      "default": "terra",
+      "options": ["terra", "luna", "sol", "astra"]
+    },
+    "codex_reviewer": {
+      "type": "string",
+      "title": "Codex reviewer model",
+      "description": "reviews Claude-authored work; the newest of the family runs",
+      "default": "sol",
+      "options": ["sol", "astra", "terra", "luna"]
+    },
+    "claude_worker": {
+      "type": "string",
+      "title": "Claude worker model",
+      "description": "claude-fast lane; the newest of the family runs",
+      "default": "sonnet",
+      "options": ["sonnet", "opus", "haiku", "fable"]
+    },
+    "claude_reviewer": {
+      "type": "string",
+      "title": "Claude reviewer model",
+      "description": "reviews Codex-authored work; the newest of the family runs",
+      "default": "opus",
+      "options": ["opus", "fable", "sonnet", "haiku"]
+    },
+    "worker_effort": {
+      "type": "string",
+      "title": "Worker effort",
+      "description": "both vendors' workers",
+      "default": "high",
+      "options": ["low", "medium", "high", "xhigh", "max"]
+    },
+    "review_effort": {
+      "type": "string",
+      "title": "Review effort",
+      "description": "both vendors' reviewers",
+      "default": "xhigh",
+      "options": ["low", "medium", "high", "xhigh", "max"]
+    }
+  }
 }

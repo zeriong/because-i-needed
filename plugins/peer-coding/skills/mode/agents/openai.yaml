@@ -1,7 +1,7 @@
 interface:
-  display_name: "Orchestration mode"
-  short_description: "Change or inspect Claude and Codex orchestration mode"
-  default_prompt: "Use peer-coding:mode to inspect the current orchestration mode."
+  display_name: "Orchestration mode and models"
+  short_description: "Switch orchestration, set worker and reviewer models and efforts"
+  default_prompt: "Use peer-coding:mode to inspect the orchestration mode and the worker and reviewer models."
 
 policy:
   allow_implicit_invocation: false

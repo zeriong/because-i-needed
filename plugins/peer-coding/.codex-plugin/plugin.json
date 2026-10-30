@@ -1,7 +1,7 @@
 {
   "name": "peer-coding",
   "description": "Claude × Codex peer orchestration: the two plan, build, and review each other's work as peers, with shared project context and a one-line on/off switch. Unofficial community plugin.",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "author": {
     "name": "zeriong"
   },

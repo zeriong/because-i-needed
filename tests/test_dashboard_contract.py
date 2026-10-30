@@ -24,8 +24,9 @@ class DashboardContractTest(unittest.TestCase):
             repo = Path(tmp) / "repo"
             repo.mkdir()
             subprocess.run(["git", "init", "-q", str(repo)], check=True)
-            env = {k: v for k, v in os.environ.items() if k not in ("CXC_MODE", "FREE_HANDS_ROLE")}
-            env.update(XDG_CONFIG_HOME=str(Path(tmp) / "xdg"), HOME=str(Path(tmp) / "home"))
+            env = {k: v for k, v in os.environ.items() if not k.startswith("CXC_") and k != "FREE_HANDS_ROLE"}
+            env.update(XDG_CONFIG_HOME=str(Path(tmp) / "xdg"), HOME=str(Path(tmp) / "home"),
+                       CLAUDE_CONFIG_DIR=str(Path(tmp) / "claude"))
             for path in declared:
                 root = path.parent
                 for entry in json.loads(path.read_text())["entries"]:

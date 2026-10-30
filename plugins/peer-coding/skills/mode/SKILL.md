@@ -1,8 +1,8 @@
 ---
 name: mode
-description: "Turn peer-coding orchestration mode on or off, or show its current status. Use only when the user asks to enable, disable, reset, or check the mode — e.g. \"/peer-coding:mode on\", \"peer-coding mode status\", \"오케스트레이션 모드 켜줘/꺼줘\"."
+description: "Turn peer-coding orchestration mode on or off, set which model family and effort its workers and reviewers use, or show the current state. Use only when the user asks to enable, disable, reset, or check the mode or these settings — e.g. \"/peer-coding:mode on\", \"/peer-coding:mode codex-reviewer astra\", \"peer-coding mode status\", \"오케스트레이션 모드 켜줘/꺼줘\", \"리뷰어 모델 astra로 바꿔줘\" (switch the reviewer model to astra)."
 disable-model-invocation: true
-argument-hint: "on | off | status | clear  [--global]"
+argument-hint: "on | off | status | clear  [--global]   ·   <setting> <value> | <setting> unset  [--global]"
 ---
 
 # peer-coding: mode
@@ -12,7 +12,7 @@ Claude Code invokes `/peer-coding:mode`; Codex invokes
 expanded by Claude Code, or the absolute path two directories above this skill's
 directory on Codex. Resolve it from the loaded SKILL.md path, not the working directory.
 
-A one-line switch for `peer-coding:run`.
+A one-line switch for `peer-coding:run`, and the place to choose its models and efforts.
 
 - **on** — every implementation task in this project goes through `run`
   (trivial requests excepted; see that skill's "Mode gate").
@@ -21,21 +21,50 @@ A one-line switch for `peer-coding:run`.
 
 ## What to do
 
-Run the script with the user's arguments, then report its output as-is, including any
-`hint:` or `note:` lines — they tell the user how to change the other scope. Default to
-`status` when no argument is given.
+Run the command that matches the user's arguments, then report its output as-is, including
+any `hint:` or `note:` lines — they tell the user how to change the other scope or what still
+overrides the value. Default to `status` when no argument is given.
 
 ```bash
-"<plugin>/scripts/mode.sh" <on|off|status|clear> [--global]
+"<plugin>/scripts/mode.sh" <on|off|clear> [--global]                    # the mode
+python3 "<plugin>/scripts/settings.py" set <setting> <value> [--global]  # a model or effort
+python3 "<plugin>/scripts/settings.py" unset <setting> [--global]        # back to the next level
+"<plugin>/scripts/mode.sh" status && python3 "<plugin>/scripts/settings.py" status   # status
 ```
 
-Outside Claude Code plugins, the script is at `../../scripts/mode.sh` relative to this
-skill's directory.
+Outside Claude Code plugins, the scripts are in `../../scripts/` relative to this skill's
+directory. Map the user's words onto a setting name ("the reviewer" on its own means the
+other vendor's reviewer, `codex-reviewer` when you are Claude and `claude-reviewer` when you are
+Codex); if the words fit no setting, run `status` and show the names.
 
 Do nothing else in this turn — don't start, stop, or resume an orchestration run.
 Turning the mode off mid-run leaves the run's state in `.claude-x-codex/<feature>/`;
 tell the user it can be resumed with `/peer-coding:run` on Claude Code or
 `$peer-coding:run` on Codex.
+
+## Model settings
+
+| Setting | Chooses | Default | Values |
+|---|---|---|---|
+| `codex-worker` | the `codex-bulk` lane's model family | `terra` | a Codex family: `terra`, `luna`, `sol`, `astra` |
+| `codex-reviewer` | the Codex reviewer's family | `sol` | as above |
+| `claude-worker` | the `claude-fast` lane's model family | `sonnet` | a Claude family: `sonnet`, `opus`, `haiku`, `fable` |
+| `claude-reviewer` | the Claude reviewer's family | `opus` | as above |
+| `worker-effort` | both vendors' workers | `high` | `low`, `medium`, `high`, `xhigh`, `max` |
+| `review-effort` | both vendors' reviewers | `xhigh` | as above |
+
+A model setting names a family; each dispatch runs the newest version of it. A family this
+version doesn't list is stored with a `note:`, and a dispatch stops the lane if the CLI has no
+model in it. Each setting resolves first match wins: its `CXC_*` variable → this project
+(`.claude-x-codex/settings`, git-excluded) → Claude Code's `/config` → your global file
+(`~/.config/claude-x-codex/settings`) → the default. `unset` removes the value at one level.
+
+On Claude Code the same six are rows of `/config` (type `peer-coding` to find them); a choice
+there is your global default and wins over the global file, so `set … --global` prints a
+`note:` when `/config` already holds that setting. Codex has no settings menu for plugins, so
+there the command is the way to set them. Settings passed only for one session (`--settings`,
+managed settings) are not read. A model or effort set here is the user's choice: `run` uses
+it as set, `astra` or `max` included, without asking again.
 
 ## Scopes
 
