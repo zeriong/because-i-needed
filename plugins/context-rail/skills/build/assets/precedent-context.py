@@ -106,8 +106,13 @@ def sections(record, target):
     return out
 
 
+def field_line(labels):
+    """`- Decision:`, `- Decision(old):`, `- Decision B1:` — a label, then an optional qualifier, then a colon."""
+    return re.compile(r"^- (" + "|".join(map(re.escape, labels)) + r")(?:\([^)\n]*\)|\s+[^:\n]{1,40})?:")
+
+
 def compact(block, labels):
-    keep, joining, field = [], False, re.compile(r"^- (" + "|".join(map(re.escape, labels)) + r"):")
+    keep, joining, field = [], False, field_line(labels)
     for line in block:
         if line.startswith(("## ", "### ")):
             keep.append(line)
@@ -379,6 +384,12 @@ def self_test():
         kept = compact(kr.split("\n"), ["결정", "금지", "기각", "기준"])
         check("compression joins a field's continuation and stops at a dropped line",
               "- 결정: 유지. 이어지는 결정." in kept and not any("근거" in k for k in kept) and "- 금지: 삭제." in kept)
+        qual = "### §q — q\n- 결정(옛): a.\n- 결정 ①(조판): b.\n- 결정 B1: c.\n- 결정적 이유: d.\n- Decision (range): e.\n"
+        kept = compact(qual.split("\n"), ["결정", "Decision"])
+        check("a qualified label is a decision line; a word that merely starts with the label is not",
+              all(any(k.startswith(p) for k in kept) for p in ("- 결정(옛):", "- 결정 ①(조판):", "- 결정 B1:",
+                                                               "- Decision (range):"))
+              and not any("결정적" in k for k in kept))
         big = "## ui/a.ts\n" + "".join(f"\n### §d{i}-{'x' * 30} — d\n- Decision: {'w ' * 120}\n- Reason: {'r ' * 400}\n"
                                        for i in range(40))
         open(f"{t}/src/PRECEDENT.md", "w").write(big)

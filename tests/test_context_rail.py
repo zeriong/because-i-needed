@@ -117,6 +117,15 @@ class RecordCheckTests(unittest.TestCase):
             self.assertEqual(len(data["orphan_headings"]), 1)
             self.assertEqual(len(data["blocks_without_decision"]), 1)
 
+    def test_lint_accepts_a_qualified_decision_label(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = repo(tmp)
+            with open(root / "src" / "PRECEDENT.md", "a") as f:
+                f.write("\n### §q — qualified\n- Decision (range): clamp.\n\n### §w — wording\n- Decisive: no.\n")
+            data = json.loads(run(LINT, "--project", root).stdout)
+            self.assertEqual(len(data["blocks_without_decision"]), 1)
+            self.assertTrue(data["blocks_without_decision"][0].endswith(":10"))
+
     def test_resident_size_fails_on_growth_in_characters(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = repo(tmp)

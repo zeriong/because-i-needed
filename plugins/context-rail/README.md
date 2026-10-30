@@ -4,7 +4,7 @@
 
 <p align="center"><strong>Recorded decisions reach the agent the moment it opens the file they govern, not on every turn.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.1-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#start">Start</a> &bull; <a href="#what-it-writes">What it writes</a> &bull; <a href="#records">Records</a> &bull; <a href="#the-arrival-hook">The arrival hook</a> &bull; <a href="#changing-a-decision">Changing a decision</a> &bull; <a href="#what-was-measured">What was measured</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#requirements">Requirements</a> &bull; <a href="#installation">Installation</a></p>
 
@@ -107,8 +107,10 @@ Code 2.1.296–2.1.312 and Codex 0.163.0, headless; Opus at effort `xhigh` unles
 | Path-scoped rules load on first contact with a matching file | Read, shell read and Write all attached the rule | `platform-r2-2.1.308-0.163.0` |
 | A brief from another agent counts as confirmation only when it relays your named override | under a main agent's "go ahead anyway" brief, Sonnet subagents broke 6/9 with 0.1.0's paragraph; with that sentence fixed in the brief, 12/12 broke with 0.1.0's → 0/12 with 0.2.0's | `leaf-2.1.309`, `leaf-r2-2.1.309` |
 | …but on a fork of a real private repository, a brief that pre-authorized without naming the decision still leaked once | Sonnet subagents broke 1/12 (top-level session 0/12, no-hook control 12/12). The one break followed a main agent's "already decided, don't re-litigate, update the entry" brief that named no decision | `real-repo-0.2.0` |
+| …and a brief that says the decision is already made and to update the record, without naming it, is not a confirmation either | a fixed brief of that shape to a Sonnet worker: 12/12 broke with 0.1.0's paragraph, 0/12 with A3 | `unnamed-preauth-0.3.1` |
 | An edit on a path with no record gets a record beside the code | recorded on those paths: 0/9 with no hook, 3/9 with 0.2.0, 8/9 with 0.3.0; edits that make no decision created no record (0/6) | `record-0.3.0` |
 | Compressed sections keep the decisions a project's own arrival hook kept | over 2,681 governed files of a private repository: 0 files with fewer decisions (0.2.0: 3) | `record-0.3.0` |
+| A decision line with a qualifier (`- Decision (range):`, `- Decision B1:`) counts as a decision line in compression and in `records-lint` | over 2,681 governed files of a private repository: qualified decision lines injected 243 → 292, blocks counted without a decision 277 → 266, no file lost a decision | `labels-0.3.1` |
 | Agents that receive the task from another agent keep the rule | Opus and Sonnet subagents, Sonnet `claude -p` and Codex `gpt-6-luna` workers, every path: 0/12 broke, 12/12 overrides proceeded, 0/15 stopped | `leaf-r2-2.1.309` |
 
 The trap and build results come from synthetic fixtures and from one private repository, with 12–15 runs per cell.

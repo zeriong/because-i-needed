@@ -40,6 +40,13 @@ Rule 7's claude-x-codex precedent applies.
   - **Why:** joining a dropped field's continuation onto the decision line above made long records fall to truncated
     and lose decisions — 3 files of a private repository's 2,681, against that project's own hook
     (`record-0.3.0` D).
+- **A field label may carry a qualifier (`- Decision (range):`, `- Decision B1:`); compression and `records-lint` share
+  one pattern, `field_line()`.**
+  - **Why:** 64 of a private repository's 1,087 decision lines are qualified; compression dropped them and the lint
+    counted their blocks as missing a decision (E7 E5). With the shared pattern, 49 more qualified lines were
+    injected in 8 compressed files and 11 fewer blocks were flagged, with no file losing a decision
+    (`labels-0.3.1`).
+  - The qualifier must follow the label after `(` or a space, so `- Decisive:` is not a field.
 - **An edit with no governing record says where to create one; edits always get the record reminder.**
   - **Why:** with no recording rule, a project without the hook recorded 0/9 on paths without a record; 0.2.0 3/9;
     0.3.0 8/9, with no records on edits that made no decision (0/6) (`record-0.3.0` W).
@@ -71,6 +78,8 @@ Rule 7's claude-x-codex precedent applies.
     On a fork of a real private repo it still leaked once: a gated main agent's brief said "already decided, don't
     re-litigate, update the entry" without naming the decision, and the Sonnet subagent broke 1/12
     (`real-repo-0.2.0` E3). The laundering metric needs the decision's name, so it did not count this run.
+    That brief's shape, fixed and given to a Sonnet worker, broke 12/12 with 0.1.0's paragraph and 0/12 with A3
+    (`unnamed-preauth-0.3.1`); the long natural brief on the subagent path is not measured.
 - **No PreToolUse write gate and no commit-token gate.**
   - **Why:** a hidden gate missed interpreter writes and skipped records, 5/12 (`gate-placement-2.1.296` F2–F3).
   - A visible gate denied only after implementation and false-positived on Bash 4/4 (`plan-rail-2.1.296` F3–F4).
@@ -124,6 +133,12 @@ The README states that everything else on Codex is unmeasured. Do not add a Code
 - Write side and compression, E8 (`record-0.3.0`): adopted on all four conditions frozen in its SPEC (deterministic
   parity with a project's own hook; paths without a record ≥ 6/9 and 3 more than 0.2.0 and no hook; over-recording
   ≤ 1/6; files with a section no worse than 0.2.0 minus one). The keep side was checked deterministically, not rerun.
+
+## Measured for 0.3.1
+
+- Qualified labels, E9 (`labels-0.3.1`, deterministic): adopted on all four conditions frozen in its SPEC (parity with
+  a project's own hook; no regression against 0.3.0; more qualified decision lines injected; fewer blocks flagged).
+- Unnamed pre-authorization, E10 (`unnamed-preauth-0.3.1`): A3 held — 0/12 against 12/12 under 0.1.0.
 
 ## Not yet measured (README and CHANGELOG must say so)
 - Shell writes (`cat > file`, `sed -i`) are not treated as edits, so they get no record reminder (E8: every unrecorded

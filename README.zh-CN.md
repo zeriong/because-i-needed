@@ -113,7 +113,7 @@ codex plugin add context-rail@because-i-needed
 
 [查看 budget 简体中文 README →](plugins/budget/README.zh-CN.md)
 
-### [context-rail](plugins/context-rail) · `v0.3.0`
+### [context-rail](plugins/context-rail) · `v0.3.1`
 
 **已记录的决定不是每一轮都加载，而是在智能体打开它所管辖的文件时送达。** 它把针对具体文件的决定从 `CLAUDE.md`/`AGENTS.md` 移到代码旁的 `PRECEDENT.md` 记录中，并安装一个项目钩子：当智能体读取或编辑该文件时注入这些决定，后面附上一段让智能体在推翻决定前先停下询问的说明。
 

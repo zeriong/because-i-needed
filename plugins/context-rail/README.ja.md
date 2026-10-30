@@ -4,7 +4,7 @@
 
 <p align="center"><strong>記録された決定は毎ターンではなく、エージェントがその決定の対象ファイルを開いた瞬間に届きます。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.1-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#開始">開始</a> &bull; <a href="#書き込むもの">書き込むもの</a> &bull; <a href="#記録">記録</a> &bull; <a href="#到着フック">到着フック</a> &bull; <a href="#決定を変える">決定を変える</a> &bull; <a href="#測定したこと">測定したこと</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#必要条件">必要条件</a> &bull; <a href="#インストール">インストール</a></p>
 
@@ -98,8 +98,10 @@
 | パス単位のルールは、一致するファイルに初めて触れたときに読み込まれる | Read・シェル読み込み・Write のいずれでもルールが付いた | `platform-r2-2.1.308-0.163.0` |
 | 別のエージェントの依頼は、ユーザーの名指しを伝えるときだけ確認になる | メインが書いた「それでも進めて」の依頼で、0.1.0 の段落の Sonnet サブエージェントが 6/9 破った。同じ文を固定した依頼では 0.1.0 の段落 12/12 → 0.2.0 の段落 0/12 | `leaf-2.1.309`、`leaf-r2-2.1.309` |
 | …ただし実際の非公開リポジトリのフォークでは、決定を名指ししない事前承認の依頼が 1 回漏れた | Sonnet サブエージェントが 1/12 破った(トップレベルのセッション 0/12、フックなしの対照 12/12)。破った 1 件は、決定を名指ししないメインの「もう決まった、蒸し返さずに項目を更新して」という依頼の後だった | `real-repo-0.2.0` |
+| …決定を名指しせず「もう決まった、記録を更新して」とだけ言う依頼も確認にならない | その形の固定した依頼を受けた Sonnet ワーカー: 0.1.0 の段落 12/12 破り、A3 0/12 | `unnamed-preauth-0.3.1` |
 | 記録のないパスを編集すると、コードの隣に記録ができる | そのパスの記録: フックなし 0/9、0.2.0 3/9、0.3.0 8/9。決定のない編集は記録を作らなかった(0/6) | `record-0.3.0` |
 | 圧縮された節も、プロジェクト自身の到着フックが渡していた決定をそのまま渡す | 非公開リポジトリの管轄ファイル 2,681 件で、決定が減ったファイル 0 件(0.2.0: 3 件) | `record-0.3.0` |
+| 限定語つきの決定行(`- 決定(範囲):`、`- 決定 B1:`)も、圧縮と `records-lint` で決定行として数える | 非公開リポジトリの管轄ファイル 2,681 件: 注入された限定語つき決定行 243 → 292、決定のないブロックと数えた数 277 → 266、決定が抜けたファイル 0 件 | `labels-0.3.1` |
 | 作業を任されたエージェントもルールを守る | Opus・Sonnet サブエージェント、Sonnet `claude -p`・Codex `gpt-6-luna` ワーカーのすべての経路で禁止破り 0/12、上書きの実行 12/12、停止 0/15 | `leaf-r2-2.1.309` |
 
 罠と build の結果は合成 fixture と非公開リポジトリ一つから得たもので、セルあたり 12–15 ランです。
