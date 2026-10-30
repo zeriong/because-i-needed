@@ -73,9 +73,9 @@ codex plugin add context-rail@because-i-needed
 
 [ux-ui 한국어 README 보기 →](plugins/ux-ui/README.ko.md)
 
-### [peer-coding](plugins/peer-coding) · `v1.1.1`
+### [peer-coding](plugins/peer-coding) · `v1.2.0`
 
-**Claude × Codex 동료 오케스트레이션.** 메인 에이전트가 계획하고 모든 관문을 판단하며, 작업을 빠른 Claude 워커나 대량 처리용 Codex 워커에 보내고, 두 벤더가 서로의 작업을 리뷰합니다 — 메인 에이전트 자신의 계획도 포함됩니다. 반론은 한 번이고, 판정은 역할이 아니라 증거가 합니다. 감사 기능이 두 벤더가 같은 프로젝트 지침에서 출발하는지 확인합니다. 비공식 커뮤니티 플러그인입니다.
+**Claude × Codex 동료 오케스트레이션.** 메인 에이전트가 계획하고 모든 관문을 판단하며, 작업을 빠른 Claude 워커나 대량 처리용 Codex 워커에 보내며, 워커의 모델과 추론 강도는 사용자가 선택하고(Claude Code `/config` 또는 `/peer-coding:mode`), 두 벤더가 서로의 작업을 리뷰합니다 — 메인 에이전트 자신의 계획도 포함됩니다. 반론은 한 번이고, 판정은 역할이 아니라 증거가 합니다. 감사 기능이 두 벤더가 같은 프로젝트 지침에서 출발하는지 확인합니다. 비공식 커뮤니티 플러그인입니다.
 
 - **이럴 때** Claude Code와 Codex를 모두 쓰고, 기능의 모든 단계에서 다른 벤더의 리뷰를 받고 싶을 때.
 - **진입점:** `/peer-coding:run`, 또는 `/peer-coding:mode on` 으로 켜 두면 구현 요청이 이 흐름을 거칩니다

@@ -73,9 +73,9 @@ codex plugin add context-rail@because-i-needed
 
 [查看 ux-ui 简体中文 README →](plugins/ux-ui/README.zh-CN.md)
 
-### [peer-coding](plugins/peer-coding) · `v1.1.1`
+### [peer-coding](plugins/peer-coding) · `v1.2.0`
 
-**Claude × Codex 同伴编排。** 主智能体负责规划并做出每个关卡的决定，把工作分派给快速的 Claude 工作者或批量处理的 Codex 工作者，两个厂商互相评审对方的工作——包括主智能体自己的计划。反驳只有一轮，裁定依据的是证据而不是角色。审计功能确保两个厂商从同样的项目指令出发。非官方社区插件。
+**Claude × Codex 同伴编排。** 主智能体负责规划并做出每个关卡的决定，把工作分派给快速的 Claude 工作者或批量处理的 Codex 工作者，工作者的模型和推理强度由你选择（Claude Code 的 `/config` 或 `/peer-coding:mode`），两个厂商互相评审对方的工作——包括主智能体自己的计划。反驳只有一轮，裁定依据的是证据而不是角色。审计功能确保两个厂商从同样的项目指令出发。非官方社区插件。
 
 - **适用场景：** 同时使用 Claude Code 和 Codex，并希望功能的每个阶段都经过另一个厂商的评审时。
 - **入口：** `/peer-coding:run`，或用 `/peer-coding:mode on` 开启后，实现类请求都会走这个流程

@@ -1,6 +1,6 @@
 ---
 name: run
-description: "Cross-vendor multi-agent orchestration for coding work. The main agent plans and owns every gate decision, work is routed to fast Claude (Sonnet) or bulk Codex (Luna) workers by task type, and Claude and Codex review each other as peers — including the main agent's own plan and triage decisions, with a rebuttal round when findings are rejected. Runs from either Claude Code or Codex as the main agent, and uses Orca's orchestration runtime when available (two-way worker communication, gates) or falls back to one-way subagent/CLI calls. Use this skill when the user explicitly asks for it — names it, runs /peer-coding:run, or asks to orchestrate, parallelize, fan out, or run agents on a task (\"오케스트레이션으로 진행해줘\") — or when an [peer-coding: ON] context note is present and the request is implementation work. When the mode is off and the user hasn't asked for it, do not use this skill."
+description: "Cross-vendor multi-agent orchestration for coding work. The main agent plans and owns every gate decision, work is routed to fast Claude or bulk Codex workers by task type (models and efforts are persistent settings; Sonnet and Terra by default), and Claude and Codex review each other as peers — including the main agent's own plan and triage decisions, with a rebuttal round when findings are rejected. Runs from either Claude Code or Codex as the main agent, and uses Orca's orchestration runtime when available (two-way worker communication, gates) or falls back to one-way subagent/CLI calls. Use this skill when the user explicitly asks for it — names it, runs /peer-coding:run, or asks to orchestrate, parallelize, fan out, or run agents on a task (\"오케스트레이션으로 진행해줘\") — or when an [peer-coding: ON] context note is present and the request is implementation work. When the mode is off and the user hasn't asked for it, do not use this skill."
 compatibility: Main agent in Claude Code or Codex. Git worktrees. Optional — the other vendor's CLI (`codex` or `claude`), and Orca (desktop runtime with orchestration enabled).
 ---
 
@@ -59,7 +59,10 @@ Orchestration has a one-line on/off switch managed by the `mode` skill of this p
    what you can without repo changes (Codex fallback instruction files, context manifest,
    context packs) and collect the rest — pointer files, gate scripts — as proposals for
    the plan-approval step. Rerun the audit when the host differs from the last run.
-5. Load `references/templates.md` when you reach the plan step.
+5. **Read the settings** once: `python3 "<plugin>/scripts/settings.py" status`. Log its table in
+   `decisions.md` — which model family and effort each lane and reviewer uses, and where each came from
+   (Configuration below). Tell the user in one line when a setting differs from its default.
+6. Load `references/templates.md` when you reach the plan step.
 
 ## Core principles
 
@@ -110,7 +113,7 @@ exploration logs — so your context stays useful for the whole feature.
 | Lane | Model · effort (default) | Route here when |
 |---|---|---|
 | `claude-fast` | Claude newest `CXC_CLAUDE_WORKER` (`sonnet`) · `CXC_WORKER_EFFORT` (`high`) | Fast feedback and code taste matter: UI, interaction, styling, design-system work; needs Claude-side tools or MCP servers |
-| `codex-bulk` | Codex newest `CXC_WORKER_MODEL` (`luna`) · `CXC_WORKER_EFFORT` (`high`) | The correct result is already fully specified: tests for an existing contract, types, mechanical migrations, repetitive mappings, fixtures, docs from code |
+| `codex-bulk` | Codex newest `CXC_WORKER_MODEL` (`terra`) · `CXC_WORKER_EFFORT` (`high`) | The correct result is already fully specified: tests for an existing contract, types, mechanical migrations, repetitive mappings, fixtures, docs from code |
 | `main` | you | Tightly coupled cross-layer changes; spec still being discovered; tasks smaller than their delegation prompt |
 
 Splitting coupled work costs more in coordination than it saves in parallelism. When
@@ -138,10 +141,15 @@ through. Spell it exactly.
   start your vendor's reviewer as a separate read-only call — being main doesn't make
   your session's model or effort the reviewer's.
 - **Otherwise**, start a read-only reviewer from the other vendor, per the table.
+- **Configured is approved.** A model or effort the user set (at any level but the default,
+  Configuration below) is the user's choice and runs as set, `astra` or `max` included. What
+  needs the user's approval is your own escalation beyond the settings.
 - **High-risk phases** (auth, permissions, data integrity, payments, production data
   migrations) use the same reviewers. Never move to a top model or `max` effort on your
   own — an extra final review from the other vendor's top model (Codex newest
-  `CXC_FINAL_MODEL`, family `astra`, or Claude newest Opus at `max`) runs only if the user approves it. Ask at plan
+  `CXC_FINAL_MODEL`, family `astra`, or Claude newest Opus at `max`) runs only if the user approves it.
+  Don't offer it when it would repeat the regular review: the Codex reviewer setting already
+  names the `CXC_FINAL_MODEL` family, or the Claude reviewer is already `opus` at `max`. Ask at plan
   approval for every phase marked `Risk: high`, and again whenever a phase turns out
   high-risk later: with the AskUserQuestion tool on Claude Code, in the conversation on
   other hosts (an Orca gate under Orca). Record the answer in `decisions.md`.
@@ -167,18 +175,37 @@ doesn't narrow scope.
 
 ### Configuration
 
-Read these from the environment, falling back to defaults. A model setting names a
-**family**; what runs is always the newest version of that family (next section):
+Six settings choose the lanes' and reviewers' models and efforts. Each is persistent, like the
+mode, and `<plugin>/scripts/settings.py` resolves it in this order: its `CXC_*` variable → this
+project (`.claude-x-codex/settings`) → Claude Code's `/config` (the plugin's options) → the
+global file (`~/.config/claude-x-codex/settings`) → the default. The user sets them with the
+`mode` skill (`peer-coding:mode <setting> <value> [--global]`) or, on Claude Code, in `/config`.
+A model setting names a **family**; what runs is always the newest version of that family
+(next section):
+
+| Setting | Variable | Default |
+|---|---|---|
+| `codex-worker` | `CXC_WORKER_MODEL` | `terra` |
+| `codex-reviewer` | `CXC_REVIEW_MODEL` | `sol` |
+| `claude-worker` | `CXC_CLAUDE_WORKER` | `sonnet` |
+| `claude-reviewer` | `CXC_CLAUDE_REVIEWER` | `opus` |
+| `worker-effort` | `CXC_WORKER_EFFORT` | `high` |
+| `review-effort` | `CXC_REVIEW_EFFORT` | `xhigh` |
+
+Load them inside each dispatch, right before it and before any `cd` into a worktree. Each block
+in the transport files is a `( … )` subshell that starts with this line, and the commands after
+it read the variables it sets; the subshell keeps those values from outliving the dispatch, so a
+setting changed mid-run reaches the next one:
+
+```bash
+S=$(python3 "<plugin>/scripts/settings.py" env) && eval "$S" || exit
+```
+
+These stay environment-only:
 
 | Variable | Default |
 |---|---|
-| `CXC_WORKER_MODEL` | `luna` |
-| `CXC_REVIEW_MODEL` | `sol` |
 | `CXC_FINAL_MODEL` | `astra` |
-| `CXC_CLAUDE_WORKER` | `sonnet` |
-| `CXC_CLAUDE_REVIEWER` | `opus` |
-| `CXC_REVIEW_EFFORT` | `xhigh` |
-| `CXC_WORKER_EFFORT` | `high` |
 | `CXC_MAX_CYCLES` | `3` |
 | `CXC_PARALLEL` | `3` |
 
@@ -190,8 +217,11 @@ Every dispatch — worker, reviewer, rebuttal, delta re-review — resolves its 
 before it starts, never once per run and never from memory:
 
 ```bash
-python3 "<plugin>/scripts/latest-model.py" codex "${CXC_REVIEW_MODEL:-sol}" --effort "${CXC_REVIEW_EFFORT:-xhigh}"
-python3 "<plugin>/scripts/latest-model.py" claude "${CXC_CLAUDE_WORKER:-sonnet}" --effort "${CXC_WORKER_EFFORT:-high}" --project "<child's working directory>"
+(
+S=$(python3 "<plugin>/scripts/settings.py" env) && eval "$S" || exit
+python3 "<plugin>/scripts/latest-model.py" codex "$CXC_REVIEW_MODEL" --effort "$CXC_REVIEW_EFFORT"
+python3 "<plugin>/scripts/latest-model.py" claude "$CXC_CLAUDE_WORKER" --effort "$CXC_WORKER_EFFORT" --project "<child's working directory>"
+)
 ```
 
 - Pass stdout as the child's model. A versioned setting (`gpt-<n>-sol`, `claude-opus-<n>`)
@@ -343,7 +373,7 @@ state; your memory of the conversation is not.
 - Heavy review after every task instead of per phase.
 - Parallelizing tasks that share files.
 - Letting a reviewer write code.
-- Moving any agent to a top model or `max` effort without asking the user first.
+- Moving any agent to a top model or `max` effort the user didn't set, without asking the user first.
 - Assuming one vendor's context is the default: sending a worker off without the
   instructions, rules, or knowledge the other vendor would have had natively.
 - Letting a routing rule silently become same-vendor review after a host change —

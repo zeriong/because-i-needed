@@ -9,9 +9,11 @@ the user flag `~/.config/claude-x-codex/mode`, the `CXC_*` variables (`CXC_MODE`
 free-hands), and the z-lab series `claude-x-codex-lab/`.
 
 Contents: three skills (`skills/run` with six references and `review.schema.json`, `skills/mode`, `skills/audit`),
-the hook `hooks/hooks.json` (UserPromptSubmit → `hooks/mode-context.sh`), and three scripts in `scripts/` shared by
-the skills (`mode.sh`, `context-audit.sh`, `worktree-setup.sh`). No agents, no MCP servers. The root `install.sh` is
-the marketplace installer, not part of this plugin.
+the hook `hooks/hooks.json` (UserPromptSubmit → `hooks/mode-context.sh`), the scripts in `scripts/` shared by the
+skills (`mode.sh`, `settings.py`, `context-audit.sh`, `worktree-setup.sh`, and the shared resolver `latest-model.py`),
+`dashboard.json` (three entries: the mode, the workers' and the reviewers' models), and six `userConfig` options in
+`.claude-plugin/plugin.json` (the `/config` rows). No agents, no MCP servers. The root `install.sh` is the marketplace
+installer, not part of this plugin.
 
 ---
 
@@ -29,6 +31,24 @@ the marketplace installer, not part of this plugin.
   anything else counts as unset. `mode.sh status --json` prints that resolution for the dashboard plugin (root Rule 11,
   `dashboard.json`): `source` is `env`, `project`, `global` or `default`. **Why (z-lab `dashboard-lab/run-0.1.0` D01,
   D04).**
+- `settings.py` (python3, standard library, offline, read-only except `set`/`unset`) resolves each of the six model and
+  effort settings: `CXC_*` env → `<repo>/.claude-x-codex/settings` → Claude Code `/config` → the global file
+  `~/.config/claude-x-codex/settings` → default. `/config` is read from `${CLAUDE_CONFIG_DIR:-~/.claude}/settings.json`
+  `pluginConfigs` only: a copy under any `/plugins/cache/` reads `peer-coding@because-i-needed`, a developer checkout
+  `peer-coding@inline`, then `peer-coding`, then the marketplace id; a value outside the declared options counts as
+  unset. A file value that fails validation counts as unset. `status --json --role worker|reviewer` prints one dashboard
+  entry (source `global` for both `/config` and the global file). Every dispatch loads `settings.py env` into its own
+  shell, so a change reaches the next dispatch. **Why (z-lab `claude-x-codex-lab/model-settings-probes-1.2.0`):** the
+  menu and `claude plugin configure` write that file under those ids (P02, P03); project and local settings files are
+  not applied (P05); `@inline` beats the bare name (P04 c); `${user_config.*}` in skill text stays literal when unset
+  and the shell gets no `CLAUDE_PLUGIN_OPTION_*` (P04), so the skills can't take the values from Claude Code directly;
+  the precedence of `/config` over the global file is a user decision (2026-10-30, `analyze/improvement-backlog.md`).
+  Each dispatch loads the settings in its own `( … )` subshell before any `cd` (Codex review of 1.2.0: a load after `cd`
+  missed the project file; an exporting shell kept the first load). The shipped mechanism: z-lab
+  `claude-x-codex-lab/model-settings-1.2.0` (M01 order 16/16, M02 dashboard, M03 mode skill on both hosts, M04 three standalone dispatch
+  blocks up to the resolved id; the Claude reviewer block and the Orca form not run).
+- The `userConfig` options in `.claude-plugin/plugin.json` and `SETTINGS` in `settings.py` list the same keys,
+  defaults and values (a test compares them). A family missing from the options can still be set by command or env.
 - Scripts stay LF (`.gitattributes`) and executable (git mode `100755`), and bash 3.2 compatible — no associative
   arrays, `mapfile`, or `${var,,}`.
 
@@ -36,8 +56,11 @@ the marketplace installer, not part of this plugin.
 
 | Fact | Source | Copies |
 |---|---|---|
-| `CXC_*` defaults | `skills/run/SKILL.md` Configuration | five READMEs (Configuration), `host-*.md`, `transport-*.md` |
-| Reviewer model families and efforts (Claude newest `opus` · Codex newest `sol`, both `xhigh`; workers newest `sonnet` / `luna` at `high`; a top model or `max` only after asking the user) | `skills/run/SKILL.md` Review routing and Work lanes | `host-*.md` tables, `transport-standalone.md` and `transport-orca.md` commands, five READMEs (How it works) |
+| Model and effort settings (names, `CXC_*` variables, defaults, values) | `scripts/settings.py` `SETTINGS` | `.claude-plugin/plugin.json` `userConfig`, `skills/run/SKILL.md` Configuration, `skills/mode/SKILL.md` Model settings, `host-*.md` parenthesized defaults, five READMEs (Configuration) |
+| Environment-only `CXC_*` defaults (`CXC_FINAL_MODEL`, `CXC_MAX_CYCLES`, `CXC_PARALLEL`) | `skills/run/SKILL.md` Configuration | five READMEs (Configuration), `host-*.md` |
+| Reviewer model families and efforts (Claude newest `opus` · Codex newest `sol`, both `xhigh`; workers newest `sonnet` / `terra` at `high`; a top model or `max` the user didn't set only after asking) | `skills/run/SKILL.md` Review routing and Work lanes | `host-*.md` tables, five READMEs (How it works) |
+| Settings resolution order (env → project → `/config` → global file → default) | `scripts/settings.py` header | `skills/mode/SKILL.md`, `skills/run/SKILL.md` Configuration, five READMEs (Configuration) |
+| Dashboard entries | `dashboard.json` | `tests/test_dashboard.py` expected entries, five READMEs (Commands) |
 | Platform support | `skills/mode/SKILL.md` Platforms | five READMEs (Platforms) |
 | Mode scopes and resolution order | `scripts/mode.sh` header | `skills/mode/SKILL.md` Scopes, five READMEs (Commands) |
 | Review JSON shape | `skills/run/references/review.schema.json` | `templates.md` review prompt example |
@@ -81,6 +104,13 @@ one of these CLIs changes, re-run the affected probes there and update the versi
   form is not, the Bash environment has no such variable (V01–V02), and a reference file read later keeps it literal, so a
   command copied from one fails with exit 127 (V03). So scripts are called from SKILL.md text, and references name them as
   `<plugin>/…`, which `run` defines in SKILL.md — that form ran the script 3/3 (V06).
+- Plugin options (model-settings-probes-1.2.0 P01–P06, r2 R01; Claude Code 2.1.314, Codex 0.166.0): a `userConfig`
+  string field with `options` is a picker row in interactive `/config` (headless `$.config.list()` has no plugin rows),
+  and both the menu and `claude plugin configure --values-stdin` save to `$CLAUDE_CONFIG_DIR/settings.json`
+  `pluginConfigs["<plugin>@<marketplace>"]` (`@inline` under `--plugin-dir`); the CLI refuses a value outside the
+  options. Project and local settings files' `pluginConfigs` are not applied. Codex has no plugin options:
+  `[plugins."<id>"]` keeps only `enabled`, and unknown manifest fields are ignored. A set `CLAUDE_CONFIG_DIR` reaches
+  hook commands, hooks modules' `$.process.run`, and the session shell (bash mode; the Bash tool is inferred).
 - Effort (E1–E6): Claude `--effort` takes `low, medium, high, xhigh, max`; Codex `gpt-6-sol` takes `low … xhigh, max, ultra`
   (`ultra` = max plus automatic task delegation), `gpt-6-luna` up to `max`. So `xhigh` is the same rung on both — one below
   `max`. `claude -p --model opus --effort xhigh` and `--model sonnet --effort high` run; an unknown value only warns on stderr
@@ -118,7 +148,7 @@ cache_read) for the same prompt with `CXC_MODE=on` and `off`, using `--setting-s
 
 ## Rule 5 — Every dispatch runs the newest model of its family
 
-- A model setting names a family (`luna`, `sol`, `astra`, `sonnet`, `opus`). `scripts/latest-model.py` resolves it right
+- A model setting names a family (`terra`, `luna`, `sol`, `astra`, `sonnet`, `opus`, `haiku`, `fable`). `scripts/latest-model.py` resolves it right
   before each dispatch; a versioned setting is reduced to its family (user decision, 2026-09-30). No file under
   `skills/`, `agents/`, `hooks/` or `scripts/` of any plugin names a model version — `tests/test_model_pins.py` fails on one.
 - Codex's newest is the highest listed `gpt-<version>-<family>` in `codex debug models`, accepted only when

@@ -161,14 +161,32 @@ class PluginPathQuotingTests(unittest.TestCase):
     def test_documented_resolver_line_runs_from_a_path_with_spaces(self):
         root = Path(__file__).resolve().parents[1]
         doc = (root / "plugins/peer-coding/skills/run/references/transport-standalone.md").read_text()
-        line = next(l for l in doc.splitlines() if 'latest-model.py" claude "${CXC_CLAUDE_WORKER' in l)
+        lines = doc.splitlines()
+        at = next(i for i, l in enumerate(lines) if 'latest-model.py" claude "$CXC_CLAUDE_WORKER' in l)
+        start = next(i for i in range(at, 0, -1) if lines[i].startswith("```")) + 1
+        self.assertEqual(lines[start], "(")
+        self.assertIn('scripts/settings.py" env', lines[start + 1])
         with tempfile.TemporaryDirectory(prefix="plugin root ") as temp:
             plugin = Path(temp) / "Application Support" / "peer-coding"
             (plugin / "scripts").mkdir(parents=True)
-            shutil.copy2(root / "plugins/peer-coding/scripts/latest-model.py", plugin / "scripts")
+            for name in ("latest-model.py", "settings.py"):
+                shutil.copy2(root / "plugins/peer-coding/scripts" / name, plugin / "scripts")
             env = {k: v for k, v in os.environ.items() if not k.startswith(("ANTHROPIC_DEFAULT_", "CXC_"))}
-            env.update(HOME=temp, CLAUDE_CONFIG_DIR=str(Path(temp) / "cfg"),
+            env.update(HOME=temp, CLAUDE_CONFIG_DIR=str(Path(temp) / "cfg"), XDG_CONFIG_HOME=str(Path(temp) / "xdg"),
                        LATEST_MODEL_MANAGED_SETTINGS=str(Path(temp) / "managed.json"))
-            script = line.replace("<plugin>", str(plugin)) + '\necho "$M"'
-            result = subprocess.run(["bash", "-c", script], cwd=temp, env=env, capture_output=True, text=True)
-        self.assertEqual((result.returncode, result.stdout.strip()), (0, "sonnet"), result.stderr)
+            block = "\n".join(lines[start:at + 1]).replace("<plugin>", str(plugin)).replace("<id>", "T1")
+            block = block.replace("<feature>", "f") + '\necho "$M"\n)'
+            results = []
+            for project_setting in (None, "claude_worker=haiku\n"):
+                repo = Path(temp) / ("plain" if project_setting is None else "set")
+                (repo / ".claude-x-codex" / "wt" / "T1").mkdir(parents=True)
+                if project_setting:
+                    (repo / ".claude-x-codex" / "settings").write_text(project_setting)
+                results.append(subprocess.run(["bash", "-c", block], cwd=repo, env=env, capture_output=True, text=True))
+            # one shell that exports everything, dispatching twice around a settings change
+            again = "set -a; export CXC_CLAUDE_WORKER=\n" + block + "\necho claude_worker=opus > .claude-x-codex/settings\n" + block
+            twice = subprocess.run(["bash", "-c", again], cwd=Path(temp) / "set", env=env, capture_output=True, text=True)
+        # the main tree's project setting reaches the worker even though the block cds into the worktree
+        self.assertEqual([(r.returncode, r.stdout.strip()) for r in results], [(0, "sonnet"), (0, "haiku")],
+                         [r.stderr for r in results])
+        self.assertEqual((twice.returncode, twice.stdout.split()), (0, ["haiku", "opus"]), twice.stderr)

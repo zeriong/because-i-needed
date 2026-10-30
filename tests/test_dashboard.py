@@ -86,12 +86,25 @@ class DashboardTest(unittest.TestCase):
         self.assertEqual(self.run_dashboard("--host", "codex")["entries"], [])
         self.assertEqual(self.run_dashboard("--host", "codex")["line"], "")
 
-    def test_the_repository_plugins_show_through_their_declarations(self):
+    def repository_plugins(self):
         dirs = os.pathsep.join(str(ROOT / "plugins" / p) for p in ("budget", "free-hands", "peer-coding"))
-        out = self.run_dashboard("--host", "claude", "--enabled", "",
-                                 env={"BECAUSE_I_NEEDED_PLUGIN_DIRS": dirs, "XDG_CONFIG_HOME": str(self.tmp / "x")})
+        self.env = {k: v for k, v in self.env.items() if not k.startswith("CXC_")}
+        return self.run_dashboard("--host", "claude", "--enabled", "",
+                                  env={"BECAUSE_I_NEEDED_PLUGIN_DIRS": dirs, "XDG_CONFIG_HOME": str(self.tmp / "x")})
+
+    def test_the_repository_plugins_show_through_their_declarations(self):
+        out = self.repository_plugins()
         self.assertEqual([(e["label"], e["value"]) for e in out["entries"]],
-                         [("budget", "off"), ("free-hands", "off"), ("peer-coding", "off")])
+                         [("budget", "off"), ("free-hands", "off"), ("peer-coding", "off"),
+                          ("peer workers", "codex terra · claude sonnet"), ("peer reviewers", "codex sol · claude opus")])
+        self.assertEqual([e["detail"] for e in out["entries"][3:]], ["effort high", "effort xhigh"])
+
+    def test_peer_models_show_the_project_setting(self):
+        (self.repo / ".claude-x-codex").mkdir()
+        (self.repo / ".claude-x-codex" / "settings").write_text("codex_reviewer=astra\nreview_effort=max\n")
+        reviewers = self.repository_plugins()["entries"][4]
+        self.assertEqual((reviewers["value"], reviewers["where"], reviewers["detail"]),
+                         ("codex astra · claude opus", "project", "effort max"))
 
 
 if __name__ == "__main__":

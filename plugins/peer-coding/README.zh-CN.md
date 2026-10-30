@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.1.1-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -49,13 +49,13 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add peer-coding@because-i-needed
 ```
 
-使用 `$peer-coding:run`、`$peer-coding:mode on|off|status|clear` 和 `$peer-coding:audit`。两个宿主的模式操作都需要用户明确请求。Codex 可以担任主代理，现有 Codex 适配器保持跨厂商评审。审计包含 `.codex/hooks.json` 及未提交的 `.codex/`、`.agents/` 上下文。自动模式需要信任 UserPromptSubmit 钩子，显式 run 不依赖它。Codex 为主代理时，跨厂商工作需要 Claude CLI；缺少时使用既有单厂商回退路径。
+使用 `$peer-coding:run`、`$peer-coding:mode on|off|status|clear`、`$peer-coding:mode <setting> <value>` 和 `$peer-coding:audit`。两个宿主的模式操作都需要用户明确请求。Codex 可以担任主代理，现有 Codex 适配器保持跨厂商评审。审计包含 `.codex/hooks.json` 及未提交的 `.codex/`、`.agents/` 上下文。自动模式需要信任 UserPromptSubmit 钩子，显式 run 不依赖它。Codex 为主代理时，跨厂商工作需要 Claude CLI；缺少时使用既有单厂商回退路径。
 
 ### Codex 设置
 
-两端使用相同的 `CXC_*` 设置、模式作用域和跨供应商评审规则。链接的 Git worktree 中也会在本地排除模式文件。审计不修改配置，并报告 `AGENTS.override.md` 的优先级及无效的钩子声明。
+两端使用相同的模型设置、模式作用域和跨供应商评审规则。Codex 没有插件设置菜单，因此使用 `$peer-coding:mode <setting> <value>` 设置模型和推理强度（见[配置](#配置)）；在 Claude Code 的 `/config` 中选择的值也适用于此。 链接的 Git worktree 中也会在本地排除模式文件。审计不修改配置，并报告 `AGENTS.override.md` 的优先级及无效的钩子声明。
 
-各宿主的路由使用配置的 CXC 评审模型和推理强度，括号内仅为默认值。仅提及文件名或 fallback 配置不会被判定为指令一致，而会标为 CHECK，要求核对实际生效内容。
+各宿主的路由使用配置的 评审模型和推理强度，括号内仅为默认值。仅提及文件名或 fallback 配置不会被判定为指令一致，而会标为 CHECK，要求核对实际生效内容。
 
 ## 命令
 
@@ -63,9 +63,10 @@ codex plugin add peer-coding@because-i-needed
 |---|---|
 | `/peer-coding:run` | 编排一项任务：主智能体负责规划并做出每个关卡的决定，把工作分派到 `claude-fast` / `codex-bulk` / `main` 通道，并让每个厂商评审另一个厂商的工作 |
 | `/peer-coding:mode on\|off\|status\|clear [--global]` | 开启或关闭自动编排的一行开关。仅限用户使用，模型无法切换 |
+| `/peer-coding:mode <setting> <value>\|unset [--global]` | 选择工作者通道或评审者的模型系列或推理强度（[配置](#配置)）；`status` 列出全部六项 |
 | `/peer-coding:audit` | 以只读方式检查两个厂商是否从同样的项目上下文出发；只提出修改建议，不做任何更改 |
 
-`on`、`off` 写入本项目的标志（`.claude-x-codex/mode`，已排除在 git 之外）；`--global` 写入对所有项目生效的默认值（`~/.config/claude-x-codex/mode`）；`clear` 删除项目标志；`CXC_MODE=on|off` 在单个 shell 中优先于两者。模式关闭时，`run` 只在你明确要求时才启动。[dashboard](../dashboard) 插件会显示当前生效的模式及其来源（`mode.sh status --json`，在 `dashboard.json` 中声明）。
+`on`、`off` 写入本项目的标志（`.claude-x-codex/mode`，已排除在 git 之外）；`--global` 写入对所有项目生效的默认值（`~/.config/claude-x-codex/mode`）；`clear` 删除项目标志；`CXC_MODE=on|off` 在单个 shell 中优先于两者。模式关闭时，`run` 只在你明确要求时才启动。[dashboard](../dashboard) 插件会显示当前生效的模式及其来源，以及工作者和评审者的模型与推理强度（`mode.sh status --json` 和 `settings.py status --json`，在 `dashboard.json` 中声明）。
 
 ## 安装
 
@@ -103,13 +104,13 @@ claude plugin install peer-coding@because-i-needed
 - **Claude Code**（或作为主智能体的 Codex）、一个 **git** 仓库，以及 bash 3.2+。
 - **可选——Codex CLI**（`codex`）。没有它时，`run` 会切换到 single-vendor 模式，把所有评审交给同一厂商的另一个评审实例，并告知你这一点。
 - **可选——Orca**（已启用编排）。有了它，工作者可以在任务进行中提问，关卡会等待你的决定；没有它时，工作者以子智能体或 CLI 调用的方式单向运行。
-- 审计的钩子表需要 `python3`；当 Codex 作为主智能体运行 Claude 评审者时需要 `jq`。
-- 已在 Claude Code 2.1.283、Codex CLI 0.157.1 和 Orca 1.4.215 上验证。
+- 模型设置、最新模型解析器和审计的钩子表需要 `python3`；当 Codex 作为主智能体运行 Claude 评审者时需要 `jq`。
+- 已在 Claude Code 2.1.283、Codex CLI 0.157.1 和 Orca 1.4.215 上验证；模型设置和 `/config` 选择项也在 Claude Code 2.1.314 和 Codex CLI 0.166.0 上验证。
 
 ## 工作原理
 
-- **通道**——工作者以 effort `high` 运行。`claude-fast`（Claude 最新 Sonnet：UI、交互、代码品味、Claude 侧的工具）、`codex-bulk`（Codex 最新 `luna`：结果已完全确定的工作，例如针对现有契约的测试、类型和机械式迁移）、`main`（主智能体：紧密耦合的工作，或规格仍在摸索中的工作）。
-- **跨厂商评审**——评审者始终与作者属于不同厂商，主智能体自己的计划和分诊决定也交给另一个厂商评审。Claude 用最新 Opus、Codex 用最新 `sol` 评审，两者的 effort 都是 `xhigh`——在两个 CLI 中都是仅次于 `max` 的级别。即使是认证、支付、数据迁移等高风险阶段，在追加顶级模型（最新 `astra` 或 `max` 的最新 Opus）评审之前也会先询问你，绝不自行升级。评审者以只读方式运行，返回由两个 CLI 用 schema 强制约束的 JSON。
+- **通道**——工作者以工作者 effort（默认为 `high`）运行。`claude-fast`（默认使用 Claude 最新 Sonnet：UI、交互、代码品味、Claude 侧的工具）、`codex-bulk`（默认使用 Codex 最新 `terra`：结果已完全确定的工作，例如针对现有契约的测试、类型和机械式迁移）、`main`（主智能体：紧密耦合的工作，或规格仍在摸索中的工作）。
+- **跨厂商评审**——评审者始终与作者属于不同厂商，主智能体自己的计划和分诊决定也交给另一个厂商评审。默认情况下 Claude 用最新 Opus、Codex 用最新 `sol` 评审，两者的 effort 都是 `xhigh`——在两个 CLI 中都是仅次于 `max` 的级别。每一项都可设置（[配置](#配置)），例如将 Codex 评审者设为 `astra`，模型和推理强度就会按设定运行。对于认证、支付、数据迁移等高风险阶段，`run` 在追加顶级模型（Codex 最新 `astra` 或 `max` 的 Claude 最新 Opus）评审前会询问你；如果评审者设置已经是该值，则不会提议，也绝不会自行超出你的设置升级。评审者以只读方式运行，返回由两个 CLI 用 schema 强制约束的 JSON。
 - **一轮反驳**——被驳回的 blocking 或 major 意见会连同理由退回给评审者一次。评审者要么认可，要么用新证据反驳；仍未解决时，会连同双方论点以 DISPUTED 提交给你。
 - **证据说了算**——出现分歧时，拥有测试、复现或追踪的一方胜出。没有证据时由你决定。
 - **上下文桥接**——审计会找出两个厂商读取不同指令文件的位置、只约束一个厂商的钩子，以及工作者的 worktree 中会缺失的未提交上下文。`run` 发起的 Codex 调用通过 Codex 的回退设置读取 `CLAUDE.md`，无需修改仓库；交互式 Codex 会话（Orca 工作者，或作为主智能体的 Codex）需要在你的 Codex 配置中加入同样的设置。任何需要修改你的配置或仓库的调整都会在计划审批时提出。
@@ -119,17 +120,37 @@ claude plugin install peer-coding@because-i-needed
 
 ## 配置
 
-`run` 从环境变量读取以下值，缺省时使用默认值：
+六项设置用于选择模型和推理强度。每项都像模式一样持久保存，按以下顺序使用第一个匹配值：
+
+1. 仅用于单个 shell 的 `CXC_*` 变量
+2. 本项目——由 `/peer-coding:mode <setting> <value>` 写入的 `.claude-x-codex/settings`（已排除在 git 之外）
+3. **Claude Code 的 `/config`**——六项均可在此选择（输入 `peer-coding` 查找）；选择值是所有项目的默认值
+4. 全局文件——由 `/peer-coding:mode <setting> <value> --global` 写入的 `~/.config/claude-x-codex/settings`（Codex 没有插件设置菜单，使用此方式）
+5. 默认值
+
+| 设置 | 变量 | 默认值 | 选择对象 |
+|---|---|---|---|
+| `codex-worker` | `CXC_WORKER_MODEL` | `terra` | `codex-bulk` 通道的模型 |
+| `codex-reviewer` | `CXC_REVIEW_MODEL` | `sol` | Codex 评审者的模型 |
+| `claude-worker` | `CXC_CLAUDE_WORKER` | `sonnet` | `claude-fast` 通道的模型 |
+| `claude-reviewer` | `CXC_CLAUDE_REVIEWER` | `opus` | Claude 评审者的模型 |
+| `worker-effort` | `CXC_WORKER_EFFORT` | `high` | 两个厂商的工作者 |
+| `review-effort` | `CXC_REVIEW_EFFORT` | `xhigh` | 两个厂商的评审者 |
+
+```text
+/peer-coding:mode codex-reviewer astra          # 本项目
+/peer-coding:mode worker-effort xhigh --global  # 所有项目
+/peer-coding:mode codex-reviewer unset          # 回到下一级
+/peer-coding:mode status                        # 模式和全部六项及各自来源
+```
+
+Codex 系列：`terra`, `luna`, `sol`, `astra`；Claude 系列：`sonnet`, `opus`, `haiku`, `fable`；effort：`low`, `medium`, `high`, `xhigh`, `max`。`/config` 只提供这些选项；命令也接受列表外的系列并给出提示。当更高层级覆盖刚设置的值时，命令会指出该层级。仅为一个会话传入的设置（`--settings`、托管设置）不会被读取。1.2.0 之前 Codex 工作者的默认值是 `luna`；使用 `/peer-coding:mode codex-worker luna --global` 可保留它。
+
+以下仍只能通过环境变量设置：
 
 | 变量 | 默认值 |
 |---|---|
-| `CXC_WORKER_MODEL` | `luna` |
-| `CXC_REVIEW_MODEL` | `sol` |
 | `CXC_FINAL_MODEL` | `astra` |
-| `CXC_CLAUDE_WORKER` | `sonnet` |
-| `CXC_CLAUDE_REVIEWER` | `opus` |
-| `CXC_REVIEW_EFFORT` | `xhigh` |
-| `CXC_WORKER_EFFORT` | `high` |
 | `CXC_MAX_CYCLES` | `3` |
 | `CXC_PARALLEL` | `3` |
 

@@ -73,9 +73,9 @@ codex plugin add context-rail@because-i-needed
 
 [閱讀 ux-ui 繁體中文 README →](plugins/ux-ui/README.zh-TW.md)
 
-### [peer-coding](plugins/peer-coding) · `v1.1.1`
+### [peer-coding](plugins/peer-coding) · `v1.2.0`
 
-**Claude × Codex 同儕編排。** 主代理負責規劃並做出每個關卡的決定，把工作分派給快速的 Claude 工作者或批次處理的 Codex 工作者，兩個廠商互相審查對方的工作——包括主代理自己的計畫。反駁只有一輪，裁定依據的是證據而不是角色。稽核功能確保兩個廠商從相同的專案指示出發。非官方社群外掛。
+**Claude × Codex 同儕編排。** 主代理負責規劃並做出每個關卡的決定，把工作分派給快速的 Claude 工作者或批次處理的 Codex 工作者，工作者的模型與推理強度由你選擇（Claude Code 的 `/config` 或 `/peer-coding:mode`），兩個廠商互相審查對方的工作——包括主代理自己的計畫。反駁只有一輪，裁定依據的是證據而不是角色。稽核功能確保兩個廠商從相同的專案指示出發。非官方社群外掛。
 
 - **適用時機：** 同時使用 Claude Code 與 Codex，並希望功能的每個階段都經過另一個廠商審查時。
 - **進入點：** `/peer-coding:run`，或以 `/peer-coding:mode on` 開啟後，實作類請求都會走這個流程

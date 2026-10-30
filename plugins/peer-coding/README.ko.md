@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.1.1-blue" alt="Version"></a>
+  <a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a>
 </p>
@@ -49,13 +49,13 @@ codex plugin marketplace add https://github.com/zeriong/because-i-needed.git
 codex plugin add peer-coding@because-i-needed
 ```
 
-`$peer-coding:run`, `$peer-coding:mode on|off|status|clear`, `$peer-coding:audit`을 사용합니다. 모드 변경은 두 호스트 모두 사용자의 명시적인 요청이 필요합니다. Codex가 메인이 될 수 있으며 기존 Codex 실행 지침에 따라 벤더 간 리뷰를 유지합니다. 감사에는 `.codex/hooks.json`과 커밋되지 않은 `.codex/`, `.agents/` 맥락이 포함됩니다. 자동 모드는 UserPromptSubmit 훅 신뢰가 필요하고, 명시적인 run 호출은 훅 없이도 시작할 수 있습니다. Codex가 메인일 때 교차 벤더 작업에는 Claude CLI가 필요하며, 없으면 기존 단일 벤더 대체 경로를 사용합니다.
+`$peer-coding:run`, `$peer-coding:mode on|off|status|clear`, `$peer-coding:mode <setting> <value>`, `$peer-coding:audit`을 사용합니다. 모드 변경은 두 호스트 모두 사용자의 명시적인 요청이 필요합니다. Codex가 메인이 될 수 있으며 기존 Codex 실행 지침에 따라 벤더 간 리뷰를 유지합니다. 감사에는 `.codex/hooks.json`과 커밋되지 않은 `.codex/`, `.agents/` 맥락이 포함됩니다. 자동 모드는 UserPromptSubmit 훅 신뢰가 필요하고, 명시적인 run 호출은 훅 없이도 시작할 수 있습니다. Codex가 메인일 때 교차 벤더 작업에는 Claude CLI가 필요하며, 없으면 기존 단일 벤더 대체 경로를 사용합니다.
 
 ### Codex 설정
 
-두 호스트에서 같은 `CXC_*` 설정·모드 범위·교차 벤더 리뷰 규칙을 사용합니다. 연결된 Git 작업 폴더에서도 모드 파일을 로컬 제외 처리합니다. 감사는 설정을 변경하지 않고 `AGENTS.override.md`의 우선순위와 잘못된 훅 선언을 보고합니다.
+두 호스트에서 같은 모델 설정·모드 범위·교차 벤더 리뷰 규칙을 사용합니다. Codex에는 플러그인 설정 메뉴가 없으므로 `$peer-coding:mode <setting> <value>`로 모델과 추론 강도를 설정합니다([설정](#설정) 참고). Claude Code의 `/config`에서 선택한 값도 여기에 적용됩니다. 연결된 Git 작업 폴더에서도 모드 파일을 로컬 제외 처리합니다. 감사는 설정을 변경하지 않고 `AGENTS.override.md`의 우선순위와 잘못된 훅 선언을 보고합니다.
 
-각 호스트의 라우팅은 설정한 CXC 검토 모델·추론 강도를 사용하며 괄호의 이름은 기본값입니다. 파일명 언급이나 fallback 설정만으로는 지침 일치를 단정하지 않고, 실제 적용 내용을 확인하도록 CHECK로 표시합니다.
+각 호스트의 라우팅은 설정한 리뷰어 모델·추론 강도를 사용하며 괄호의 이름은 기본값입니다. 파일명 언급이나 fallback 설정만으로는 지침 일치를 단정하지 않고, 실제 적용 내용을 확인하도록 CHECK로 표시합니다.
 
 ## 명령
 
@@ -63,9 +63,10 @@ codex plugin add peer-coding@because-i-needed
 |---|---|
 | `/peer-coding:run` | 작업을 오케스트레이션합니다: 메인 에이전트가 계획하고 모든 관문을 판단하며, 작업을 `claude-fast` / `codex-bulk` / `main` 레인으로 보내고, 각 벤더가 상대 벤더의 작업을 리뷰하게 합니다 |
 | `/peer-coding:mode on\|off\|status\|clear [--global]` | 자동 오케스트레이션을 켜고 끄는 한 줄 스위치입니다. 사용자 전용이라 모델은 바꿀 수 없습니다 |
+| `/peer-coding:mode <setting> <value>\|unset [--global]` | 워커 레인 또는 리뷰어의 모델 제품군이나 추론 강도를 선택합니다([설정](#설정)). `status`는 여섯 설정을 모두 표시합니다 |
 | `/peer-coding:audit` | 두 벤더가 같은 프로젝트 맥락에서 출발하는지 읽기 전용으로 점검합니다. 수정안만 제안하고 아무것도 바꾸지 않습니다 |
 
-`on`·`off` 는 이 프로젝트의 플래그(`.claude-x-codex/mode`, git 제외)를 쓰고, `--global` 은 모든 프로젝트에 적용되는 기본값(`~/.config/claude-x-codex/mode`)을 씁니다. `clear` 는 프로젝트 플래그를 지우고, `CXC_MODE=on|off` 는 셸 하나에서 둘 다보다 우선합니다. 모드가 꺼져 있으면 `run` 은 요청할 때만 시작합니다. [dashboard](../dashboard) 플러그인은 적용 중인 모드와 그 출처를 보여 줍니다(`mode.sh status --json`, `dashboard.json`에 선언).
+`on`·`off` 는 이 프로젝트의 플래그(`.claude-x-codex/mode`, git 제외)를 쓰고, `--global` 은 모든 프로젝트에 적용되는 기본값(`~/.config/claude-x-codex/mode`)을 씁니다. `clear` 는 프로젝트 플래그를 지우고, `CXC_MODE=on|off` 는 셸 하나에서 둘 다보다 우선합니다. 모드가 꺼져 있으면 `run` 은 요청할 때만 시작합니다. [dashboard](../dashboard) 플러그인은 적용 중인 모드와 그 출처, 워커와 리뷰어의 모델 및 추론 강도를 보여 줍니다(`mode.sh status --json`, `settings.py status --json`, `dashboard.json`에 선언).
 
 ## 설치
 
@@ -103,13 +104,13 @@ claude plugin install peer-coding@because-i-needed
 - **Claude Code**(또는 메인 에이전트로서의 Codex), **git** 저장소, bash 3.2+.
 - **선택 — Codex CLI**(`codex`). 없으면 `run` 은 single-vendor 모드로 전환해 모든 리뷰를 같은 벤더의 별도 리뷰어 인스턴스에 맡기고, 그 사실을 알려 줍니다.
 - **선택 — Orca**(오케스트레이션 활성화). 있으면 워커가 작업 중에 질문할 수 있고 관문이 사용자의 결정을 기다립니다. 없으면 워커는 서브에이전트나 CLI 호출로 단방향 실행됩니다.
-- 감사의 훅 표에는 `python3` 이, Codex가 메인 에이전트로서 Claude 리뷰어를 돌릴 때는 `jq` 가 필요합니다.
-- Claude Code 2.1.283, Codex CLI 0.157.1, Orca 1.4.215 기준으로 확인했습니다.
+- 모델 설정, 최신 모델 확인 및 감사의 훅 표에는 `python3` 이, Codex가 메인 에이전트로서 Claude 리뷰어를 돌릴 때는 `jq` 가 필요합니다.
+- Claude Code 2.1.283, Codex CLI 0.157.1, Orca 1.4.215 기준으로 확인했으며, 모델 설정과 `/config` 선택기는 Claude Code 2.1.314와 Codex CLI 0.166.0에서도 확인했습니다.
 
 ## 동작 방식
 
-- **레인** — 워커는 effort `high` 로 실행합니다. `claude-fast`(Claude 최신 Sonnet: UI, 인터랙션, 코드 감각, Claude 쪽 도구), `codex-bulk`(Codex 최신 `luna`: 기존 계약에 대한 테스트, 타입, 기계적 마이그레이션처럼 결과가 완전히 정해진 작업), `main`(메인 에이전트: 강하게 결합된 작업이나 아직 명세를 찾아가는 작업).
-- **교차 벤더 리뷰** — 리뷰어는 항상 작성자와 다른 벤더이고, 메인 에이전트 자신의 계획과 선별 결정도 상대 벤더의 리뷰를 받습니다. Claude는 최신 Opus로, Codex는 최신 `sol`로 리뷰하며, 둘 다 effort `xhigh` — 두 CLI 모두에서 `max` 바로 아래 단계 — 입니다. 인증·결제·데이터 마이그레이션 같은 고위험 단계라도 최상위 모델(최신 `astra` 또는 `max` 의 최신 Opus) 리뷰를 추가하기 전에 먼저 사용자에게 묻고, 스스로 올리지 않습니다. 리뷰어는 읽기 전용으로 실행되며, 두 CLI가 스키마로 강제하는 JSON을 반환합니다.
+- **레인** — 워커는 워커 effort(기본값 `high`)로 실행합니다. `claude-fast`(기본적으로 Claude 최신 Sonnet: UI, 인터랙션, 코드 감각, Claude 쪽 도구), `codex-bulk`(기본적으로 Codex 최신 `terra`: 기존 계약에 대한 테스트, 타입, 기계적 마이그레이션처럼 결과가 완전히 정해진 작업), `main`(메인 에이전트: 강하게 결합된 작업이나 아직 명세를 찾아가는 작업).
+- **교차 벤더 리뷰** — 리뷰어는 항상 작성자와 다른 벤더이고, 메인 에이전트 자신의 계획과 선별 결정도 상대 벤더의 리뷰를 받습니다. 기본적으로 Claude는 최신 Opus로, Codex는 최신 `sol`로 리뷰하며 둘 다 effort `xhigh` — 두 CLI에서 `max` 바로 아래 단계 — 입니다. 각각 설정할 수 있으며([설정](#설정)), 예를 들어 Codex 리뷰어에 `astra`를 지정하면 모델과 추론 강도는 지정한 대로 실행됩니다. 인증·결제·데이터 마이그레이션 같은 고위험 단계에서는 최상위 모델(Codex 최신 `astra` 또는 `max`의 Claude 최신 Opus) 리뷰를 추가하기 전에 `run`이 사용자에게 묻습니다. 리뷰어 설정이 이미 그 값이면 제안하지 않으며, 설정을 넘어 스스로 올리지 않습니다. 리뷰어는 읽기 전용으로 실행되며 두 CLI가 스키마로 강제하는 JSON을 반환합니다.
 - **반론 1회** — 기각된 blocking·major 지적은 이유와 함께 한 번 리뷰어에게 돌아갑니다. 리뷰어는 수긍하거나 새 증거로 반박하고, 그래도 풀리지 않으면 양쪽 주장과 함께 DISPUTED로 사용자에게 올라옵니다.
 - **증거가 판정** — 의견이 갈리면 테스트·재현·추적이 판정하며, 증거를 가진 쪽이 이깁니다. 증거가 없으면 사용자가 결정합니다.
 - **컨텍스트 브리지** — 감사가 두 벤더가 서로 다른 지침 파일을 읽는 곳, 한 벤더에만 걸리는 훅, 워커 worktree에 빠질 커밋되지 않은 맥락을 찾아냅니다. `run` 이 직접 하는 Codex 호출은 Codex의 폴백 설정으로 `CLAUDE.md` 를 읽으므로 레포를 바꿀 필요가 없습니다. 대화형 Codex 세션(Orca 워커, 또는 메인 에이전트로서의 Codex)에는 같은 설정이 사용자의 Codex 설정에 있어야 합니다. 사용자 설정이나 레포를 바꾸는 수정은 계획 승인 단계에서 제안합니다.
@@ -119,17 +120,37 @@ claude plugin install peer-coding@because-i-needed
 
 ## 설정
 
-`run` 은 아래 값을 환경변수에서 읽고, 없으면 기본값을 씁니다:
+여섯 설정으로 모델과 추론 강도를 선택합니다. 각 설정은 모드처럼 유지되며, 다음 순서에서 처음 일치하는 값이 적용됩니다:
+
+1. 셸 하나에 적용되는 `CXC_*` 변수
+2. 이 프로젝트 — `/peer-coding:mode <setting> <value>`로 기록하는 `.claude-x-codex/settings` (git 제외)
+3. **Claude Code의 `/config`** — 여섯 항목을 선택할 수 있습니다(`peer-coding`을 입력해 찾기). 선택한 값은 모든 프로젝트의 기본값입니다
+4. 전역 파일 — `/peer-coding:mode <setting> <value> --global`로 기록하는 `~/.config/claude-x-codex/settings` (플러그인 설정 메뉴가 없는 Codex에서 사용하는 방법)
+5. 기본값
+
+| 설정 | 변수 | 기본값 | 선택 대상 |
+|---|---|---|---|
+| `codex-worker` | `CXC_WORKER_MODEL` | `terra` | `codex-bulk` 레인의 모델 |
+| `codex-reviewer` | `CXC_REVIEW_MODEL` | `sol` | Codex 리뷰어의 모델 |
+| `claude-worker` | `CXC_CLAUDE_WORKER` | `sonnet` | `claude-fast` 레인의 모델 |
+| `claude-reviewer` | `CXC_CLAUDE_REVIEWER` | `opus` | Claude 리뷰어의 모델 |
+| `worker-effort` | `CXC_WORKER_EFFORT` | `high` | 두 벤더의 워커 |
+| `review-effort` | `CXC_REVIEW_EFFORT` | `xhigh` | 두 벤더의 리뷰어 |
+
+```text
+/peer-coding:mode codex-reviewer astra          # 이 프로젝트
+/peer-coding:mode worker-effort xhigh --global  # 모든 프로젝트
+/peer-coding:mode codex-reviewer unset          # 다음 우선순위로 복귀
+/peer-coding:mode status                        # 모드와 여섯 설정 및 각 출처
+```
+
+Codex 제품군: `terra`, `luna`, `sol`, `astra`; Claude 제품군: `sonnet`, `opus`, `haiku`, `fable`; effort: `low`, `medium`, `high`, `xhigh`, `max`. `/config`는 정확히 이 값들을 제공하며, 명령은 목록에 없는 제품군도 안내와 함께 받습니다. 상위 수준이 방금 설정한 값을 가리면 명령이 어느 수준인지 알려 줍니다. 한 세션에만 전달된 설정(`--settings`, 관리 설정)은 읽지 않습니다. 1.2.0 이전 Codex 워커 기본값은 `luna`였으며, `/peer-coding:mode codex-worker luna --global`로 유지할 수 있습니다.
+
+다음은 환경변수로만 설정합니다:
 
 | 변수 | 기본값 |
 |---|---|
-| `CXC_WORKER_MODEL` | `luna` |
-| `CXC_REVIEW_MODEL` | `sol` |
 | `CXC_FINAL_MODEL` | `astra` |
-| `CXC_CLAUDE_WORKER` | `sonnet` |
-| `CXC_CLAUDE_REVIEWER` | `opus` |
-| `CXC_REVIEW_EFFORT` | `xhigh` |
-| `CXC_WORKER_EFFORT` | `high` |
 | `CXC_MAX_CYCLES` | `3` |
 | `CXC_PARALLEL` | `3` |
 
