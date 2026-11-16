@@ -4,7 +4,7 @@
 
 <p align="center"><strong>给智能体一个有限目标，它就会不提问、不停下地完成清单。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.5.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="许可证：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 插件"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.6.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="许可证：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 插件"></a></p>
 
 <p align="center"><a href="#开始">开始</a> &bull; <a href="#目标文件">目标文件</a> &bull; <a href="#预计完成时间">预计完成时间</a> &bull; <a href="#不提问">不提问</a> &bull; <a href="#钩子">钩子</a> &bull; <a href="#讨论面板">讨论面板</a> &bull; <a href="#堆叠pr">堆叠 PR</a> &bull; <a href="#限制与状态">限制与状态</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#要求">要求</a> &bull; <a href="#安装">安装</a></p>
 
@@ -34,7 +34,7 @@ owner: <session id>
 ## Goal
 <一句话目标>
 ## Checklist
-- [ ] <有明确完成条件的有限事项> (~<分钟>m <类别>)
+- [ ] <有明确完成条件的有限事项>
 ## Decisions
 ## Resume
 <下一会话需要的信息>
@@ -46,18 +46,18 @@ owner: <session id>
 
 ## 预计完成时间
 
-智能体写清单时，会在每一项末尾加上自己的估计，例如 `(~6m fix)`：预计在这一项上花的分钟数和类别。类别为 `docs`、`fix`、`feature`、`refactor`、`test`、`research` 或 `ops`。此后，拥有目标的会话的钩子为每一项计时：
+推进目标的智能体既不写估计，也看不到估计。清单中出现没有估计的事项时，拥有目标的会话的钩子会在后台启动一个单独的、短暂的估算器：一个使用 Haiku 的无界面 Claude Code 会话，处于安全模式（没有钩子、插件钩子和 CLAUDE.md），只用只读工具，也不保存会话。它读取所需的代码，为每个事项在 `.free-hands/estimates.jsonl` 中写一行分钟数和类别（`docs`、`fix`、`feature`、`refactor`、`test`、`research`、`ops`），然后退出。钩子立即返回且不输出任何内容，因此这一切都不会进入智能体的上下文。设置 `FREE_HANDS_ESTIMATOR=off` 可关闭估算器。估算器每次运行都是你账户上的一个独立 Claude Code 会话（在实测运行中每次约 0.002–0.003 USD 的用量），[budget](../budget) 插件看不到它。
+
+此后，拥有目标的会话的钩子为每一项计时：
 
 - `.free-hands/eta.json` 中的工作时间时钟。一轮结束后、新会话开始前、你输入提示之前以及目标暂停期间的时间不计；超过 20 分钟的空档，只计入工具调用报告自己运行的那部分。
-- 每完成一项，在 `.free-hands/timings.jsonl` 中写一行：事项、类别、估计、实测分钟数、模型和 effort。这是项目自己的记录：留在项目文件夹中，被 Git 忽略，开始新目标时也会保留。
+- 每完成一项，在 `.free-hands/timings.jsonl` 中写一行：事项、实测分钟数、模型和 effort；估计从 `estimates.jsonl` 合并而来，即使在事项完成之后才到达也会合并。这是项目自己的记录：留在项目文件夹中，被 Git 忽略，开始新目标时也会保留。
 
-智能体从不自行报告用时，估计时也不读取记录。
+[dashboard](../dashboard) 以时刻显示预计完成时间，如 `ETA 15:40`，并在详情中显示剩余分钟数（`~25m left`）；时刻后的 `+` 表示还有未完成事项没有估计。从 dashboard 0.3.0 起，事项被勾选或估计到达时，这一行在一轮之中也会更新。
 
-[dashboard](../dashboard) 以时刻显示预计完成时间，如 `ETA 15:40`，并在详情中显示剩余分钟数（`~25m left`）；时刻后的 `+` 表示有未完成事项没有估计。从 dashboard 0.3.0 起，事项被勾选时，这一行在一轮之中也会更新。
+预计完成时间是对每个未完成事项求“估计 × 执行工作的模型系列系数 × 本项目系数”之和：
 
-预计完成时间是对每个未完成事项求“估计 × 模型系列系数 × 本项目系数”之和：
-
-- **模型系数**：在 z-lab 中实测。所有被测智能体都高估了自己的用时：实际用时是估计的 Sonnet 0.08、Opus 0.13、Fable 0.20（effort xhigh，13 次运行）。随插件提供的系数为 Sonnet 0.080、Opus 0.126、Fable 0.197。没有实测系数的模型（Haiku、Codex 的模型）使用它们的平均值 0.125——这是选择，不是测量。
+- **模型系数**：在 z-lab 中实测。Haiku 的估计远长于实际工作：事项实际用时是 Haiku 估计的 Sonnet 0.040、Opus 0.070、Fable 0.074，随插件提供的就是这些系数（[`eta-haiku-calibrate-0.6.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-haiku-calibrate-0.6.0)，以 effort xhigh 测得的 26 次目标运行）。没有实测系数的工作模型（Haiku、Codex 的模型）使用它们的平均值 0.061——这是选择，不是测量。像 0.5.0 写下的目标那样，事项中仍带有智能体自己的 `(~6m fix)` 时，这些估计继续使用 0.5.0 的系数。
 - **项目系数**：本项目的事项比模型系数预测的多用或少用了多少时间，从 `timings.jsonl` 最新的 60 行学得；记录较少时向 1 收拢。新项目从 1 开始。
 
 ## 不提问
@@ -72,7 +72,7 @@ owner: <session id>
 
 - 下列守卫和恢复说明只在 `owner:` 指定的会话及其启动的子智能体中生效。同一仓库中的其他会话（第二个终端，或其他工具启动的 `claude -p`）不会收到恢复说明，也不受提问和停止守卫、计数器及 Shell 守卫的约束；当其提示中出现“free-hands”时，开始说明会告知哪个会话拥有本次运行。在该会话中运行 `/free-hands:run`（Codex：`$free-hands:run`）会把运行转移到该会话。没有 `owner:` 的目标（例如由 0.2.0 写入的目标）归钩子最先遇到的会话所有。
 - 只有位于 `## Checklist` 下方、且在代码块之外的 `- [ ]` 行才计为未完成项。
-- [预计完成时间](#预计完成时间)的时钟（所有工具的 `PostToolUse`，以及提示、会话和停止钩子）与守卫一样，只在拥有目标的会话及其子智能体中运行；讨论面板的子进程不会写入时钟。勾选最后一项并结束运行的那次编辑也会被记录。
+- [预计完成时间](#预计完成时间)的时钟（所有工具的 `PostToolUse`，以及提示、会话和停止钩子）与守卫一样，只在拥有目标的会话及其子智能体中运行；讨论面板的子进程不会写入时钟。勾选最后一项并结束运行的那次编辑也会被记录。同样的钩子会启动估算器，仅在 Claude Code 中，每分钟最多一次。
 - Shell 守卫（`Bash` 上的 `PreToolUse`）会在目标为 `active`，或仍有未完成项的 `done`/`waiting` 时运行。即使没有剩余的 `[ ]` 项，或已达到 `max_iterations`，也会运行。它会拒绝[限制与状态](#限制与状态)中所述的硬性限制命令。
 - 目标有未完成 `[ ]`、迭代数低于 `max_iterations`，且状态为 `active`，或为仍有未完成项的 `done`/`waiting` 时，提问和停止守卫会生效。提问守卫会拒绝提问工具。达到上限后可以提问。Stop 钩子会先将计数写入磁盘再阻止停止，最多继续40次。budget 的用量提问在会话中处于打开状态时，两个守卫都不生效。
 - 目标为 `active` 时会发送恢复说明（`UserPromptSubmit`、包括压缩后的 `SessionStart`），即使没有未完成项也会发送；有未完成项的 `done`/`waiting` 状态也会发送。
@@ -128,13 +128,15 @@ owner: <session id>
 
 从 0.5.0 起，目标会显示预计完成时间。在 Claude Code 2.1.325 上以 Sonnet、Opus 和 Fable（effort xhigh）在三个规模不同的项目中测量（[z-lab `eta-calibrate-0.5.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-calibrate-0.5.0)、[`eta-validate-r2-0.5.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-validate-r2-0.5.0)）：每次运行中，钩子测得的时间与独立记录相差都在 0.1 分钟以内（E01）。在拟合系数时未使用的目标上，模型系数把中位误差从 3.2 个倍数降到 0.6（约 1.5 倍）——原始估计约长了 9 倍（W01）。写下清单时显示的剩余时间，按中位数在实际用时的 1.42 倍以内，13 个目标中有 12 个在 2 倍以内（W04）。在这些运行中，项目系数对 Sonnet 有帮助、对 Opus 有害（W03），因此不声称它带来改进。每完成一项，dashboard 的这一行都在一轮之中更新（[`dashboard-lab/run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab/run-0.3.0)，D09）。未测量：Codex、Haiku、其他 effort 级别、记录更长的项目。
 
+从 0.6.0 起，估计由那个隔离的估算器给出。在 Claude Code 2.1.325 上以 Sonnet 进行两次无界面 free-hands 运行和一次交互会话测量（[z-lab `eta-isolated-run-r2-0.6.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-isolated-run-r2-0.6.0)）：执行工作的智能体的输出流中完全没有出现与估计相关的内容，free-hands 钩子的输出中也没有（J01）；估算器在清单写下约 6 秒后作答，没有留下错误，也没有保存会话（J02）；这一行在提示后 2 秒显示 `ETA`，并随每完成一项而变化（J04）。估算器每次运行花费 0.002–0.003 USD。在拟合系数时未使用的目标上，Haiku × 系数的中位误差按事项为 0.68 个倍数、按目标为 0.66，而 0.5.0 中智能体自己的估计为 0.62 和 0.51——把估计移出智能体的上下文会损失一点精度（[`eta-haiku-calibrate-0.6.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-haiku-calibrate-0.6.0)，H04、H05）。一边勾选一边改写事项文字的智能体，会按位置对应为同一事项；这一修正通过重放已记录的运行确认，没有用新的运行确认（J05）。
+
 要暂停，请说 **“pause”**、**“stop”** 或 **“일시정지”**。目标记录为 `paused`；再次运行命令即可恢复。
 
 来源：移植自一个项目本地技能。
 
 ## Codex
 
-依赖自动执行前，请在 `/hooks` 中信任插件钩子。提问钩子的 matcher 包含 `request_user_input`；尚未观察到它被拒绝。Codex 默认模式没有提问工具，因此由 Stop 钩子负责确保继续执行。即使钩子未获信任或未启用，技能仍按书面规则继续，但钩子效果可能未启用。[预计完成时间](#预计完成时间)在 Codex 上使用相同的钩子；在 Codex 上没有测量过，Codex 的模型使用默认系数，并且因为没有实时显示行，需要用 `$dashboard:audit` 查看。
+依赖自动执行前，请在 `/hooks` 中信任插件钩子。提问钩子的 matcher 包含 `request_user_input`；尚未观察到它被拒绝。Codex 默认模式没有提问工具，因此由 Stop 钩子负责确保继续执行。即使钩子未获信任或未启用，技能仍按书面规则继续，但钩子效果可能未启用。在 Codex 上钩子仍会为事项计时，但不会启动估算器——钩子只在 `CLAUDECODE=1` 且父进程为 `CLAUDE_PID` 时启动它，从 Claude Code 内部启动的 Codex 会话即使继承了这些值，父进程也对不上——因此除非目标由 0.5.0 写下并带有内联估计，否则不会显示预计完成时间；可以用 `$dashboard:audit` 查看现有内容（Codex 没有实时显示行）。未在 Codex 上测量。
 
 面板为每个角色启动一个 `codex exec -s read-only` 子进程（native subagent 可以指定模型，但没有只读控制，因此不使用 — F10）。无论角色如何，子进程都可以搜索网页；为 `evidence-hunter` 和 `trend-tracker` 添加 `--search`（F09）。子进程需要网络。从沙箱中的主智能体运行时，`panel.py run` 必须通过获准的提权在沙箱外运行，或由会话允许网络。否则所有子进程都会失败，本次运行继续由主智能体独自决策并记录为 **panel degraded**（G06）。
 

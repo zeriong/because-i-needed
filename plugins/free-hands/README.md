@@ -4,7 +4,7 @@
 
 <p align="center"><strong>Give an agent a finite goal; it works through the checklist without asking or stopping.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.5.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.6.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#start">Start</a> &bull; <a href="#goal-file">Goal file</a> &bull; <a href="#expected-finish">Expected finish</a> &bull; <a href="#never-ask">Never ask</a> &bull; <a href="#hooks">Hooks</a> &bull; <a href="#the-panel">The panel</a> &bull; <a href="#stacked-prs">Stacked PRs</a> &bull; <a href="#limits-and-status">Limits and status</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#requirements">Requirements</a> &bull; <a href="#installation">Installation</a></p>
 
@@ -34,7 +34,7 @@ owner: <session id>
 ## Goal
 <one sentence>
 ## Checklist
-- [ ] <a finite item with a check you can run or observe> (~<minutes>m <category>)
+- [ ] <a finite item with a check you can run or observe>
 ## Decisions
 ## Resume
 <what the next session needs to know>
@@ -46,18 +46,18 @@ Marks are `- [ ]` open, `- [x]` done, and `- [-] … — needs the user` for wor
 
 ## Expected finish
 
-When the agent writes the checklist it ends every item with its own estimate, such as `(~6m fix)`: the minutes it expects to spend on that item, and a category — `docs`, `fix`, `feature`, `refactor`, `test`, `research` or `ops`. From then on the hooks of the session that owns the goal time each item:
+The agent working on the goal never estimates and never sees an estimate. When the checklist gains items without one, the hook of the session that owns the goal starts a separate, short-lived estimator in the background: a headless Claude Code session on Haiku in safe mode (no hooks, no plugin hooks, no CLAUDE.md, read-only tools, no saved session). It reads the code it needs, writes one line per item — minutes and a category (`docs`, `fix`, `feature`, `refactor`, `test`, `research`, `ops`) — to `.free-hands/estimates.jsonl`, and exits. The hook returns at once and prints nothing, so none of this enters the agent's context. Set `FREE_HANDS_ESTIMATOR=off` to turn the estimator off. Each estimator run is a separate Claude Code session on your account (0.002–0.003 USD of usage per run in the measured runs), and the [budget](../budget) plugin does not see it.
+
+From then on the hooks of the owner session time each item:
 
 - An active-time clock in `.free-hands/eta.json`. Time after a turn that ended, before a new session, before a prompt you type, or while the goal is paused does not count; a quiet gap over 20 minutes counts only as long as a tool call reports it ran.
-- One row per finished item in `.free-hands/timings.jsonl`: the item, its category, the estimate, the measured minutes, the model and the effort. This is your project's own record. It stays in the project folder, Git ignores it, and it is kept when a new goal starts.
+- One row per finished item in `.free-hands/timings.jsonl`: the item, the measured minutes, the model and the effort; the estimate is joined from `estimates.jsonl`, also when it arrived after the item was done. This is your project's own record. It stays in the project folder, Git ignores it, and it is kept when a new goal starts.
 
-The agent never reports a duration itself, and it estimates without reading the record.
+The [dashboard](../dashboard) shows the expected finish as a clock time, `ETA 15:40`, with the minutes left in the detail (`~25m left`); a `+` after the time means some open items have no estimate yet. With dashboard 0.3.0 the line changes when an item is checked or when estimates arrive, also in the middle of a turn.
 
-The [dashboard](../dashboard) shows the expected finish as a clock time, `ETA 15:40`, with the minutes left in the detail (`~25m left`); a `+` after the time means some open items have no estimate. With dashboard 0.3.0 the line changes when an item is checked, also in the middle of a turn.
+The expected finish adds up, over the open items, the estimate × a factor for the model family doing the work × a factor for this project:
 
-The expected finish adds up, over the open items, the estimate × a factor for the model family and the category × a factor for this project:
-
-- **Model factor**, measured in z-lab. Every agent measured overestimated its own time: what the items actually took was 0.08 of the estimate for Sonnet, 0.13 for Opus and 0.20 for Fable (13 runs at effort xhigh). The shipped factors are Sonnet 0.080, Opus 0.126 and Fable 0.197. A model without a measured factor (Haiku, Codex's models) uses their mean, 0.125 — a choice, not a measurement.
+- **Model factor**, measured in z-lab. Haiku's estimates were far longer than the work took: the items took 0.040 of Haiku's estimate when Sonnet did them, 0.070 with Opus and 0.074 with Fable — the shipped factors ([`eta-haiku-calibrate-0.6.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-haiku-calibrate-0.6.0), 26 measured goal runs at effort xhigh). A working model without a measured factor (Haiku, Codex's models) uses their mean, 0.061 — a choice, not a measurement. Goals written by 0.5.0, whose items still carry the agent's own `(~6m fix)`, keep 0.5.0's factors for those estimates.
 - **Project factor**: how much longer or shorter this project's items took than the model factor predicted, learned from the newest 60 rows of `timings.jsonl` and pulled toward 1 while the record is short. A new project starts at 1.
 
 ## Never ask
@@ -72,7 +72,7 @@ The hooks have different conditions:
 
 - The guards and the restore note below act only in the session named by `owner:` and in the subagents it starts. Another session in the same repository — a second terminal, or a `claude -p` that another tool starts — gets no restore note, no ask or stop guard, no counter and no shell guard; when its prompt mentions “free-hands”, the entry note says which session owns the run. Running `/free-hands:run` (Codex: `$free-hands:run`) in that session moves the run there. A goal without `owner:`, such as one written by 0.2.0, becomes the first session's that a hook sees.
 - Only `- [ ]` lines under `## Checklist`, outside code blocks, count as open items.
-- The clock of the [expected finish](#expected-finish) (`PostToolUse` on every tool, plus the prompt, session and stop hooks) runs only in the owner session and its subagents, like the guards; panel children never feed it. It also records the edit that checks the last item and ends the run.
+- The clock of the [expected finish](#expected-finish) (`PostToolUse` on every tool, plus the prompt, session and stop hooks) runs only in the owner session and its subagents, like the guards; panel children never feed it. It also records the edit that checks the last item and ends the run. The same hooks start the estimator, at most once a minute, only under Claude Code.
 - The shell guard (`PreToolUse` on `Bash`) acts while the goal is `active`, or `done`/`waiting` with items still open — also when no `[ ]` item is left and at `max_iterations`. It denies the hard-limit commands described under [Limits and status](#limits-and-status).
 - The ask and stop guards act when the goal has open `[ ]` items, is below `max_iterations`, and is `active` — or `done`/`waiting` with items still open. The ask guard denies asking tools. At the limit, asking is allowed. The Stop hook blocks stopping and increments the counter on disk first, up to 40 continuations. While budget's usage question is open in the session, neither guard acts.
 - The restore note (`UserPromptSubmit`, and `SessionStart` including after a compaction) is emitted while the goal is `active` (also when no `[ ]` items remain) or `done`/`waiting` with items still open.
@@ -128,13 +128,15 @@ Since 0.4.0 the [budget](../budget) question gets through, and the goal shows on
 
 Since 0.5.0 the goal shows an expected finish. Measured on Claude Code 2.1.325 with Sonnet, Opus and Fable at effort xhigh, on three projects of different size ([z-lab `eta-calibrate-0.5.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-calibrate-0.5.0), [`eta-validate-r2-0.5.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-validate-r2-0.5.0)): the hooks' times matched an independent log within 0.1 minute in every run (E01). On goals the factors were not fitted on, the model factor brought the median error from 3.2 doublings — the raw estimates were about 9× too long — to 0.6, about 1.5× (W01). The remaining time shown when a checklist was written was within 1.42× of what the goal took on median, and within 2× for 12 of 13 goals (W04). The project factor helped Sonnet and hurt Opus in these runs (W03), so no gain from it is claimed. The dashboard line changed after each finished item, mid-turn ([`dashboard-lab/run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab/run-0.3.0), D09). Not measured: Codex, Haiku, other effort levels, projects with a longer record.
 
+Since 0.6.0 the estimate comes from that isolated estimator. Measured on Claude Code 2.1.325 in two headless free-hands runs with Sonnet and one interactive session ([z-lab `eta-isolated-run-r2-0.6.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-isolated-run-r2-0.6.0)): nothing about estimates appeared in the working agent's stream, and every free-hands hook output was empty of it (J01); the estimator answered about 6 seconds after the checklist was written, logged no error and kept no session (J02); the line showed `ETA` 2 seconds after the prompt and moved with each finished item (J04). One estimator run cost 0.002–0.003 USD. On goals its factors were not fitted on, Haiku × factor came within 0.68 doublings per item and 0.66 per goal (median), against 0.62 and 0.51 for the agents' own estimates in 0.5.0 — keeping estimates out of the agent's context costs a little accuracy ([`eta-haiku-calibrate-0.6.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-haiku-calibrate-0.6.0), H04, H05). An agent that rewrites an item's text while checking it is matched by position; that fix was checked by replaying a recorded run, not in a new one (J05).
+
 To pause, say **“pause”**, **“stop”**, or **“일시정지”**. The goal is recorded as `paused`; invoke the command again to resume.
 
 Origin: ported from a project-local skill.
 
 ## Codex
 
-Trust the plugin hooks in `/hooks` before relying on them. The ask hook matcher includes `request_user_input`; its denial has not been observed. Codex's default mode has no ask tool, so the Stop hook carries the keep-working rule. If hooks are not trusted or active, the skill continues under its written rules, but hook effects may be off. The [expected finish](#expected-finish) uses the same hooks on Codex; it has not been measured there, Codex's models get the default factor, and `$dashboard:audit` shows it (Codex has no live line).
+Trust the plugin hooks in `/hooks` before relying on them. The ask hook matcher includes `request_user_input`; its denial has not been observed. Codex's default mode has no ask tool, so the Stop hook carries the keep-working rule. If hooks are not trusted or active, the skill continues under its written rules, but hook effects may be off. On Codex the hooks still time items, but no estimator is started — the hook starts one only when `CLAUDECODE=1` and its parent process is `CLAUDE_PID`, which a Codex session started from inside Claude Code inherits but does not match — so no expected finish is shown unless the goal was written by 0.5.0 with inline estimates; `$dashboard:audit` shows what there is (Codex has no live line). Not measured on Codex.
 
 The panel runs one `codex exec -s read-only` child per role (native subagents take a model but no read-only control, so they are not used — F10). Children can search the web whatever the role; `--search` is added for `evidence-hunter` and `trend-tracker` (F09). The children need network: from a sandboxed main, `panel.py run` must run outside the sandbox through an approved escalation, or the session must allow network. Otherwise every child fails, and the run continues with the main deciding alone, recorded as **panel degraded** (G06).
 

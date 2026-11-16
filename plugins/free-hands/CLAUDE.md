@@ -2,7 +2,7 @@
 
 Every shared rule in the root `CLAUDE.md` applies. This plugin gives an agent a finite goal checklist and instructions to continue without asking; a five-role read-only panel advises on user-level decisions, and the main agent decides from evidence.
 
-Contents: the `run` skill and Codex adapter, five read-only panel roles, `dashboard.json`, `hooks/hooks.json` (UserPromptSubmit, SessionStart, PreToolUse for the ask tool and for Bash, PostToolUse, Stop), `scripts/guard.py`, `scripts/shellguard.py`, `scripts/eta.py` with `scripts/eta-baseline.json`, `scripts/panel.py`, and a byte-identical `scripts/latest-model.py` copy.
+Contents: the `run` skill and Codex adapter, five read-only panel roles, `dashboard.json`, `hooks/hooks.json` (UserPromptSubmit, SessionStart, PreToolUse for the ask tool and for Bash, PostToolUse, Stop), `scripts/guard.py`, `scripts/shellguard.py`, `scripts/eta.py` with `scripts/eta-baseline.json`, `scripts/estimator.py`, `scripts/panel.py`, and a byte-identical `scripts/latest-model.py` copy.
 
 ## Invariants
 
@@ -28,12 +28,20 @@ Contents: the `run` skill and Codex adapter, five read-only panel roles, `dashbo
 - `guard.py status` prints the goal's state for the dashboard (root Rule 11, `dashboard.json`), with the expected finish
   while the goal is active and the goal file in `watch`. **Why (`dashboard-lab/run-0.1.0` D01, D04; `run-0.3.0` D09):**
   the dashboard redraws mid-turn only when a watched file changes.
-- Estimates come from the agent, actual times only from hooks. Each item ends with the agent's `(~<minutes>m
-  <category>)`, written once when it plans; the owner session's hooks (every PostToolUse, and prompt, session and stop)
-  keep an active-time clock in `.free-hands/eta.json` and append one row per finished item to
-  `.free-hands/timings.jsonl`. Keep both names (root Rule 8: they live in users' projects). **Why (run-0.1.0 F04, r2
-  G03; z-lab `free-hands-lab/analyze` D16):** agents rewrote the counter they were given, so a self-reported duration is
-  not a measurement.
+- Nothing about the expected finish reaches the working agent: SKILL.md, the template and the restore note never
+  mention estimates, and every hook that feeds the clock or starts the estimator prints nothing. Estimates come from
+  the isolated estimator (`estimator.py`): started detached (no inherited stdio, `start_new_session`) by the owner
+  session's hook when open items have none, only when `CLAUDECODE` is `1` and the hook's parent is `CLAUDE_PID` (both are
+  inherited by a Codex started inside Claude Code; the parent is not — r3 I06), with the CLI from `CLAUDE_CODE_EXECPATH`
+  or `PATH`; one `claude -p --safe-mode --no-session-persistence --model haiku --effort low --tools Read Glob Grep`
+  session; answers appended to `.free-hands/estimates.jsonl`; at most one start per minute per goal folder, one at a
+  time (lock), an item asked once per run; an item the agent rewords keeps its estimate (open keys that vanish pair in
+  order with keys that appear in the same edit; J05). Actual times come only from hooks: the clock in `.free-hands/eta.json`, one
+  row per finished item in `.free-hands/timings.jsonl`. Keep the three file names (root Rule 8). **Why (maintainer
+  request, 2026-11-16, backlog D22; z-lab `eta-isolated-probes` I01, I03–I05, `-r3` I06, I07; run-0.1.0 F04, r2 G03):**
+  the expected finish must not cost the main agent's context; a hook that held stdout would block the call and its
+  output would reach the model; Claude Code gives hooks `CLAUDECODE=1` but no CLI path; agents rewrote counters they
+  were given, so a self-reported duration is not a measurement.
 - The clock does not count the gap after a turn that ended (an allowed Stop), before a new session or before a prompt
   (a turn interrupted with Esc sends no Stop; a prompt made only of task notifications is not the user's and counts), and counts a gap over 20 minutes only as far as the tool call's
   `duration_ms` covers it. A paused goal with items open is not timed. Items finished in one edit share the time by
@@ -42,10 +50,11 @@ Contents: the `run` skill and Codex adapter, five read-only panel roles, `dashbo
   the hook input. **Why (`eta-probes-2.1.325` T01–T04; `eta-calibrate-0.5.0` E09; product review, 2026-11-16):** no
   hook input names the model; PostToolUse follows every edit route and reports the tool's duration; parallel hook
   processes and a user's thinking time must not become an item's time.
-- Prediction = estimate × the shipped factor for the model family and category (`eta-baseline.json`, family keys only —
-  no versioned model id) × the project factor from `timings.jsonl`, shrunk toward 1 with weight 3. The agent never
-  reads its record to estimate. **Why (analyze D17):** one correction path; the agent correcting itself as well would
-  be corrected twice.
+- Prediction = estimate × the shipped factor for the estimator (`haiku`; `self` for 0.5.0 goals with inline estimates)
+  and the working family (`eta-baseline.json`, family keys only — no versioned model id) × the project factor from
+  `timings.jsonl`, shrunk toward 1 with weight 3. Records join an estimate that lands after its item finished. **Why
+  (analyze D17, D22; `eta-haiku-calibrate-0.6.0` H03, H04):** one correction path; the factor depends on who estimated
+  and who worked.
 - The recorder and the prediction fail open like the guards: a broken state or record means no row and no ETA, never
   a changed guard decision; the stop decision is printed and flushed before the clock is fed, and a hook input of the
   wrong type (a `transcript_path` that is not a string) is ignored. **Why (product review, 2026-11-16):** an integer
@@ -62,6 +71,11 @@ Contents: the `run` skill and Codex adapter, five read-only panel roles, `dashbo
 Use SemVer for this plugin: MAJOR for a breaking goal-file format or command change; MINOR when a rule, role, or hook behavior is added or changed; PATCH for documentation changes. **Why (root Rule 2):** installed copies are version-keyed, so changes must be classified and released consistently.
 
 ## Evidence
+
+0.6.0 isolated estimator: z-lab `free-hands-lab/eta-isolated-probes-2.1.325` I01–I05 (I02 corrected by
+`-r3` I06, I07), `eta-haiku-calibrate-0.6.0` H01–H05, `eta-isolated-run-r2-0.6.0` J01–J05 (round 1
+`eta-isolated-run-0.6.0` stopped: the estimator required `CLAUDE_CODE_EXECPATH`); the rewording fix (J05) rests on unit
+tests and a replay; decision D22, items 20–21 in the backlog.
 
 0.5.0 expected finish (Claude Code only; Codex not measured, maintainer request 2026-11-16): z-lab
 `free-hands-lab/eta-probes-2.1.325` T01–T06 and `-r2`…`-r4` T07–T11 (hook inputs, edit routes, isolation, a blocked
