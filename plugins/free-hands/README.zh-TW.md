@@ -46,7 +46,7 @@ owner: <session id>
 
 ## 預計完成時間
 
-推進目標的代理既不寫估計，也看不到估計。清單中出現沒有估計的項目時，擁有目標的工作階段的 hook 會在背景啟動一個獨立的、短暫的估算器：一個使用 Haiku 的無介面 Claude Code 工作階段，處於安全模式（沒有 hooks、外掛 hooks 與 CLAUDE.md），只用唯讀工具，也不保存工作階段。它讀取所需的程式碼，為每個項目在 `.free-hands/estimates.jsonl` 中寫一行分鐘數與類別（`docs`、`fix`、`feature`、`refactor`、`test`、`research`、`ops`），然後結束。hook 會立即返回且不輸出任何內容，因此這一切都不會進入代理的上下文。設定 `FREE_HANDS_ESTIMATOR=off` 可關閉估算器。
+推進目標的代理既不寫估計，也看不到估計。清單中出現沒有估計的項目時，擁有目標的工作階段的 hook 會在背景啟動一個獨立的、短暫的估算器：一個使用 Haiku 的無介面 Claude Code 工作階段，處於安全模式（沒有 hooks、外掛 hooks 與 CLAUDE.md），只用唯讀工具，也不保存工作階段。它讀取所需的程式碼，為每個項目在 `.free-hands/estimates.jsonl` 中寫一行分鐘數與類別（`docs`、`fix`、`feature`、`refactor`、`test`、`research`、`ops`），然後結束。hook 會立即返回且不輸出任何內容，因此這一切都不會進入代理的上下文。設定 `FREE_HANDS_ESTIMATOR=off` 可關閉估算器。估算器每次執行都是你帳戶上的一個獨立 Claude Code 工作階段（在實測執行中每次約 0.002–0.003 USD 的用量），[budget](../budget) 外掛看不到它。
 
 此後，擁有目標的工作階段的 hook 會為每一項計時：
 
@@ -136,7 +136,7 @@ Hook 輸入錯誤時不會產生效果。目標檔案格式錯誤或無法讀取
 
 ## Codex
 
-依賴自動執行前，請在 `/hooks` 信任外掛 hooks。提問 hook 的 matcher 包含 `request_user_input`；尚未觀察到拒絕。Codex 預設模式沒有提問工具，因此由 Stop hook 負責延續工作。若未信任或啟用 hooks，技能仍依照書面規則繼續，但 hook 效果可能未生效。在 Codex 上 hooks 仍會為項目計時，但不會啟動估算器（它需要 hook 所在的 Claude Code CLI），因此除非目標由 0.5.0 寫下並附有內嵌估計，否則不會顯示預計完成時間；可以用 `$dashboard:audit` 查看現有內容（Codex 沒有即時顯示行）。未在 Codex 上測量。
+依賴自動執行前，請在 `/hooks` 信任外掛 hooks。提問 hook 的 matcher 包含 `request_user_input`；尚未觀察到拒絕。Codex 預設模式沒有提問工具，因此由 Stop hook 負責延續工作。若未信任或啟用 hooks，技能仍依照書面規則繼續，但 hook 效果可能未生效。在 Codex 上 hooks 仍會為項目計時，但不會啟動估算器——hook 只在 `CLAUDECODE=1` 且父程序為 `CLAUDE_PID` 時啟動它，從 Claude Code 內部啟動的 Codex 工作階段即使繼承了這些值，父程序也對不上——因此除非目標由 0.5.0 寫下並附有內嵌估計，否則不會顯示預計完成時間；可以用 `$dashboard:audit` 查看現有內容（Codex 沒有即時顯示行）。未在 Codex 上測量。
 
 面板為每個角色啟動一個 `codex exec -s read-only` 子程序（native subagent 可指定模型，但沒有唯讀控制，因此不使用 — F10）。不論角色為何，子程序都能搜尋網頁；為 `evidence-hunter` 和 `trend-tracker` 加上 `--search`（F09）。子程序需要網路。從沙箱中的主代理執行時，`panel.py run` 必須透過核准的權限提升在沙箱外執行，或由工作階段允許網路。否則所有子程序都會失敗，這次執行會由主代理自行決定並記錄為 **panel degraded**，然後繼續（G06）。
 

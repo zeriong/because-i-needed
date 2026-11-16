@@ -10,8 +10,9 @@
   detached (no inherited input or output; the hook returns at once and prints nothing). It runs one headless Claude
   Code session — Haiku, effort low, `--safe-mode` (no hooks, no CLAUDE.md), `--no-session-persistence`, tools Read,
   Glob and Grep — and appends minutes and a category per item to `.free-hands/estimates.jsonl`. Only under Claude Code
-  (`CLAUDECODE=1`; the CLI from `CLAUDE_CODE_EXECPATH` or `PATH`), at most once a minute per goal folder, one at a
-  time; an item asked without an answer is not asked again in the run. `FREE_HANDS_ESTIMATOR=off` turns it off.
+  (`CLAUDECODE=1` and the hook's parent is `CLAUDE_PID`; the CLI from `CLAUDE_CODE_EXECPATH` or `PATH`), at most once a minute per goal folder, one at a
+  time; an item asked without an answer is not asked again in the run. `FREE_HANDS_ESTIMATOR=off` turns it off. Each
+  run is a Claude Code session on the user's account (0.002–0.003 USD measured) that the budget plugin does not see.
 - `eta-baseline.json` holds factors per estimator, then per working family: `haiku` (Sonnet 0.040, Opus 0.070, Fable
   0.074, default 0.061) and `self` (0.5.0's, for goals whose items still carry the agent's own `(~6m fix)`). Records
   join an estimate that lands after its item was done. `status` also watches `estimates.jsonl`.

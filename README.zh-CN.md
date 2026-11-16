@@ -90,7 +90,7 @@ codex plugin add context-rail@because-i-needed
 - **适用场景：** 希望智能体完成范围明确的目标、记录决策，并能在中断后恢复时。
 - **入口：** `/free-hands:run <目标>`（Claude Code）· `$free-hands:run <目标>`（Codex），也可在提示中写“free-hands”以先收到一次开始确认
 - **预计完成时间：** 钩子在智能体上下文之外启动的独立 Haiku 估算器为清单每一项给出估计；钩子把每一项的实际用时记入项目的 `.free-hands/timings.jsonl`，[dashboard](plugins/dashboard) 显示按实测的模型系数和该项目自身记录校正后的预计完成时间。
-- **注意：** 钩子会在每次提示、会话开始、工具调用、提问、shell 命令和停止时运行。没有活动目标时保持静默，只有提示中出现“free-hands”时会发送一次开始问题。有未完成事项时，Stop 最多让当前轮继续40次；目标处于活动状态时，辅助钩子会拒绝列表中合并到默认分支、远程删除、部署或发布的 shell 命令（见插件 README）。两者都只在启动本次运行的会话中生效，不影响同一仓库中的其他会话。
+- **注意：** 钩子会在每次提示、会话开始、工具调用、提问、shell 命令和停止时运行；清单新增事项时，还会用你的账户在后台启动一个简短的 Haiku 会话来估计（budget 插件看不到它，可用 `FREE_HANDS_ESTIMATOR=off` 关闭）。没有活动目标时保持静默，只有提示中出现“free-hands”时会发送一次开始问题。有未完成事项时，Stop 最多让当前轮继续40次；目标处于活动状态时，辅助钩子会拒绝列表中合并到默认分支、远程删除、部署或发布的 shell 命令（见插件 README）。两者都只在启动本次运行的会话中生效，不影响同一仓库中的其他会话。
 
 [查看 free-hands 简体中文 README →](plugins/free-hands/README.zh-CN.md)
 

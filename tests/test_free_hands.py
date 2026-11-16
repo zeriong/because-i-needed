@@ -51,7 +51,7 @@ class GuardTest(unittest.TestCase):
         data = {"cwd": str(self.repo / "sub"), **(payload or {})}
         # never the real CLI: a test that wants the estimator passes CLAUDECODE and a fake CLI itself
         environ = {k: v for k, v in os.environ.items()
-                   if k not in ("FREE_HANDS_ROLE", "CLAUDE_PROJECT_DIR", "CLAUDE_CODE_EXECPATH", "CLAUDECODE")}
+                   if k not in ("FREE_HANDS_ROLE", "CLAUDE_PROJECT_DIR", "CLAUDE_CODE_EXECPATH", "CLAUDECODE", "CLAUDE_PID")}
         result = subprocess.run([sys.executable, str(GUARD), mode], input=json.dumps(data), capture_output=True,
                                 text=True, cwd=self.tmp, env={**environ, **(env or {})})
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -115,7 +115,8 @@ class GuardTest(unittest.TestCase):
 
     def test_malformed_hook_input_means_no_effect(self):
         self.write(goal_text())
-        environ = {k: v for k, v in os.environ.items() if k not in ("FREE_HANDS_ROLE", "CLAUDE_CODE_EXECPATH", "CLAUDECODE")}
+        environ = {k: v for k, v in os.environ.items()
+                   if k not in ("FREE_HANDS_ROLE", "CLAUDE_CODE_EXECPATH", "CLAUDECODE", "CLAUDE_PID")}
         for raw in ("{broken", "[1, 2]", ""):
             for mode in ("ask", "stop", "prompt"):
                 result = subprocess.run([sys.executable, str(GUARD), mode], input=raw, capture_output=True, text=True,
@@ -593,7 +594,9 @@ class EtaTest(unittest.TestCase):
                         "open(os.environ['FAKE_ARGV'], 'a').write(json.dumps(sys.argv[1:]) + '\\n')\n"
                         f"print({json.dumps(json.dumps(reply))})\nsys.exit({code})\n")
         fake.chmod(0o755)
-        return {"CLAUDECODE": "1", "CLAUDE_CODE_EXECPATH": str(fake), "FAKE_ARGV": str(self.tmp / "argv.jsonl")}
+        # the hook runs as this test's child, as a hook runs as Claude Code's (CLAUDE_PID = its parent; r3 I06)
+        return {"CLAUDECODE": "1", "CLAUDE_PID": str(os.getpid()), "CLAUDE_CODE_EXECPATH": str(fake),
+                "FAKE_ARGV": str(self.tmp / "argv.jsonl")}
 
     def wait_for(self, path, seconds=8):
         end = time.time() + seconds
@@ -634,6 +637,7 @@ class EtaTest(unittest.TestCase):
         self.assertEqual(len((self.tmp / "argv.jsonl").read_text().splitlines()), 1)
         self.hook("post", {"session_id": "s2"}, env=env)  # another session never starts one
         self.hook("post", {"session_id": "s1"}, env={k: v for k, v in env.items() if k != "CLAUDECODE"})  # not Claude Code
+        self.hook("post", {"session_id": "s1"}, env={**env, "CLAUDE_PID": "1"})  # inherited: its parent is not that pid
         time.sleep(1)
         self.assertEqual(len((self.tmp / "argv.jsonl").read_text().splitlines()), 1)
 
@@ -1142,7 +1146,7 @@ class ShellGuardTest(unittest.TestCase):
     def hook(self, payload, env=None):
         # never the real CLI: a test that wants the estimator passes CLAUDECODE and a fake CLI itself
         environ = {k: v for k, v in os.environ.items()
-                   if k not in ("FREE_HANDS_ROLE", "CLAUDE_PROJECT_DIR", "CLAUDE_CODE_EXECPATH", "CLAUDECODE")}
+                   if k not in ("FREE_HANDS_ROLE", "CLAUDE_PROJECT_DIR", "CLAUDE_CODE_EXECPATH", "CLAUDECODE", "CLAUDE_PID")}
         result = subprocess.run([sys.executable, str(GUARD), "shell"], input=json.dumps(payload), capture_output=True,
                                 text=True, cwd=self.tmp, env={**environ, **(env or {})})
         self.assertEqual(result.returncode, 0, result.stderr)

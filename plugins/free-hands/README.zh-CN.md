@@ -46,7 +46,7 @@ owner: <session id>
 
 ## 预计完成时间
 
-推进目标的智能体既不写估计，也看不到估计。清单中出现没有估计的事项时，拥有目标的会话的钩子会在后台启动一个单独的、短暂的估算器：一个使用 Haiku 的无界面 Claude Code 会话，处于安全模式（没有钩子、插件钩子和 CLAUDE.md），只用只读工具，也不保存会话。它读取所需的代码，为每个事项在 `.free-hands/estimates.jsonl` 中写一行分钟数和类别（`docs`、`fix`、`feature`、`refactor`、`test`、`research`、`ops`），然后退出。钩子立即返回且不输出任何内容，因此这一切都不会进入智能体的上下文。设置 `FREE_HANDS_ESTIMATOR=off` 可关闭估算器。
+推进目标的智能体既不写估计，也看不到估计。清单中出现没有估计的事项时，拥有目标的会话的钩子会在后台启动一个单独的、短暂的估算器：一个使用 Haiku 的无界面 Claude Code 会话，处于安全模式（没有钩子、插件钩子和 CLAUDE.md），只用只读工具，也不保存会话。它读取所需的代码，为每个事项在 `.free-hands/estimates.jsonl` 中写一行分钟数和类别（`docs`、`fix`、`feature`、`refactor`、`test`、`research`、`ops`），然后退出。钩子立即返回且不输出任何内容，因此这一切都不会进入智能体的上下文。设置 `FREE_HANDS_ESTIMATOR=off` 可关闭估算器。估算器每次运行都是你账户上的一个独立 Claude Code 会话（在实测运行中每次约 0.002–0.003 USD 的用量），[budget](../budget) 插件看不到它。
 
 此后，拥有目标的会话的钩子为每一项计时：
 
@@ -136,7 +136,7 @@ owner: <session id>
 
 ## Codex
 
-依赖自动执行前，请在 `/hooks` 中信任插件钩子。提问钩子的 matcher 包含 `request_user_input`；尚未观察到它被拒绝。Codex 默认模式没有提问工具，因此由 Stop 钩子负责确保继续执行。即使钩子未获信任或未启用，技能仍按书面规则继续，但钩子效果可能未启用。在 Codex 上钩子仍会为事项计时，但不会启动估算器（它需要钩子所在的 Claude Code CLI），因此除非目标由 0.5.0 写下并带有内联估计，否则不会显示预计完成时间；可以用 `$dashboard:audit` 查看现有内容（Codex 没有实时显示行）。未在 Codex 上测量。
+依赖自动执行前，请在 `/hooks` 中信任插件钩子。提问钩子的 matcher 包含 `request_user_input`；尚未观察到它被拒绝。Codex 默认模式没有提问工具，因此由 Stop 钩子负责确保继续执行。即使钩子未获信任或未启用，技能仍按书面规则继续，但钩子效果可能未启用。在 Codex 上钩子仍会为事项计时，但不会启动估算器——钩子只在 `CLAUDECODE=1` 且父进程为 `CLAUDE_PID` 时启动它，从 Claude Code 内部启动的 Codex 会话即使继承了这些值，父进程也对不上——因此除非目标由 0.5.0 写下并带有内联估计，否则不会显示预计完成时间；可以用 `$dashboard:audit` 查看现有内容（Codex 没有实时显示行）。未在 Codex 上测量。
 
 面板为每个角色启动一个 `codex exec -s read-only` 子进程（native subagent 可以指定模型，但没有只读控制，因此不使用 — F10）。无论角色如何，子进程都可以搜索网页；为 `evidence-hunter` 和 `trend-tracker` 添加 `--search`（F09）。子进程需要网络。从沙箱中的主智能体运行时，`panel.py run` 必须通过获准的提权在沙箱外运行，或由会话允许网络。否则所有子进程都会失败，本次运行继续由主智能体独自决策并记录为 **panel degraded**（G06）。
 

@@ -90,7 +90,7 @@ codex plugin add context-rail@because-i-needed
 - **適用時機：** 想交付範圍明確的目標，並記錄決定、在中斷後繼續處理時。
 - **進入點：** `/free-hands:run <目標>`（Claude Code）· `$free-hands:run <目標>`（Codex），也可在提示中寫「free-hands」以先收到一次開始確認
 - **預計完成時間：** hook 在代理上下文之外啟動的獨立 Haiku 估算器為清單每一項給出估計；hook 把每一項的實際用時記入專案的 `.free-hands/timings.jsonl`，[dashboard](plugins/dashboard) 顯示依實測的模型係數與該專案自身紀錄校正後的預計完成時間。
-- **注意：** hook 會在每次提示、工作階段開始、工具呼叫、提問、shell 指令和停止時執行。沒有啟用中的目標時保持安靜，只有提示中出現「free-hands」時會送出一次開始問題。有未完成項目時，Stop 最多讓目前回合延續40次；目標啟用期間，輔助 hook 會拒絕清單中合併到預設分支、遠端刪除、部署或發布的 shell 指令（見外掛 README）。兩者都只在啟動這次執行的工作階段中生效，不影響同一儲存庫中的其他工作階段。
+- **注意：** hook 會在每次提示、工作階段開始、工具呼叫、提問、shell 指令和停止時執行；清單新增項目時，還會用你的帳戶在背景啟動一個簡短的 Haiku 工作階段來估計（budget 外掛看不到它，可用 `FREE_HANDS_ESTIMATOR=off` 關閉）。沒有啟用中的目標時保持安靜，只有提示中出現「free-hands」時會送出一次開始問題。有未完成項目時，Stop 最多讓目前回合延續40次；目標啟用期間，輔助 hook 會拒絕清單中合併到預設分支、遠端刪除、部署或發布的 shell 指令（見外掛 README）。兩者都只在啟動這次執行的工作階段中生效，不影響同一儲存庫中的其他工作階段。
 
 [閱讀 free-hands 繁體中文 README →](plugins/free-hands/README.zh-TW.md)
 

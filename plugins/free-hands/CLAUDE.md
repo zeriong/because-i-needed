@@ -31,7 +31,8 @@ Contents: the `run` skill and Codex adapter, five read-only panel roles, `dashbo
 - Nothing about the expected finish reaches the working agent: SKILL.md, the template and the restore note never
   mention estimates, and every hook that feeds the clock or starts the estimator prints nothing. Estimates come from
   the isolated estimator (`estimator.py`): started detached (no inherited stdio, `start_new_session`) by the owner
-  session's hook when open items have none, only when `CLAUDECODE` is `1`, with the CLI from `CLAUDE_CODE_EXECPATH`
+  session's hook when open items have none, only when `CLAUDECODE` is `1` and the hook's parent is `CLAUDE_PID` (both are
+  inherited by a Codex started inside Claude Code; the parent is not — r3 I06), with the CLI from `CLAUDE_CODE_EXECPATH`
   or `PATH`; one `claude -p --safe-mode --no-session-persistence --model haiku --effort low --tools Read Glob Grep`
   session; answers appended to `.free-hands/estimates.jsonl`; at most one start per minute per goal folder, one at a
   time (lock), an item asked once per run; an item the agent rewords keeps its estimate (open keys that vanish pair in

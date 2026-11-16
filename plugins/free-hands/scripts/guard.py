@@ -228,8 +228,15 @@ SPAWN_GAP = 60  # seconds between two estimator starts for one goal folder (a fa
 
 def claude_cli():
     """The Claude Code CLI to run the estimator with, or None outside Claude Code: a hook under Claude Code gets
-    `CLAUDECODE=1` but no path to the CLI, which is on `PATH` (z-lab eta-isolated-probes-r3 I06, I07)."""
+    `CLAUDECODE=1` and runs as a child of the `CLAUDE_PID` process, but gets no path to the CLI, which is on `PATH`
+    (z-lab eta-isolated-probes-r3 I06, I07). Both variables are inherited by anything started inside a Claude Code
+    session — a Codex session, for one — so the parent process decides."""
     if os.environ.get("CLAUDECODE") != "1":
+        return None
+    try:
+        if int(os.environ.get("CLAUDE_PID", "")) != os.getppid():
+            return None
+    except ValueError:
         return None
     return os.environ.get("CLAUDE_CODE_EXECPATH") or shutil.which("claude")
 
