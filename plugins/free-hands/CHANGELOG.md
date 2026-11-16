@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.6.0] - 2026-11-16
+
+### Changed
+
+- The working agent no longer estimates. SKILL.md, the goal template and the restore note say nothing about
+  estimates, so nothing about the expected finish enters the main agent's context.
+- When the checklist gains open items without an estimate, the owner session's hook starts `scripts/estimator.py`
+  detached (no inherited input or output; the hook returns at once and prints nothing). It runs one headless Claude
+  Code session — Haiku, effort low, `--safe-mode` (no hooks, no CLAUDE.md), `--no-session-persistence`, tools Read,
+  Glob and Grep — and appends minutes and a category per item to `.free-hands/estimates.jsonl`. Only under Claude Code
+  (`CLAUDECODE=1`; the CLI from `CLAUDE_CODE_EXECPATH` or `PATH`), at most once a minute per goal folder, one at a
+  time; an item asked without an answer is not asked again in the run. `FREE_HANDS_ESTIMATOR=off` turns it off.
+- `eta-baseline.json` holds factors per estimator, then per working family: `haiku` (Sonnet 0.040, Opus 0.070, Fable
+  0.074, default 0.061) and `self` (0.5.0's, for goals whose items still carry the agent's own `(~6m fix)`). Records
+  join an estimate that lands after its item was done. `status` also watches `estimates.jsonl`.
+- An item whose text the agent rewrites — often in the edit that checks it — keeps its clock and its estimate: open
+  items that vanish pair, in order, with items that appear in the same edit; a leftover is marked gone.
+
+### Why
+
+The maintainer asked that the expected finish never cost the main agent's context: a separate agent takes the work,
+updates the dashboard and is discarded, fully isolated from the work (confirmed by question, 2026-11-16: fully
+isolated; only when the checklist changes; Haiku).
+
+Evidence (z-lab `free-hands-lab`, Claude Code 2.1.325): `eta-isolated-probes-2.1.325` I01, I03–I05 (a detached child
+does not hold the hook, leaves the stream empty, outlives the session; safe mode loads no hook; no transcript; the
+estimate on disk 4.5 s after the hook) and `-r3` I06, I07 (from a clean environment a hook gets `CLAUDECODE=1`, not
+`CLAUDE_CODE_EXECPATH`; the CLI is on `PATH` — round 1's I02 had read an inherited value, corrected);
+`eta-haiku-calibrate-0.6.0` H01–H05 (78 estimator runs, no error, 6 s median; on held-out goals Haiku × factor came
+within 0.68 doublings per item against 0.62 for the agents' own estimates — the isolation costs a little accuracy);
+`eta-isolated-run-r2-0.6.0` J01–J05 (two Sonnet runs: no estimate text reached the main agent; the
+estimator answered about 6 s after the checklist; the band showed the finish 2 s after the prompt and per item; a
+rewording defect found there is fixed, checked by unit tests and a replay of the recorded run only; round 1,
+`eta-isolated-run-0.6.0`, stopped because the estimator then required `CLAUDE_CODE_EXECPATH`). Not measured: Codex (no estimator is started there), Haiku as the working model, other efforts.
+
+
 ## [0.5.0] - 2026-11-16
 
 ### Added

@@ -19,6 +19,7 @@ import time
 
 STATE = "eta.json"
 HISTORY = "timings.jsonl"
+ESTIMATES = "estimates.jsonl"
 BASELINE = Path(__file__).resolve().parent / "eta-baseline.json"
 CATEGORIES = ("docs", "fix", "feature", "refactor", "test", "research", "ops")
 ESTIMATE = re.compile(r"\(~\s*(\d+(?:\.\d+)?)\s*m(?:in)?\b[ ,]*([A-Za-z]*)\s*\)")
@@ -72,10 +73,80 @@ def checklist(text):
     return items
 
 
+def section(text, name):
+    match = re.search(r"^##\s+%s\s*$(.*?)(?=^##\s|\Z)" % re.escape(name), text or "", re.MULTILINE | re.DOTALL)
+    return match.group(1) if match else ""
+
+
 def goal_id(text):
     """A run's identity: its `## Goal` section. A new goal (the old file renamed) starts a new clock."""
-    match = re.search(r"^##\s+Goal\s*$(.*?)(?=^##\s|\Z)", text or "", re.MULTILINE | re.DOTALL)
-    return hashlib.sha256((match.group(1).strip() if match else "").encode()).hexdigest()[:16]
+    return hashlib.sha256(section(text, "Goal").strip().encode()).hexdigest()[:16]
+
+
+def run_of(state):
+    """The run's id in the estimates file: when its clock started."""
+    return round(number(state.get("started")), 3) if isinstance(state, dict) else None
+
+
+def estimates(folder, run):
+    """{key: (minutes or None, category, estimator)} the isolated estimator wrote for this run; the newest row wins. A
+    row without minutes marks an item that was asked and got no answer."""
+    found = {}
+    for line in tail_lines(folder / ESTIMATES):
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(row, dict) and row.get("run") == run and isinstance(row.get("item"), str):
+            minutes = row.get("minutes") if usable(row.get("minutes")) else None
+            category = row.get("cat") if row.get("cat") in CATEGORIES else None
+            estimator = row.get("estimator") if isinstance(row.get("estimator"), str) else "haiku"
+            found[row["item"]] = (minutes, category, estimator)
+    return found
+
+
+def estimate_of(item, found, known=None):
+    """(minutes, category, estimator) for a checklist entry: the agent's own inline estimate (goals written by 0.5.0),
+    else the isolated estimator's — under the item's earlier text when the agent reworded it — else (None, None,
+    None)."""
+    _, key, minutes, category = item
+    if minutes:
+        return minutes, category, "self"
+    entry = (known or {}).get(key)
+    was = entry.get("was") if isinstance(entry, dict) else None
+    hit = found.get(key) or (found.get(was) if was else None)
+    return hit if hit and hit[0] else (None, None, None)
+
+
+def rename(known, items):
+    """Keep an item whose text the agent rewrote — often in the edit that checks it: open keys that vanished pair, in
+    order, with keys that appeared in the same edit (z-lab eta-isolated-run-r2-0.6.0). A vanished key left over is
+    marked gone, so the clock does not wait for it."""
+    keys = [key for _, key, _, _ in items]
+    present = set(keys)
+    vanished = [k for k, v in known.items() if isinstance(v, dict) and v.get("mark") == " " and k not in present]
+    appeared = [k for k in keys if k not in known]
+    for old, new in zip(vanished, appeared):
+        entry = known.pop(old)
+        entry["was"] = entry.get("was") or old
+        known[new] = entry
+    for old in vanished[len(appeared):]:
+        known[old]["mark"] = "gone"
+
+
+def unestimated(folder, text):
+    """(run, [open keys the estimator has not been asked about]) for the run the clock holds, or (None, [])."""
+    state = read_json(folder / STATE)
+    if not state or not isinstance(state.get("items"), dict) or not same_run(state, goal_id(text), text):
+        return None, []
+    run, known = run_of(state), state["items"]
+    asked = estimates(folder, run)
+
+    def was(key):
+        entry = known.get(key)
+        return entry.get("was") if isinstance(entry, dict) else None
+    return run, [key for mark, key, minutes, _ in checklist(text)
+                 if mark == " " and not minutes and key not in asked and was(key) not in asked]
 
 
 def family(model):
@@ -189,7 +260,7 @@ def advance(state, now, event, data):
 
 def share(finished, elapsed):
     """Split the active time since the previous completion among the items finished in one edit, by estimate."""
-    weights = [minutes or 0 for _, minutes, _, _ in finished]
+    weights = [entry[1] or 0 for entry in finished]
     total = sum(weights)
     if total <= 0 or 0 in weights:
         return [elapsed / len(finished)] * len(finished)
@@ -233,7 +304,9 @@ def observe(folder, text, event, data, now=None, ended=False):
         finished = []
         known = state.setdefault("items", {})
         running = bool(known)  # a run already under way: an item that first appears finished was done just now
-        for mark, key, minutes, category in checklist(text):
+        items = checklist(text)
+        rename(known, items)
+        for mark, key, minutes, category in items:
             previous = known.get(key)
             if not isinstance(previous, dict):
                 known[key] = {"mark": mark, "est": minutes, "cat": category}
@@ -251,12 +324,17 @@ def observe(folder, text, event, data, now=None, ended=False):
         if finished:
             elapsed = max(0.0, state["active"] - number(state.get("mark")))
             stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
+            run, found = run_of(state), estimates(folder, run_of(state))
+            finished = [(key, *estimate_of((mark, key, minutes, category), found, known), mark)
+                        for key, minutes, category, mark in finished]
             rows = []
-            for (key, minutes, category, mark), seconds in zip(finished, share(finished, elapsed)):
-                rows.append({"v": 1, "at": stamp, "goal": goal, "item": key[:200], "cat": category,
-                             "est_min": minutes, "actual_min": round(seconds / 60.0, 2), "batch": len(finished),
-                             "outcome": "done" if mark == "x" else "skipped", "model": state["model"],
-                             "family": family(state["model"]), "effort": state.get("effort")})
+            for (key, minutes, category, estimator, mark), seconds in zip(finished, share(finished, elapsed)):
+                was = known.get(key, {}).get("was")
+                rows.append({"v": 2, "at": stamp, "goal": goal, "run": run, "item": key[:200],
+                             **({"was": was[:200]} if was else {}), "cat": category,
+                             "est_min": minutes, "estimator": estimator, "actual_min": round(seconds / 60.0, 2),
+                             "batch": len(finished), "outcome": "done" if mark == "x" else "skipped",
+                             "model": state["model"], "family": family(state["model"]), "effort": state.get("effort")})
             with open(folder / HISTORY, "a", encoding="utf-8") as history:
                 history.write("".join(json.dumps(row) + "\n" for row in rows))
             state["mark"] = state["active"]
@@ -270,19 +348,25 @@ def pending(folder, text):
     state = read_json(folder / STATE)
     if not state or not isinstance(state.get("items"), dict) or not same_run(state, goal_id(text), text):
         return False
-    keys = {key for _, key, _, _ in checklist(text)}  # an item renamed mid-run leaves its old key open: not counted
-    return any(isinstance(item, dict) and item.get("mark") == " " and key in keys
-               for key, item in state["items"].items())
+    # an open item whose text the agent rewrote still counts: the next observe pairs it with its new text, or marks it
+    # gone, so this turns false after one edit at most
+    return any(isinstance(item, dict) and item.get("mark") == " " for item in state["items"].values())
 
 
 def baseline():
+    """{estimator: {family: {"all": factor, …}}}: who wrote the estimate (`self`, the working agent in 0.5.0 goals; or
+    the isolated estimator), then the model family doing the work."""
     data = read_json(BASELINE) or {}
-    return data.get("families") if isinstance(data.get("families"), dict) else {}
+    if isinstance(data.get("estimators"), dict):
+        return data["estimators"]
+    return {"self": data["families"]} if isinstance(data.get("families"), dict) else {}
 
 
-def factor(base, fam, category):
-    """The family's factor for the category, else for all its items; a family without one takes `default`."""
-    for cell in (base.get(fam) if fam else None, base.get("default")):
+def factor(base, fam, category, estimator="self"):
+    """The factor for this estimator and working family, for the category, else for all its items; a family without
+    one takes the estimator's `default`."""
+    cells = base.get(estimator) if isinstance(base.get(estimator), dict) else {}
+    for cell in (cells.get(fam) if fam else None, cells.get("default")):
         if isinstance(cell, dict):
             for key in (category, "all"):
                 value = cell.get(key) if key else None
@@ -298,24 +382,38 @@ def usable(value):
 def records(folder):
     """The project's finished items with both an estimate and a measured time, newest last. A hand-edited or broken
     row (`Infinity`, `NaN`, zero, beyond a day) is skipped."""
-    rows = []
+    rows, late = [], {}
+    for line in tail_lines(folder / ESTIMATES):  # an estimate may land after its item was already done
+        try:
+            entry = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(entry, dict) and usable(entry.get("minutes")) and isinstance(entry.get("item"), str):
+            late[(entry.get("run"), entry["item"])] = (entry["minutes"], entry.get("cat"), entry.get("estimator"))
     for line in tail_lines(folder / HISTORY):
         try:
             row = json.loads(line)
         except ValueError:
             continue
-        if isinstance(row, dict) and row.get("outcome") == "done" and usable(row.get("est_min")) \
-                and usable(row.get("actual_min")):
-            rows.append({"est_min": row["est_min"], "actual_min": row["actual_min"],
+        if not isinstance(row, dict) or row.get("outcome") != "done" or not usable(row.get("actual_min")):
+            continue
+        minutes, category, estimator = row.get("est_min"), row.get("cat"), row.get("estimator") or "self"
+        if not usable(minutes):
+            minutes, category, estimator = late.get((row.get("run"), row.get("item"))) \
+                or late.get((row.get("run"), row.get("was"))) or (None, None, None)
+        if usable(minutes):
+            rows.append({"est_min": minutes, "actual_min": row["actual_min"],
                          "family": row.get("family") if isinstance(row.get("family"), str) else None,
-                         "cat": row.get("cat") if isinstance(row.get("cat"), str) else None})
+                         "cat": category if isinstance(category, str) else None,
+                         "estimator": estimator if isinstance(estimator, str) else "self"})
     return rows[-RECENT:]
 
 
 def project_factor(rows, base):
     """How much longer (or shorter) this project's items took than the shipped baseline predicted — the project's
     complexity — shrunk toward 1 while the record is small."""
-    residuals = [math.log(r["actual_min"] / (r["est_min"] * factor(base, r.get("family"), r.get("cat"))))
+    residuals = [math.log(r["actual_min"] / (r["est_min"] * factor(base, r.get("family"), r.get("cat"),
+                                                                     r.get("estimator") or "self")))
                  for r in rows]
     return math.exp(sum(residuals) / (len(residuals) + PRIOR)) if residuals else 1.0
 
@@ -324,13 +422,15 @@ def predict(folder, text, now=None):
     """{"eta": epoch seconds, "minutes": remaining, "unestimated": n} for the open items, or None when no open item
     has an estimate."""
     now = time.time() if now is None else now
-    open_items = [(key, minutes, category) for mark, key, minutes, category in checklist(text) if mark == " "]
-    estimated = [(key, minutes, category) for key, minutes, category in open_items if minutes]
-    if not estimated:
-        return None
     state = read_json(folder / STATE)
     if state and (not isinstance(state.get("items"), dict) or not same_run(state, goal_id(text), text)):
         state = None
+    found = estimates(folder, run_of(state)) if state else {}
+    known = state.get("items") if state else {}
+    open_items = [(item[1], *estimate_of(item, found, known)) for item in checklist(text) if item[0] == " "]
+    estimated = [entry for entry in open_items if entry[1]]
+    if not estimated:
+        return None
     base = baseline()
     fam = family(state.get("model")) if state else None
     adjust = project_factor(records(folder), base)
@@ -346,8 +446,8 @@ def predict(folder, text, now=None):
         elapsed = number(state.get("active")) - number(state.get("mark"))
         elapsed += live if not state.get("idle") and live <= CAP else 0.0
     total = 0.0
-    for index, (key, minutes, category) in enumerate(estimated):
-        expected = minutes * factor(base, fam, category) * adjust
+    for index, (key, minutes, category, estimator) in enumerate(estimated):
+        expected = minutes * factor(base, fam, category, estimator) * adjust
         if index == 0 and open_items[0][0] == key:  # the item in progress has already used part of its time
             expected = max(expected - elapsed / 60.0, expected * FLOOR)
         total += expected

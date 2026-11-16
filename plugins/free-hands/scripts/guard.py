@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -130,9 +131,8 @@ def restore_note(goal, info):
             "decide with the brainstorming panel or yourself, record it under ## Decisions, continue (the one exception: "
             "when the budget plugin stops you at the user's usage threshold, do what it says); (2) never merge a "
             "PR or into the default branch, delete irreversibly, deploy or send anything outside — mark such items "
-            "`- [-] … — needs the user: <why>`; (3) keep the goal file current (`- [x]` when an item is done; a new item "
-            "ends with its `(~<minutes>m <category>)` estimate; status done, waiting or paused at the end); (4) if the "
-            "user asks to pause or stop, set `status: paused` first.")
+            "`- [-] … — needs the user: <why>`; (3) keep the goal file current (`- [x]` when an item is done; status "
+            "done, waiting or paused at the end); (4) if the user asks to pause or stop, set `status: paused` first.")
 
 
 ENTRY_NOTE = (
@@ -222,12 +222,49 @@ def eta_target(data):
     return goal, text
 
 
+ESTIMATOR = Path(__file__).resolve().parent / "estimator.py"
+SPAWN_GAP = 60  # seconds between two estimator starts for one goal folder (a failing estimator must not run per call)
+
+
+def claude_cli():
+    """The Claude Code CLI to run the estimator with, or None outside Claude Code: a hook under Claude Code gets
+    `CLAUDECODE=1` but no path to the CLI, which is on `PATH` (z-lab eta-isolated-probes-r3 I06, I07)."""
+    if os.environ.get("CLAUDECODE") != "1":
+        return None
+    return os.environ.get("CLAUDE_CODE_EXECPATH") or shutil.which("claude")
+
+
+def start_estimator(folder, root, text):
+    """Start the isolated estimator (estimator.py) when open items have no estimate — detached, with no inherited
+    stdio, so the hook returns at once and nothing reaches the main agent (z-lab eta-isolated-probes I01, I05). Only
+    under Claude Code; `FREE_HANDS_ESTIMATOR=off` turns it off."""
+    cli = claude_cli()
+    if os.environ.get("FREE_HANDS_ESTIMATOR", "").lower() == "off" or not cli:
+        return
+    _, keys = eta.unestimated(folder, text)
+    if not keys:
+        return
+    marker = folder / "estimator.json"
+    try:
+        last = json.loads(marker.read_text()).get("started")
+    except (OSError, ValueError, AttributeError):
+        last = None
+    now = time.time()
+    if isinstance(last, (int, float)) and 0 <= now - last < SPAWN_GAP:
+        return
+    marker.write_text(json.dumps({"started": now}))
+    subprocess.Popen([sys.executable, str(ESTIMATOR), str(folder), str(root), cli], cwd=str(root),
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                     start_new_session=True)
+
+
 def record(data, event, ended=False):
-    """Feed the ETA clock; its failure never changes what the guard decided."""
+    """Feed the ETA clock and start the estimator; their failure never changes what the guard decided."""
     try:
         target = eta_target(data)
         if target:
             eta.observe(target[0].parent, target[1], event, data, ended=ended)
+            start_estimator(target[0].parent, target[0].parent.parent, load(target[0]) or target[1])
     except Exception:
         return
 
@@ -433,7 +470,8 @@ def status():
     if info and info["owner"]:
         notes.append(f"owner {info['owner'][:8]}")
     print(json.dumps({"value": state or "off", "source": "project" if state else "default", "project": state,
-                      "global": None, "detail": " · ".join(notes) or None, "watch": [str(goal)]}))
+                      "global": None, "detail": " · ".join(notes) or None,
+                      "watch": [str(goal), str(goal.parent / eta.ESTIMATES)]}))
 
 
 def main():

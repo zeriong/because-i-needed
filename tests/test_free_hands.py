@@ -49,7 +49,9 @@ class GuardTest(unittest.TestCase):
 
     def hook(self, mode, payload=None, env=None):
         data = {"cwd": str(self.repo / "sub"), **(payload or {})}
-        environ = {k: v for k, v in os.environ.items() if k not in ("FREE_HANDS_ROLE", "CLAUDE_PROJECT_DIR")}
+        # never the real CLI: a test that wants the estimator passes CLAUDECODE and a fake CLI itself
+        environ = {k: v for k, v in os.environ.items()
+                   if k not in ("FREE_HANDS_ROLE", "CLAUDE_PROJECT_DIR", "CLAUDE_CODE_EXECPATH", "CLAUDECODE")}
         result = subprocess.run([sys.executable, str(GUARD), mode], input=json.dumps(data), capture_output=True,
                                 text=True, cwd=self.tmp, env={**environ, **(env or {})})
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -113,7 +115,7 @@ class GuardTest(unittest.TestCase):
 
     def test_malformed_hook_input_means_no_effect(self):
         self.write(goal_text())
-        environ = {k: v for k, v in os.environ.items() if k not in ("FREE_HANDS_ROLE",)}
+        environ = {k: v for k, v in os.environ.items() if k not in ("FREE_HANDS_ROLE", "CLAUDE_CODE_EXECPATH", "CLAUDECODE")}
         for raw in ("{broken", "[1, 2]", ""):
             for mode in ("ask", "stop", "prompt"):
                 result = subprocess.run([sys.executable, str(GUARD), mode], input=raw, capture_output=True, text=True,
@@ -329,7 +331,8 @@ class GuardTest(unittest.TestCase):
                                     text=True)
             return json.loads(result.stdout)
         self.assertEqual(status(), {"value": "off", "source": "default", "project": None, "global": None,
-                                    "detail": None, "watch": [str(self.goal.resolve())]})
+                                    "detail": None, "watch": [str(self.goal.resolve()),
+                                                              str(self.goal.resolve().parent / "estimates.jsonl")]})
         self.write(goal_text(owner="0123456789abcdef", iterations="3"))
         self.assertEqual(status()["value"], "active 3/40 · 1 open")
         self.assertEqual((status()["source"], status()["detail"]), ("project", "owner 01234567"))
@@ -457,13 +460,15 @@ class EtaTest(unittest.TestCase):
                                6 * 2.5 ** 0.25 - 1)
 
     def test_a_family_without_a_factor_takes_the_default(self):
-        base = {"sonnet": {"all": 0.1, "fix": 0.2}, "default": {"all": 0.5}}
+        base = {"self": {"sonnet": {"all": 0.1, "fix": 0.2}, "default": {"all": 0.5}}, "haiku": {"sonnet": {"all": 2.0}}}
         self.assertEqual([self.eta.factor(base, fam, cat) for fam, cat in
                           (("sonnet", "fix"), ("sonnet", "docs"), ("haiku", "fix"), (None, None))], [0.2, 0.1, 0.5, 0.5])
+        self.assertEqual(self.eta.factor(base, "sonnet", "fix", "haiku"), 2.0)
+        self.assertEqual(self.eta.factor(base, "opus", "fix", "haiku"), 1.0)
         self.assertEqual(self.eta.factor({}, "sonnet", "fix"), 1.0)
-        shipped = json.loads((PLUGIN / "scripts" / "eta-baseline.json").read_text())["families"]
-        self.assertTrue({"sonnet", "opus", "fable", "default"} <= set(shipped))
-        self.assertTrue(all(0 < cell["all"] < 1 for cell in shipped.values()))
+        shipped = json.loads((PLUGIN / "scripts" / "eta-baseline.json").read_text())["estimators"]
+        self.assertTrue({"sonnet", "opus", "fable", "default"} <= set(shipped["self"]))
+        self.assertTrue(all(0 < cell["all"] < 5 for cells in shipped.values() for cell in cells.values()))
 
     def test_an_item_added_already_finished_mid_run_joins_that_edits_batch(self):
         self.step(("- [ ] a (~4m fix)", "- [ ] b (~4m docs)"), 0)
@@ -552,6 +557,120 @@ class EtaTest(unittest.TestCase):
         self.write(goal_text(status="paused", items=("- [ ] a (~4m fix)", "- [ ] b (~4m fix)"), owner="s1"))
         self.hook("post", {"session_id": "s1"})
         self.assertEqual(json.loads((self.folder / "eta.json").read_text())["last"], before)
+
+    def estimate_rows(self, *rows):
+        run = self.eta.run_of(json.loads((self.folder / "eta.json").read_text()))
+        with open(self.folder / "estimates.jsonl", "a") as out:
+            for item, minutes in rows:
+                out.write(json.dumps({"run": run, "item": item, "minutes": minutes, "cat": "fix",
+                                      "estimator": "haiku"}) + "\n")
+
+    def test_the_isolated_estimators_answers_drive_the_prediction(self):
+        base = self.tmp / "baseline.json"
+        base.write_text(json.dumps({"estimators": {"haiku": {"default": {"all": 0.5}}}}))
+        self.eta.BASELINE = base
+        self.step(("- [ ] a", "- [ ] b", "- [ ] c"), 0)
+        self.assertEqual(self.eta.unestimated(self.folder, self.goal.read_text())[1], ["a", "b", "c"])
+        self.assertIsNone(self.eta.predict(self.folder, self.goal.read_text(), now=0))
+        self.estimate_rows(("a", 8), ("b", 4), ("c", None))  # c was asked and got no answer
+        self.assertEqual(self.eta.unestimated(self.folder, self.goal.read_text())[1], [])
+        expected = self.eta.predict(self.folder, self.goal.read_text(), now=0)
+        self.assertEqual((expected["minutes"], expected["unestimated"]), (6.0, 1))
+        self.step(("- [x] a", "- [ ] b", "- [ ] c"), 300)
+        self.assertEqual([(r["est_min"], r["estimator"]) for r in self.rows()], [(8, "haiku")])
+
+    def test_an_estimate_that_lands_after_the_item_still_counts(self):
+        self.step(("- [ ] a", "- [ ] b"), 0)
+        self.step(("- [x] a", "- [ ] b"), 120)
+        self.assertIsNone(self.rows()[0]["est_min"])
+        self.estimate_rows(("a", 4))
+        self.assertEqual([(r["est_min"], r["actual_min"], r["estimator"]) for r in self.eta.records(self.folder)],
+                         [(4, 2.0, "haiku")])
+
+    def fake_claude(self, reply, code=0):
+        fake = self.tmp / "fake-claude"
+        fake.write_text("#!/usr/bin/env python3\nimport json, os, sys\n"
+                        "open(os.environ['FAKE_ARGV'], 'a').write(json.dumps(sys.argv[1:]) + '\\n')\n"
+                        f"print({json.dumps(json.dumps(reply))})\nsys.exit({code})\n")
+        fake.chmod(0o755)
+        return {"CLAUDECODE": "1", "CLAUDE_CODE_EXECPATH": str(fake), "FAKE_ARGV": str(self.tmp / "argv.jsonl")}
+
+    def wait_for(self, path, seconds=8):
+        end = time.time() + seconds
+        while time.time() < end and not path.exists():
+            time.sleep(0.1)
+        time.sleep(0.3)
+        return path.exists()
+
+    def test_the_hook_starts_the_isolated_estimator(self):
+        self.write(goal_text(items=("- [ ] fix the pager", "- [x] done before"), owner="s1"))
+        answer = {"items": [{"n": 1, "minutes": 7, "category": "Fix"}]}
+        env = self.fake_claude({"result": json.dumps(answer), "modelUsage": {"claude-haiku-9": {}},
+                                "total_cost_usd": 0.001})
+        self.assertIsNone(self.hook("post", {"session_id": "s1"}, env=env))  # nothing reaches the session
+        self.assertTrue(self.wait_for(self.folder / "estimates.jsonl"))
+        row = json.loads((self.folder / "estimates.jsonl").read_text().splitlines()[0])
+        self.assertEqual((row["item"], row["minutes"], row["cat"], row["model"]), ("fix the pager", 7, "fix",
+                                                                                  "claude-haiku-9"))
+        argv = json.loads((self.tmp / "argv.jsonl").read_text().splitlines()[0])
+        for flag in ("--safe-mode", "--no-session-persistence", "--tools"):
+            self.assertIn(flag, argv)
+        self.assertEqual(argv[argv.index("--model") + 1], "haiku")
+        self.assertIn("1. fix the pager", argv[1])
+        self.assertNotIn("done before", argv[1])
+
+    def test_a_failing_estimator_is_not_asked_again_and_can_be_turned_off(self):
+        self.write(goal_text(items=("- [ ] a",), owner="s1"))
+        env = self.fake_claude({"error": "auth"}, code=1)
+        self.hook("post", {"session_id": "s1"}, env={**env, "FREE_HANDS_ESTIMATOR": "off"})
+        time.sleep(1)
+        self.assertFalse((self.tmp / "argv.jsonl").exists())
+        self.hook("post", {"session_id": "s1"}, env=env)
+        self.assertTrue(self.wait_for(self.folder / "estimator.log"))
+        self.assertIsNone(json.loads((self.folder / "estimates.jsonl").read_text())["minutes"])  # asked, no answer
+        self.write(goal_text(items=("- [ ] a", "- [ ] b"), owner="s1"))
+        self.hook("post", {"session_id": "s1"}, env=env)  # b is new, but the last start is under a minute old
+        time.sleep(1)
+        self.assertEqual(len((self.tmp / "argv.jsonl").read_text().splitlines()), 1)
+        self.hook("post", {"session_id": "s2"}, env=env)  # another session never starts one
+        self.hook("post", {"session_id": "s1"}, env={k: v for k, v in env.items() if k != "CLAUDECODE"})  # not Claude Code
+        time.sleep(1)
+        self.assertEqual(len((self.tmp / "argv.jsonl").read_text().splitlines()), 1)
+
+    def test_without_a_path_from_the_host_the_cli_comes_from_path(self):
+        self.write(goal_text(items=("- [ ] a",), owner="s1"))
+        env = self.fake_claude({"result": json.dumps({"items": [{"n": 1, "minutes": 3, "category": "docs"}]})})
+        bin_dir = self.tmp / "bin"
+        bin_dir.mkdir()
+        shutil.copy2(env.pop("CLAUDE_CODE_EXECPATH"), bin_dir / "claude")  # as from a user's terminal (r3 I06, I07)
+        self.hook("post", {"session_id": "s1"}, env={**env, "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}"})
+        self.assertTrue(self.wait_for(self.folder / "estimates.jsonl"))
+        self.assertEqual(json.loads((self.folder / "estimates.jsonl").read_text())["minutes"], 3)
+
+    def test_an_item_reworded_while_it_is_checked_keeps_its_estimate(self):
+        self.step(("- [ ] a: fix the pager", "- [ ] b: add docs"), 0)
+        self.estimate_rows(("a: fix the pager", 4), ("b: add docs", 2))
+        self.assertEqual(self.eta.unestimated(self.folder, self.goal.read_text())[1], [])
+        self.write(goal_text(status="done", items=("- [x] a: pager fixed, 12 tests pass", "- [x] b: docs added"),
+                             owner="s1"))
+        self.assertTrue(self.eta.pending(self.folder, self.goal.read_text()))  # the last edit is still timed
+        self.eta.observe(self.folder, self.goal.read_text(), "post", {}, now=360)
+        self.assertEqual([(r["item"], r["was"], r["est_min"], r["actual_min"]) for r in self.rows()],
+                         [("a: pager fixed, 12 tests pass", "a: fix the pager", 4, 4.0),
+                          ("b: docs added", "b: add docs", 2, 2.0)])
+        self.assertFalse(self.eta.pending(self.folder, self.goal.read_text()))
+
+    def test_a_reworded_open_item_is_not_estimated_again(self):
+        self.step(("- [ ] a: fix the pager", "- [ ] b: add docs"), 0)
+        self.estimate_rows(("a: fix the pager", 4), ("b: add docs", 2))
+        self.step(("- [ ] a: fix the pager in render.py", "- [ ] b: add docs"), 60)
+        self.assertEqual(self.eta.unestimated(self.folder, self.goal.read_text())[1], [])
+        self.assertAlmostEqual(self.eta.predict(self.folder, self.goal.read_text(), now=60)["minutes"], 5.0)
+        self.step(("- [ ] b: add docs",), 120)  # a removed: gone, not done, and the clock does not wait for it
+        self.assertEqual(self.rows(), [])
+        self.assertTrue(self.eta.pending(self.folder, self.goal.read_text()))
+        self.step(("- [x] b: add docs",), 180)
+        self.assertFalse(self.eta.pending(self.folder, self.goal.read_text()))
 
     def test_no_estimate_means_no_prediction(self):
         self.write(goal_text(items=("- [ ] a", "- [x] b (~3m fix)")))
@@ -1021,7 +1140,9 @@ class ShellGuardTest(unittest.TestCase):
         self.assertFalse(self.sg.check("git switch trunk && git -c push.default=current push origin", tracker)[0])
 
     def hook(self, payload, env=None):
-        environ = {k: v for k, v in os.environ.items() if k not in ("FREE_HANDS_ROLE", "CLAUDE_PROJECT_DIR")}
+        # never the real CLI: a test that wants the estimator passes CLAUDECODE and a fake CLI itself
+        environ = {k: v for k, v in os.environ.items()
+                   if k not in ("FREE_HANDS_ROLE", "CLAUDE_PROJECT_DIR", "CLAUDE_CODE_EXECPATH", "CLAUDECODE")}
         result = subprocess.run([sys.executable, str(GUARD), "shell"], input=json.dumps(payload), capture_output=True,
                                 text=True, cwd=self.tmp, env={**environ, **(env or {})})
         self.assertEqual(result.returncode, 0, result.stderr)

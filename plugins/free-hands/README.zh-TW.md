@@ -4,7 +4,7 @@
 
 <p align="center"><strong>交給代理一個有限目標，它就會不提問、不停止地完成清單。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.5.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="授權：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 外掛"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.6.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="授權：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 外掛"></a></p>
 
 <p align="center"><a href="#開始">開始</a> &bull; <a href="#目標檔案">目標檔案</a> &bull; <a href="#預計完成時間">預計完成時間</a> &bull; <a href="#不提問">不提問</a> &bull; <a href="#hooks">Hooks</a> &bull; <a href="#討論面板">討論面板</a> &bull; <a href="#堆疊pr">堆疊 PR</a> &bull; <a href="#限制與狀態">限制與狀態</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#需求">需求</a> &bull; <a href="#安裝">安裝</a></p>
 
@@ -34,7 +34,7 @@ owner: <session id>
 ## Goal
 <一句話目標>
 ## Checklist
-- [ ] <有明確完成條件的有限事項> (~<分鐘>m <類別>)
+- [ ] <有明確完成條件的有限事項>
 ## Decisions
 ## Resume
 <下一個工作階段需要的資訊>
@@ -46,18 +46,18 @@ owner: <session id>
 
 ## 預計完成時間
 
-代理撰寫清單時，會在每一項末尾加上自己的估計，例如 `(~6m fix)`：預計在這一項上花的分鐘數與類別。類別為 `docs`、`fix`、`feature`、`refactor`、`test`、`research` 或 `ops`。此後，擁有目標的工作階段的 hook 會為每一項計時：
+推進目標的代理既不寫估計，也看不到估計。清單中出現沒有估計的項目時，擁有目標的工作階段的 hook 會在背景啟動一個獨立的、短暫的估算器：一個使用 Haiku 的無介面 Claude Code 工作階段，處於安全模式（沒有 hooks、外掛 hooks 與 CLAUDE.md），只用唯讀工具，也不保存工作階段。它讀取所需的程式碼，為每個項目在 `.free-hands/estimates.jsonl` 中寫一行分鐘數與類別（`docs`、`fix`、`feature`、`refactor`、`test`、`research`、`ops`），然後結束。hook 會立即返回且不輸出任何內容，因此這一切都不會進入代理的上下文。設定 `FREE_HANDS_ESTIMATOR=off` 可關閉估算器。
+
+此後，擁有目標的工作階段的 hook 會為每一項計時：
 
 - `.free-hands/eta.json` 中的工作時間時鐘。回合結束後、新工作階段開始前、你輸入提示之前以及目標暫停期間的時間不計；超過 20 分鐘的空檔，只計入工具呼叫回報自己執行的那部分。
-- 每完成一項，在 `.free-hands/timings.jsonl` 中寫一行：項目、類別、估計、實測分鐘數、模型與 effort。這是專案自己的紀錄：留在專案資料夾中，被 Git 忽略，開始新目標時也會保留。
+- 每完成一項，在 `.free-hands/timings.jsonl` 中寫一行：項目、實測分鐘數、模型與 effort；估計從 `estimates.jsonl` 合併而來，即使在項目完成之後才到達也會合併。這是專案自己的紀錄：留在專案資料夾中，被 Git 忽略，開始新目標時也會保留。
 
-代理從不自行回報用時，估計時也不讀取紀錄。
+[dashboard](../dashboard) 以時刻顯示預計完成時間，如 `ETA 15:40`，並在詳情中顯示剩餘分鐘數（`~25m left`）；時刻後的 `+` 表示還有未完成項目沒有估計。自 dashboard 0.3.0 起，項目被勾選或估計到達時，這一行在回合之中也會更新。
 
-[dashboard](../dashboard) 以時刻顯示預計完成時間，如 `ETA 15:40`，並在詳情中顯示剩餘分鐘數（`~25m left`）；時刻後的 `+` 表示有未完成項目沒有估計。自 dashboard 0.3.0 起，項目被勾選時，這一行在回合之中也會更新。
+預計完成時間是對每個未完成項目求「估計 × 執行工作的模型系列係數 × 本專案係數」之和：
 
-預計完成時間是對每個未完成項目求「估計 × 模型系列係數 × 本專案係數」之和：
-
-- **模型係數**：在 z-lab 中實測。所有受測代理都高估了自己的用時：實際用時是估計的 Sonnet 0.08、Opus 0.13、Fable 0.20（effort xhigh，13 次執行）。隨外掛提供的係數為 Sonnet 0.080、Opus 0.126、Fable 0.197。沒有實測係數的模型（Haiku、Codex 的模型）使用它們的平均值 0.125——這是選擇，不是測量。
+- **模型係數**：在 z-lab 中實測。Haiku 的估計遠長於實際工作：項目實際用時是 Haiku 估計的 Sonnet 0.040、Opus 0.070、Fable 0.074，隨外掛提供的就是這些係數（[`eta-haiku-calibrate-0.6.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-haiku-calibrate-0.6.0)，以 effort xhigh 測得的 26 次目標執行）。沒有實測係數的工作模型（Haiku、Codex 的模型）使用它們的平均值 0.061——這是選擇，不是測量。像 0.5.0 寫下的目標那樣，項目中仍附有代理自己的 `(~6m fix)` 時，這些估計繼續使用 0.5.0 的係數。
 - **專案係數**：本專案的項目比模型係數預測的多用或少用了多少時間，從 `timings.jsonl` 最新的 60 行學得；紀錄較少時向 1 收攏。新專案從 1 開始。
 
 ## 不提問
@@ -72,7 +72,7 @@ owner: <session id>
 
 - 下列守衛與恢復備註只在 `owner:` 指定的工作階段及其啟動的子代理中生效。同一儲存庫中的其他工作階段（第二個終端機，或其他工具啟動的 `claude -p`）不會收到恢復備註，也不受提問與停止守衛、計數器及 Shell 守衛約束；當其提示中出現「free-hands」時，開始備註會說明哪個工作階段擁有這次執行。在該工作階段執行 `/free-hands:run`（Codex：`$free-hands:run`）會把執行移到該工作階段。沒有 `owner:` 的目標（例如由 0.2.0 寫入的目標）歸 hook 最先遇到的工作階段所有。
 - 只有位於 `## Checklist` 下方、且在程式碼區塊外的 `- [ ]` 行才會計為未完成項目。
-- [預計完成時間](#預計完成時間)的時鐘（所有工具的 `PostToolUse`，以及提示、工作階段與停止 hook）與守衛一樣，只在擁有目標的工作階段及其子代理中執行；討論面板的子程序不會寫入時鐘。勾選最後一項並結束執行的那次編輯也會被記錄。
+- [預計完成時間](#預計完成時間)的時鐘（所有工具的 `PostToolUse`，以及提示、工作階段與停止 hook）與守衛一樣，只在擁有目標的工作階段及其子代理中執行；討論面板的子程序不會寫入時鐘。勾選最後一項並結束執行的那次編輯也會被記錄。同樣的 hook 會啟動估算器，僅在 Claude Code 中，每分鐘最多一次。
 - Shell 守衛（`Bash` 的 `PreToolUse`）會在目標為 `active`，或仍有未完成項目的 `done`/`waiting` 時執行。即使沒有剩餘的 `[ ]` 項目或已達 `max_iterations`，也會執行。它會拒絕[限制與狀態](#限制與狀態)所述的硬性限制命令。
 - 目標有未完成 `[ ]`、迭代數低於 `max_iterations`，且狀態為 `active`，或為仍有未完成項目的 `done`/`waiting` 時，提問與停止守衛會執行。提問守衛會拒絕提問工具。達到上限後可以提問。Stop hook 會先將計數寫入磁碟再阻止停止，最多延續40次。budget 的用量問題在該工作階段中開啟期間，這兩個守衛都不會生效。
 - 目標為 `active` 時會送出恢復備註（`UserPromptSubmit`、包括壓縮後的 `SessionStart`），即使沒有未完成項目也會送出；仍有未完成項目的 `done`/`waiting` 狀態也會送出。
@@ -128,13 +128,15 @@ Hook 輸入錯誤時不會產生效果。目標檔案格式錯誤或無法讀取
 
 自 0.5.0 起，目標會顯示預計完成時間。在 Claude Code 2.1.325 上以 Sonnet、Opus 與 Fable（effort xhigh）在三個規模不同的專案中測量（[z-lab `eta-calibrate-0.5.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-calibrate-0.5.0)、[`eta-validate-r2-0.5.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-validate-r2-0.5.0)）：每次執行中，hook 測得的時間與獨立紀錄相差都在 0.1 分鐘以內（E01）。在擬合係數時未使用的目標上，模型係數把中位誤差從 3.2 個倍數降到 0.6（約 1.5 倍）——原始估計約長了 9 倍（W01）。寫下清單時顯示的剩餘時間，按中位數在實際用時的 1.42 倍以內，13 個目標中有 12 個在 2 倍以內（W04）。在這些執行中，專案係數對 Sonnet 有幫助、對 Opus 有害（W03），因此不宣稱它帶來改進。每完成一項，dashboard 的這一行都在回合之中更新（[`dashboard-lab/run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab/run-0.3.0)，D09）。未測量：Codex、Haiku、其他 effort 等級、紀錄更長的專案。
 
+自 0.6.0 起，估計由那個隔離的估算器給出。在 Claude Code 2.1.325 上以 Sonnet 進行兩次無介面 free-hands 執行與一次互動工作階段測量（[z-lab `eta-isolated-run-r2-0.6.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-isolated-run-r2-0.6.0)）：執行工作的代理的輸出流中完全沒有出現與估計相關的內容，free-hands hook 的輸出中也沒有（J01）；估算器在清單寫下約 6 秒後作答，沒有留下錯誤，也沒有保存工作階段（J02）；這一行在提示後 2 秒顯示 `ETA`，並隨每完成一項而改變（J04）。估算器每次執行花費 0.002–0.003 USD。在擬合係數時未使用的目標上，Haiku × 係數的中位誤差按項目為 0.68 個倍數、按目標為 0.66，而 0.5.0 中代理自己的估計為 0.62 與 0.51——把估計移出代理的上下文會損失一點精度（[`eta-haiku-calibrate-0.6.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-haiku-calibrate-0.6.0)，H04、H05）。一邊勾選一邊改寫項目文字的代理，會依位置對應為同一項目；這一修正透過重播已記錄的執行確認，沒有用新的執行確認（J05）。
+
 若要暫停，請說 **「pause」**、**「stop」** 或 **「일시정지」**。目標會記錄為 `paused`；再次執行命令即可恢復。
 
 來源：由專案本機技能移植而來。
 
 ## Codex
 
-依賴自動執行前，請在 `/hooks` 信任外掛 hooks。提問 hook 的 matcher 包含 `request_user_input`；尚未觀察到拒絕。Codex 預設模式沒有提問工具，因此由 Stop hook 負責延續工作。若未信任或啟用 hooks，技能仍依照書面規則繼續，但 hook 效果可能未生效。[預計完成時間](#預計完成時間)在 Codex 上使用相同的 hooks；在 Codex 上沒有測量過，Codex 的模型使用預設係數，且因為沒有即時顯示行，需要用 `$dashboard:audit` 查看。
+依賴自動執行前，請在 `/hooks` 信任外掛 hooks。提問 hook 的 matcher 包含 `request_user_input`；尚未觀察到拒絕。Codex 預設模式沒有提問工具，因此由 Stop hook 負責延續工作。若未信任或啟用 hooks，技能仍依照書面規則繼續，但 hook 效果可能未生效。在 Codex 上 hooks 仍會為項目計時，但不會啟動估算器（它需要 hook 所在的 Claude Code CLI），因此除非目標由 0.5.0 寫下並附有內嵌估計，否則不會顯示預計完成時間；可以用 `$dashboard:audit` 查看現有內容（Codex 沒有即時顯示行）。未在 Codex 上測量。
 
 面板為每個角色啟動一個 `codex exec -s read-only` 子程序（native subagent 可指定模型，但沒有唯讀控制，因此不使用 — F10）。不論角色為何，子程序都能搜尋網頁；為 `evidence-hunter` 和 `trend-tracker` 加上 `--search`（F09）。子程序需要網路。從沙箱中的主代理執行時，`panel.py run` 必須透過核准的權限提升在沙箱外執行，或由工作階段允許網路。否則所有子程序都會失敗，這次執行會由主代理自行決定並記錄為 **panel degraded**，然後繼續（G06）。
 

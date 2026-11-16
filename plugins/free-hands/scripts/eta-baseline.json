@@ -1,9 +1,39 @@
 {
-  "source": "z-lab free-hands-lab/eta-calibrate-0.5.0: actual / estimate, geometric mean per model family at effort xhigh (E03); one factor per family (E04); default = mean of the measured families, not measured for others (backlog D20)",
-  "families": {
-    "sonnet": {"all": 0.080, "n": 34},
-    "opus": {"all": 0.126, "n": 34},
-    "fable": {"all": 0.197, "n": 7},
-    "default": {"all": 0.125}
+  "source": "z-lab free-hands-lab: measured / estimate, geometric mean per working model family at effort xhigh. haiku = the isolated estimator 0.6.0 starts (eta-haiku-calibrate-0.6.0 H03, H04); self = the working agent's own inline estimates in goals written by 0.5.0 (eta-calibrate-0.5.0 E03, E04; eta-validate-r2-0.5.0 W01). default = mean of the measured families, not measured for others (backlog D20).",
+  "estimators": {
+    "self": {
+      "sonnet": {
+        "all": 0.08,
+        "n": 34
+      },
+      "opus": {
+        "all": 0.126,
+        "n": 34
+      },
+      "fable": {
+        "all": 0.197,
+        "n": 7
+      },
+      "default": {
+        "all": 0.125
+      }
+    },
+    "haiku": {
+      "sonnet": {
+        "all": 0.04,
+        "n": 34
+      },
+      "opus": {
+        "all": 0.07,
+        "n": 34
+      },
+      "fable": {
+        "all": 0.074,
+        "n": 7
+      },
+      "default": {
+        "all": 0.061
+      }
+    }
   }
 }

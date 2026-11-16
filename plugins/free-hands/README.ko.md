@@ -4,7 +4,7 @@
 
 <p align="center"><strong>에이전트에게 유한한 목표를 주면 체크리스트를 질문하거나 멈추지 않고 처리합니다.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.5.0-blue" alt="버전"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="라이선스: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 플러그인"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.6.0-blue" alt="버전"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="라이선스: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 플러그인"></a></p>
 
 <p align="center"><a href="#시작하기">시작하기</a> &bull; <a href="#목표-파일">목표 파일</a> &bull; <a href="#예상-완료-시각">예상 완료 시각</a> &bull; <a href="#묻지-않기">묻지 않기</a> &bull; <a href="#훅">훅</a> &bull; <a href="#패널">패널</a> &bull; <a href="#누적-pr">누적 PR</a> &bull; <a href="#한계와-상태">한계와 상태</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#요구사항">요구사항</a> &bull; <a href="#설치">설치</a></p>
 
@@ -34,7 +34,7 @@ owner: <session id>
 ## Goal
 <한 문장 목표>
 ## Checklist
-- [ ] <완료 여부를 확인할 수 있는 유한한 항목> (~<분>m <범주>)
+- [ ] <완료 여부를 확인할 수 있는 유한한 항목>
 ## Decisions
 ## Resume
 <다음 세션에 필요한 내용>
@@ -46,18 +46,18 @@ owner: <session id>
 
 ## 예상 완료 시각
 
-에이전트는 체크리스트를 쓸 때 항목마다 끝에 자기 예상 시간을 붙입니다. 예를 들어 `(~6m fix)`는 그 항목에 쓸 것으로 예상하는 분과 범주입니다. 범주는 `docs`, `fix`, `feature`, `refactor`, `test`, `research`, `ops` 중 하나입니다. 그때부터 목표를 가진 세션의 훅이 항목마다 시간을 잽니다.
+목표를 진행하는 에이전트는 예상 시간을 쓰지도, 보지도 않습니다. 체크리스트에 예상 시간이 없는 항목이 생기면, 목표를 가진 세션의 훅이 별도의 짧은 예측기를 백그라운드에서 띄웁니다. 예측기는 Haiku로 도는 헤드리스 Claude Code 세션입니다. 안전 모드라 훅·플러그인 훅·CLAUDE.md가 없고, 읽기 전용 도구만 쓰며, 세션도 저장하지 않습니다. 필요한 코드를 읽은 뒤 항목마다 분과 범주(`docs`, `fix`, `feature`, `refactor`, `test`, `research`, `ops`)를 `.free-hands/estimates.jsonl`에 한 줄씩 쓰고 종료합니다. 훅은 바로 반환하고 아무것도 출력하지 않으므로, 이 과정은 에이전트의 맥락에 전혀 들어가지 않습니다. 예측기를 끄려면 `FREE_HANDS_ESTIMATOR=off`로 설정합니다.
+
+그 뒤로 목표를 가진 세션의 훅이 항목마다 시간을 잽니다.
 
 - `.free-hands/eta.json`의 작업 시간 시계. 끝난 차례 뒤, 새 세션 전, 사용자가 프롬프트를 입력하기 전, 목표가 일시정지된 동안의 시간은 세지 않고, 20분이 넘는 공백은 도구 호출이 그만큼 실행됐다고 보고한 만큼만 셉니다.
-- 끝난 항목마다 `.free-hands/timings.jsonl`에 한 줄: 항목, 범주, 예상 시간, 잰 시간, 모델, effort. 이 파일이 그 프로젝트의 기록입니다. 프로젝트 폴더에 남고, Git은 무시하며, 새 목표를 시작해도 유지됩니다.
+- 끝난 항목마다 `.free-hands/timings.jsonl`에 한 줄: 항목, 잰 시간, 모델, effort. 예상 시간은 `estimates.jsonl`에서 합쳐 오며, 항목이 끝난 뒤에 도착해도 합쳐집니다. 이 파일이 그 프로젝트의 기록입니다. 프로젝트 폴더에 남고, Git은 무시하며, 새 목표를 시작해도 유지됩니다.
 
-에이전트가 직접 걸린 시간을 보고하는 일은 없고, 예상할 때 기록을 읽지도 않습니다.
+[dashboard](../dashboard)는 완료 예상 시각을 `ETA 15:40`처럼 시각으로, 남은 시간을 상세에 `~25m left`로 보여 줍니다. 시각 뒤의 `+`는 아직 예상 시간이 없는 미완료 항목이 있다는 뜻입니다. dashboard 0.3.0부터는 항목이 체크되거나 예상 시간이 도착하면 차례 도중에도 줄이 바뀝니다.
 
-[dashboard](../dashboard)는 완료 예상 시각을 `ETA 15:40`처럼 시각으로, 남은 시간을 상세에 `~25m left`로 보여 줍니다. 시각 뒤의 `+`는 예상 시간이 없는 미완료 항목이 있다는 뜻입니다. dashboard 0.3.0부터는 항목이 체크되면 차례 도중에도 줄이 바뀝니다.
+완료 예상 시각은 미완료 항목마다 예상 시간 × 작업하는 모델 계열의 계수 × 그 프로젝트의 계수를 더한 값입니다.
 
-완료 예상 시각은 미완료 항목마다 예상 시간 × 모델 계열 계수 × 그 프로젝트의 계수를 더한 값입니다.
-
-- **모델 계수**: z-lab에서 측정했습니다. 측정한 모든 에이전트가 자기 시간을 부풀려 예상했습니다. 실제로 걸린 시간은 예상의 Sonnet 0.08, Opus 0.13, Fable 0.20이었습니다(effort xhigh, 13회 실행). 제공되는 계수는 Sonnet 0.080, Opus 0.126, Fable 0.197입니다. 측정한 계수가 없는 모델(Haiku, Codex의 모델)은 그 평균 0.125를 씁니다. 이것은 측정이 아니라 선택입니다.
+- **모델 계수**: z-lab에서 측정했습니다. Haiku의 예상은 실제 작업보다 훨씬 길었습니다. 항목에 실제로 걸린 시간은 Haiku 예상의 Sonnet 0.040, Opus 0.070, Fable 0.074였고, 이 값을 계수로 제공합니다([`eta-haiku-calibrate-0.6.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-haiku-calibrate-0.6.0), effort xhigh로 측정한 목표 실행 26개). 측정한 계수가 없는 작업 모델(Haiku, Codex의 모델)은 그 평균 0.061을 씁니다. 이것은 측정이 아니라 선택입니다. 0.5.0이 쓴 목표처럼 항목에 에이전트 자신의 `(~6m fix)`가 남아 있으면, 그 예상에는 0.5.0의 계수를 그대로 씁니다.
 - **프로젝트 계수**: 이 프로젝트의 항목이 모델 계수의 예측보다 얼마나 더 걸리거나 덜 걸렸는지입니다. `timings.jsonl`의 최근 60줄에서 배우며, 기록이 적을 때는 1 쪽으로 당겨집니다. 새 프로젝트는 1에서 시작합니다.
 
 ## 묻지 않기
@@ -72,7 +72,7 @@ owner: <session id>
 
 - 아래의 가드와 복원 메모는 `owner:`에 적힌 세션과 그 세션이 띄운 서브에이전트에서만 동작합니다. 같은 저장소의 다른 세션(두 번째 터미널, 다른 도구가 띄운 `claude -p` 등)에는 복원 메모, 질문·중단 가드, 카운터, 셸 가드가 모두 적용되지 않습니다. 그 세션의 프롬프트에 “free-hands”가 있으면 진입 메모가 어느 세션이 실행을 소유하는지 알려 줍니다. 그 세션에서 `/free-hands:run`(Codex: `$free-hands:run`)을 실행하면 실행이 그 세션으로 넘어갑니다. 0.2.0이 만든 목표처럼 `owner:`가 없는 목표는 훅이 처음 마주친 세션의 것이 됩니다.
 - `## Checklist` 아래에 있으면서 코드 블록 밖에 있는 `- [ ]` 줄만 미완료 항목으로 셉니다.
-- [완료 예상 시각](#예상-완료-시각)의 시계(모든 도구의 `PostToolUse`와 프롬프트·세션·중단 훅)는 가드처럼 목표를 가진 세션과 그 서브에이전트에서만 돕니다. 패널 자식은 시계에 기록하지 않습니다. 마지막 항목을 체크하면서 실행을 끝내는 편집도 기록합니다.
+- [완료 예상 시각](#예상-완료-시각)의 시계(모든 도구의 `PostToolUse`와 프롬프트·세션·중단 훅)는 가드처럼 목표를 가진 세션과 그 서브에이전트에서만 돕니다. 패널 자식은 시계에 기록하지 않습니다. 마지막 항목을 체크하면서 실행을 끝내는 편집도 기록합니다. 같은 훅이 예측기를 띄우며, Claude Code에서만, 1분에 최대 한 번입니다.
 - 셸 가드(`Bash`의 `PreToolUse`)는 목표가 `active`이거나, 미완료 항목이 남은 `done`/`waiting`일 때 동작합니다. `[ ]` 항목이 더 이상 없거나 `max_iterations`에 도달해도 마찬가지입니다. [한계와 상태](#한계와-상태)에 설명된 하드 리밋 명령을 거부합니다.
 - 질문·중단 가드는 목표에 미완료 `[ ]` 항목이 있고 `max_iterations` 미만이며, 상태가 `active`이거나 미완료 항목이 남은 `done`/`waiting`일 때 동작합니다. 질문 가드는 질문 도구를 거부합니다. 한도에서는 질문이 허용됩니다. Stop 훅은 중단을 막기 전에 반복 횟수를 디스크에 기록하며 최대 40회까지 이어갑니다. 세션에서 budget의 사용량 질문이 열려 있는 동안에는 두 가드 모두 동작하지 않습니다.
 - 복원 메모(`UserPromptSubmit`, 압축 후를 포함한 `SessionStart`)는 목표가 `active`(미완료 `[ ]` 항목이 없어도)인 동안 또는 미완료 항목이 남은 `done`/`waiting` 상태에서 전달됩니다.
@@ -128,13 +128,15 @@ owner: <session id>
 
 0.5.0부터 목표에 완료 예상 시각이 표시됩니다. Claude Code 2.1.325에서 Sonnet·Opus·Fable(effort xhigh)로, 크기가 다른 세 프로젝트에서 측정했습니다([z-lab `eta-calibrate-0.5.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-calibrate-0.5.0), [`eta-validate-r2-0.5.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-validate-r2-0.5.0)). 모든 실행에서 훅이 잰 시간은 독립 기록과 0.1분 이내로 일치했습니다(E01). 계수를 맞출 때 쓰지 않은 목표에서 모델 계수는 중앙 오차를 3.2배수에서 0.6배수(약 1.5배)로 줄였습니다. 원래 예상은 약 9배 길었습니다(W01). 체크리스트를 쓸 때 표시된 남은 시간은 실제로 걸린 시간의 중앙값 기준 1.42배 이내였고, 13개 목표 중 12개가 2배 이내였습니다(W04). 프로젝트 계수는 이 실행들에서 Sonnet에는 도움이 됐고 Opus에는 손해였습니다(W03). 그래서 그 효과는 주장하지 않습니다. dashboard 줄은 항목이 끝날 때마다 차례 도중에 바뀌었습니다([`dashboard-lab/run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab/run-0.3.0), D09). 측정하지 않은 것: Codex, Haiku, 다른 effort 수준, 기록이 더 긴 프로젝트.
 
+0.6.0부터 예상 시간은 그 격리된 예측기가 냅니다. Claude Code 2.1.325에서 Sonnet으로 헤드리스 free-hands 실행 2회와 대화형 세션 1회로 측정했습니다([z-lab `eta-isolated-run-r2-0.6.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-isolated-run-r2-0.6.0)). 작업하는 에이전트의 스트림에는 예상 시간에 관한 내용이 전혀 나타나지 않았고, free-hands 훅의 출력에도 없었습니다(J01). 예측기는 체크리스트가 쓰이고 약 6초 뒤에 답했으며, 오류를 남기지 않았고 세션도 저장하지 않았습니다(J02). 줄은 프롬프트 2초 뒤에 `ETA`를 보였고 항목이 끝날 때마다 바뀌었습니다(J04). 예측기 1회 실행 비용은 0.002–0.003 USD였습니다. 계수를 맞출 때 쓰지 않은 목표에서 Haiku × 계수는 항목 기준 0.68배수, 목표 기준 0.66배수(중앙값) 이내였고, 0.5.0의 에이전트 자기 예상은 0.62와 0.51이었습니다. 예상 시간을 에이전트의 맥락 밖으로 빼는 데 정확도가 조금 듭니다([`eta-haiku-calibrate-0.6.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-haiku-calibrate-0.6.0), H04, H05). 항목을 체크하면서 문구를 고쳐 쓰는 에이전트는 위치로 짝지어 같은 항목으로 봅니다. 이 수정은 기록된 실행을 재생해 확인했고, 새 실행으로는 확인하지 않았습니다(J05).
+
 “pause”, “stop” 또는 **“일시정지”**라고 말하면 일시정지합니다. 목표에 `paused`를 기록하고 명령을 다시 실행하면 재개합니다.
 
 기원: 프로젝트 내부 스킬을 이식했습니다.
 
 ## Codex
 
-자동 적용에 앞서 `/hooks`에서 플러그인 훅을 신뢰하세요. 질문 훅 matcher에는 `request_user_input`이 포함되어 있지만, 거부되는지는 아직 관찰되지 않았습니다. Codex 기본 모드에는 질문 도구가 없으므로 계속 작업 규칙은 Stop 훅이 담당합니다. 훅을 신뢰하거나 활성화하지 않아도 스킬의 규칙은 따르지만 훅 동작은 꺼져 있을 수 있습니다. [완료 예상 시각](#예상-완료-시각)은 Codex에서도 같은 훅을 씁니다. Codex에서는 측정하지 않았고, Codex의 모델은 기본 계수를 쓰며, 실시간 줄이 없으므로 `$dashboard:audit`로 확인합니다.
+자동 적용에 앞서 `/hooks`에서 플러그인 훅을 신뢰하세요. 질문 훅 matcher에는 `request_user_input`이 포함되어 있지만, 거부되는지는 아직 관찰되지 않았습니다. Codex 기본 모드에는 질문 도구가 없으므로 계속 작업 규칙은 Stop 훅이 담당합니다. 훅을 신뢰하거나 활성화하지 않아도 스킬의 규칙은 따르지만 훅 동작은 꺼져 있을 수 있습니다. Codex에서도 훅이 항목 시간을 재지만, 예측기는 훅이 실행되는 Claude Code CLI가 있어야 하므로 띄우지 않습니다. 그래서 0.5.0이 인라인 예상 시간과 함께 쓴 목표가 아니면 완료 예상 시각이 표시되지 않습니다. 있는 내용은 `$dashboard:audit`로 볼 수 있습니다(Codex에는 실시간 줄이 없습니다). Codex에서는 측정하지 않았습니다.
 
 패널은 역할마다 `codex exec -s read-only` 자식 하나를 실행합니다(native subagent는 모델은 지정할 수 있지만 읽기 전용 제어가 없어 사용하지 않습니다 — F10). 자식은 역할에 관계없이 웹을 검색할 수 있으며, `evidence-hunter`와 `trend-tracker`에는 `--search`를 추가합니다 (F09). 자식에는 네트워크가 필요합니다. 샌드박스의 메인 에이전트에서는 `panel.py run`을 승인된 권한 상승으로 샌드박스 밖에서 실행하거나, 세션이 네트워크를 허용해야 합니다. 그렇지 않으면 모든 자식이 실패하고, 실행은 메인 에이전트가 단독 결정한 뒤 **panel degraded**로 기록하며 계속됩니다 (G06).
 
