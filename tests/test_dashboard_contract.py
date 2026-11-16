@@ -44,6 +44,9 @@ class DashboardContractTest(unittest.TestCase):
                         for level in ("project", "global"):
                             self.assertTrue(state[level] is None or isinstance(state[level], str), level)
                         self.assertTrue(state.get("detail") is None or isinstance(state["detail"], str))
+                        watch = state.get("watch", [])
+                        self.assertTrue(isinstance(watch, list) and all(isinstance(w, str) and os.path.isabs(w)
+                                                                         for w in watch), watch)
 
 
 if __name__ == "__main__":

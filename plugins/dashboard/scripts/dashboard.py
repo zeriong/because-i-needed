@@ -6,7 +6,8 @@ Usage: dashboard.py --host claude|codex [--enabled name@market,...] [--cwd DIR] 
 Plugins are found where each host records installs: Claude Code's installed_plugins.json (enabled per --enabled, or
 the settings files when it is absent), Codex's config.toml and plugin cache. BECAUSE_I_NEEDED_PLUGIN_DIRS adds plugin
 folders loaded from disk (`--plugin-dir`), counted as enabled. Each declared status command runs read-only with the
-project as its working directory; a command that fails, times out or prints something else shows as an error.
+project as its working directory; a command that fails, times out or prints something else shows as an error. A
+status may name absolute file paths in `watch`; the Claude Code module redraws mid-turn when one of them changes.
 """
 import argparse
 import json
@@ -105,6 +106,8 @@ def run_status(root, argv, cwd):
         return {"value": "error", "source": "default", "project": None, "global": None, "error": True}
     if proc.returncode != 0 or not isinstance(state, dict) or not isinstance(state.get("value"), str):
         return {"value": "error", "source": "default", "project": None, "global": None, "error": True}
+    watch = state.get("watch")
+    state["watch"] = [p for p in watch if isinstance(p, str) and os.path.isabs(p)] if isinstance(watch, list) else []
     return state
 
 

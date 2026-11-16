@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.5.0] - 2026-11-16
+
+### Added
+
+- Expected finish. The agent ends every checklist item with its own estimate, `(~<minutes>m <category>)`. A new
+  PostToolUse hook and the existing prompt, session and stop hooks of the owner session keep an active-time clock
+  (`.free-hands/eta.json`) and append one row per finished item to `.free-hands/timings.jsonl`, the project's own
+  record. `guard.py status` adds `ETA <clock>` and `~<n>m left` while the goal is active, and names the goal file in
+  `watch` so dashboard 0.3.0 redraws when an item is checked.
+- The prediction is estimate × a measured factor per model family (`scripts/eta-baseline.json`: Sonnet 0.080, Opus
+  0.126, Fable 0.197; 0.125 for a family without one) × a project factor learned from `timings.jsonl`.
+
+### Why
+
+The maintainer asked for an expected completion time on the dashboard that stays as close as possible to the real one,
+per model and per project (2026-11-16). Agents' own estimates were 5–12× too long on average per model family, and
+too long in every category and project measured, so the estimates are kept but corrected.
+
+Evidence (z-lab `free-hands-lab`, Claude Code 2.1.325): `eta-probes-2.1.325` T01–T06 (no hook input names the model;
+PostToolUse sees every edit route; isolation), `eta-probes-r3`/`-r4` T08–T11 (a blocked Stop never ends the turn);
+`eta-calibrate-0.5.0` E01–E09 (13 runs: the recorder matched an independent witness within 0.1 min per run; actual /
+estimate 0.08 Sonnet, 0.13 Opus, 0.20 Fable; one factor per family cut the held-out median error from 3.3 to 0.5
+doublings, category factors only to 0.74); `eta-validate-0.5.0` with `eta-validate-r2-0.5.0` W01–W04 (78 items of
+held-out goals: raw 3.17 → 0.62 doublings with the family factor, 0.70 with category factors; the remaining time
+shown at a goal's start within 1.42× on median, 12 of 13 goals within 2×; the project factor helped Sonnet and hurt
+Opus, so no gain is claimed for it). Fixes from the product review after validation (repeated item texts, a paused
+goal, the time before a typed prompt — a prompt made only of task notifications still counts —, input types, a
+stale checklist under the lock, broken values, a next goal sharing one item) are unit-tested only
+(`EtaTest`; backlog item 17). The project factor and the default for unmeasured
+families are decisions (`analyze/improvement-backlog.md` D17, D20). Not measured: Codex, Haiku, effort levels other
+than xhigh, interactive sessions beyond the dashboard case (`dashboard-lab/run-0.3.0` D09, D11).
+
 ## [0.4.1] - 2026-10-16
 
 ### Changed

@@ -86,6 +86,16 @@ class DashboardTest(unittest.TestCase):
         self.assertEqual(self.run_dashboard("--host", "codex")["entries"], [])
         self.assertEqual(self.run_dashboard("--host", "codex")["line"], "")
 
+    def test_only_absolute_watched_paths_are_passed_on(self):
+        script = self.tmp / "watch.py"
+        script.write_text("import json\nprint(json.dumps({'value': 'on', 'source': 'project', 'project': 'on', "
+                          "'global': None, 'watch': ['/abs/goal.md', 'relative.md', 3]}))\n")
+        alpha = fake_plugin(self.tmp / "dev" / "alpha", "alpha", [{"label": "a", "status": [sys.executable, str(script)]}])
+        beta = fake_plugin(self.tmp / "dev" / "beta", "beta", [self.entry("on")])
+        dirs = os.pathsep.join(map(str, (alpha, beta)))
+        out = self.run_dashboard("--host", "claude", "--enabled", "", env={"BECAUSE_I_NEEDED_PLUGIN_DIRS": dirs})
+        self.assertEqual([e["watch"] for e in out["entries"]], [["/abs/goal.md"], []])
+
     def repository_plugins(self):
         dirs = os.pathsep.join(str(ROOT / "plugins" / p) for p in ("budget", "free-hands", "peer-coding"))
         self.env = {k: v for k, v in self.env.items() if not k.startswith("CXC_")}

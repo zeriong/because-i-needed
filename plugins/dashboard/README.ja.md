@@ -4,7 +4,7 @@
 
 <p align="center"><strong>オンにしている because-i-needed のモードと、各値の出どころを、1行で確認できます。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="バージョン"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="ライセンス: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code プラグイン"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="バージョン"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="ライセンス: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code プラグイン"></a></p>
 
 <p align="center"><a href="#表示内容">表示内容</a> &bull; <a href="#claude-code">Claude Code</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#プラグインの参加方法">プラグインの参加方法</a> &bull; <a href="#制限と状態">制限と状態</a> &bull; <a href="#インストール">インストール</a></p>
 
@@ -20,7 +20,7 @@ because-i-needed のプラグインには、プロジェクトまたはユーザ
 
 ```
 ────────────────────────────────────────────────────────────────────────────────────────────────
-💰budget: 80% · 5h now 24%   🙌free-hands: active 0/40 · 1 open (project) · owner lab-sess   🤝peer-coding: on (project)
+💰budget: 80% · 5h now 24%   🙌free-hands: active 0/40 · 2 open · ETA 15:29 (project) · ~6m left · owner 1c4c797d   🤝peer-coding: on (project)
 ```
 
 - 薄い区切り線の下に、有効な because-i-needed プラグインが宣言したスイッチごとに `{icon}label: value` の項目が1つ並びます。決めているレベルが該当する場合は `(project)` または `(env)`、そして最後に測定した使用量ウィンドウや目標の所有セッションなどの詳細も表示されます。ターミナルが狭いと、項目は1行に1つずつ折り返されます。
@@ -29,7 +29,7 @@ because-i-needed のプラグインには、プロジェクトまたはユーザ
 
 ## Claude Code
 
-行はプロンプトの上に表示されます。セッション開始時、ターンごと、使用量ウィンドウが動いたときに更新されます。dashboard は、Claude Code がインストールして有効にしている because-i-needed プラグインを見つけます。
+行はプロンプトの上に表示されます。セッション開始時、ターンごと、使用量ウィンドウが動いたときに更新され、ターンの途中でも、スイッチが監視対象に指定したファイル（free-hands の goal ファイルなど）を変えたツール呼び出しのあとに更新されます。そのため、1つの長いターンで進む目標でも、項目が終わるたびに表示が変わります。dashboard は、Claude Code がインストールして有効にしている because-i-needed プラグインを見つけます。
 
 ## Codex
 
@@ -50,7 +50,7 @@ status_line = ["model-with-reasoning", "weekly-limit"]
 { "entries": [ { "label": "peer-coding", "icon": "🤝", "status": ["bash", "scripts/mode.sh", "status", "--json"] } ] }
 ```
 
-`icon` はラベルの前に付く絵文字1つです（ない場合は `🔹`）。`status` コマンドは読み取り専用で、プロジェクトのディレクトリで実行され、JSON オブジェクトを1つ出力します。内容は `value`、`source`（`env`、`project`、`global` または `default`）、`project` と `global`（各レベルの値。なければ `null`）、任意の `detail` です。失敗する、2秒を超える、または別の内容を出力するコマンドは `error` と表示されます。あとから追加されたプラグインは、dashboard のリリースなしで表示されます。
+`icon` はラベルの前に付く絵文字1つです（ない場合は `🔹`）。`status` コマンドは読み取り専用で、プロジェクトのディレクトリで実行され、JSON オブジェクトを1つ出力します。内容は `value`、`source`（`env`、`project`、`global` または `default`）、`project` と `global`（各レベルの値。なければ `null`）、任意の `detail`、任意の `watch`（変わったらターンの途中でも行を描き直すファイルの絶対パスのリスト、Claude Code）です。失敗する、2秒を超える、または別の内容を出力するコマンドは `error` と表示されます。あとから追加されたプラグインは、dashboard のリリースなしで表示されます。
 
 `claude --plugin-dir` でフォルダーから読み込んだプラグインは Claude Code のインストール記録にありません。表示するには、そのフォルダーを `BECAUSE_I_NEEDED_PLUGIN_DIRS`（`PATH` と同じ区切り）に列挙してください。
 
@@ -62,8 +62,9 @@ Claude Code 2.1.299 と Codex 0.162.1 で、ケースごとに1回ずつ測定�
 - Codex では、`$dashboard:audit` がインストール済みのプラグインから同じ項目を出力し、budget の項目には7日ウィンドウが表示されました。宣言するプラグインがなければ、その旨を表示しました（D04–D05）。
 - Codex の `weekly-limit` 項目は `weekly 28% left` と表示されました（C02）。
 - 0.2.0 から（[`run-0.2.0`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab/run-0.2.0)、Claude Code 2.1.300）: 200桁では区切り線と `{icon}label: value` の項目が1行に並び、80桁では項目が切れずに1行に1つずつ折り返されました。Codex の audit も同じ項目を出力しました（D06–D08）。
+- 0.3.0 から（[`run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab/run-0.3.0)、Claude Code 2.1.325）: 3項目の free-hands 目標が1つのターンで進む間、行は項目が終わるたびに、その 1.4–2.0 秒後に変わりました。同じ実行で 0.2.0 は1回しか変わらず、途中の状態を1つ飛ばしました（D09、D10）。free-hands が止めた Stop はターンを終わらせないため、0.2.0 は待っていたのです（[`free-hands-lab/eta-probes-r4-2.1.325`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-probes-r4-2.1.325)、T08）。
 
-未測定: tmux 以外のターミナル、太字と薄い表示のスタイル、Claude Code のマーケットプレイス経由でインストールしたプラグイン（測定した行は `--plugin-dir` のフォルダーを読み取っており、インストール記録は単体テストのみ）、セッション途中でスイッチが変わったときの行の更新、デスクトップと IDE のサーフェス。
+未測定: tmux 以外のターミナル、太字と薄い表示のスタイル、Claude Code のマーケットプレイス経由でインストールしたプラグイン（測定した行は `--plugin-dir` のフォルダーを読み取っており、インストール記録は単体テストのみ）、監視ファイルを指定しないスイッチがセッション途中で変わったときの行の更新、更新がツール呼び出しに加える時間、デスクトップと IDE のサーフェス。
 
 行を描画する Claude Code のプラグインフックモジュール API は早期アクセスとされており、リリース間で変更される可能性があります。
 

@@ -4,7 +4,7 @@
 
 <p align="center"><strong>一行看清你开启的所有 because-i-needed 模式，以及每个值的来源。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#显示内容">显示内容</a> &bull; <a href="#claude-code">Claude Code</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#插件如何加入">插件如何加入</a> &bull; <a href="#限制与状态">限制与状态</a> &bull; <a href="#安装">安装</a></p>
 
@@ -20,7 +20,7 @@ because-i-needed 的插件带有会一直保持设定的开关——peer-coding 
 
 ```
 ────────────────────────────────────────────────────────────────────────────────────────────────
-💰budget: 80% · 5h now 24%   🙌free-hands: active 0/40 · 1 open (project) · owner lab-sess   🤝peer-coding: on (project)
+💰budget: 80% · 5h now 24%   🙌free-hands: active 0/40 · 2 open · ETA 15:29 (project) · ~6m left · owner 1c4c797d   🤝peer-coding: on (project)
 ```
 
 - 一条浅色分隔线下方，每个已启用的 because-i-needed 插件所声明的开关各占一项 `{icon}label: value`；由项目级或环境变量决定时附上 `(project)` 或 `(env)`，以及一项细节，例如最近一次测得的用量窗口或目标所属的会话。终端较窄时，各项会换行，每行一项。
@@ -29,7 +29,7 @@ because-i-needed 的插件带有会一直保持设定的开关——peer-coding 
 
 ## Claude Code
 
-这一行位于提示上方。它会在会话开始时、每一轮之后以及用量窗口变化时刷新。dashboard 会找出 Claude Code 已安装并已启用的 because-i-needed 插件。
+这一行位于提示上方。它会在会话开始时、每一轮之后以及用量窗口变化时刷新；在一轮之中，某次工具调用改动了开关指定要监视的文件（例如 free-hands 的 goal 文件）之后，也会刷新。因此，即使目标在一个很长的轮次里推进，每完成一项，显示都会变化。dashboard 会找出 Claude Code 已安装并已启用的 because-i-needed 插件。
 
 ## Codex
 
@@ -50,7 +50,7 @@ status_line = ["model-with-reasoning", "weekly-limit"]
 { "entries": [ { "label": "peer-coding", "icon": "🤝", "status": ["bash", "scripts/mode.sh", "status", "--json"] } ] }
 ```
 
-`icon` 是显示在名称前的一个表情符号（缺省时为 `🔹`）。`status` 命令是只读的，在项目目录中运行，并打印一个 JSON 对象：`value`、`source`（`env`、`project`、`global` 或 `default`）、`project` 和 `global`（各级的值，或 `null`），以及可选的 `detail`。命令失败、耗时超过两秒或输出了其他内容时，显示为 `error`。之后新增的插件无需 dashboard 发布新版本就会出现。
+`icon` 是显示在名称前的一个表情符号（缺省时为 `🔹`）。`status` 命令是只读的，在项目目录中运行，并打印一个 JSON 对象：`value`、`source`（`env`、`project`、`global` 或 `default`）、`project` 和 `global`（各级的值，或 `null`），可选的 `detail`，以及可选的 `watch`（文件绝对路径列表，这些文件一旦变化，就在轮次中途重绘这一行，仅 Claude Code）。命令失败、耗时超过两秒或输出了其他内容时，显示为 `error`。之后新增的插件无需 dashboard 发布新版本就会出现。
 
 用 `claude --plugin-dir` 从文件夹加载的插件不在 Claude Code 的安装记录中；把它们的文件夹列在 `BECAUSE_I_NEEDED_PLUGIN_DIRS` 中（分隔方式与 `PATH` 相同）即可显示。
 
@@ -62,8 +62,9 @@ status_line = ["model-with-reasoning", "weekly-limit"]
 - 在 Codex 上，`$dashboard:audit` 根据已安装的插件打印了同样的条目，其中 budget 条目带有 7 天窗口；没有声明开关的插件时，它会如实说明（D04–D05）。
 - Codex 的 `weekly-limit` 项目显示了 `weekly 28% left`（C02）。
 - 从 0.2.0 起（[`run-0.2.0`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab/run-0.2.0)，Claude Code 2.1.300）：在 200 列下，分隔线和 `{icon}label: value` 各项排在一行；在 80 列下，各项完整换行，每行一项；Codex 的 audit 也输出了相同的各项（D06–D08）。
+- 从 0.3.0 起（[`run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab/run-0.3.0)，Claude Code 2.1.325）：一个三项的 free-hands 目标在一轮之内推进时，每完成一项，这一行就在 1.4–2.0 秒后变化；同一次运行中 0.2.0 只变化了一次，并跳过了一个中间状态（D09、D10）。free-hands 拦下的 Stop 不会结束这一轮，所以 0.2.0 一直在等（[`free-hands-lab/eta-probes-r4-2.1.325`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-probes-r4-2.1.325)，T08）。
 
-未测量：tmux 以外的终端，以及粗体与浅色样式；通过 Claude Code 市场安装的插件（被测的这一行读取的是 `--plugin-dir` 文件夹；安装记录只做了单元测试）；会话中途开关变化后这一行是否刷新；桌面端和 IDE 界面。
+未测量：tmux 以外的终端，以及粗体与浅色样式；通过 Claude Code 市场安装的插件（被测的这一行读取的是 `--plugin-dir` 文件夹；安装记录只做了单元测试）；未指定监视文件的开关在会话中途变化后这一行是否刷新；一次刷新给工具调用增加的时间；桌面端和 IDE 界面。
 
 绘制这一行所用的 Claude Code 插件钩子模块 API 被标记为抢先体验，在不同版本之间可能会变化。
 

@@ -8,6 +8,26 @@ import type { Entry } from '../types'
 
 const entries = atom({ plugin: 'dashboard', key: 'entries' } as const, [] as Entry[])
 
+// Files the status commands name in `watch`, with their contents at the last refresh. A blocked Stop never ends the
+// turn, so a tool call that changes one redraws mid-turn (z-lab free-hands-lab eta-probes-r4-2.1.325 T08-T10).
+let watched: Record<string, string> = {}
+
+async function readOrEmpty($: EngineInterface, path: string): Promise<string> {
+  try {
+    return await $.fs.read(path)
+  } catch {
+    return ''
+  }
+}
+
+function watchPaths(list: unknown[]): string[] {
+  const paths = list.flatMap(raw => {
+    const watch = raw && typeof raw === 'object' ? (raw as { watch?: unknown }).watch : null
+    return Array.isArray(watch) ? watch.filter((path): path is string => typeof path === 'string') : []
+  })
+  return [...new Set(paths)]
+}
+
 function toEntry(raw: unknown): Entry | null {
   if (!raw || typeof raw !== 'object') return null
   const item = raw as Record<string, unknown>
@@ -20,6 +40,9 @@ function toEntry(raw: unknown): Entry | null {
 }
 
 async function refresh($: EngineInterface): Promise<void> {
+  // read before the status runs: a change made while it runs is still caught by the next tool call
+  const before: Record<string, string> = {}
+  for (const path of Object.keys(watched)) before[path] = await readOrEmpty($, path)
   try {
     const settings = await $.settings.read()
     const enabled = Object.entries(settings.enabledPlugins ?? {})
@@ -33,9 +56,22 @@ async function refresh($: EngineInterface): Promise<void> {
     const list = parsed && typeof parsed === 'object' ? (parsed as { entries?: unknown }).entries : []
     const next = Array.isArray(list) ? list.map(toEntry).filter((item): item is Entry => item !== null) : []
     await update($, entries, () => next)
+    const seen: Record<string, string> = {}
+    for (const path of Array.isArray(list) ? watchPaths(list) : []) {
+      seen[path] = before[path] ?? (await readOrEmpty($, path))
+    }
+    watched = seen
   } catch {
     await update($, entries, () => [])
+    watched = {}
   }
+}
+
+async function watchedChanged($: EngineInterface): Promise<boolean> {
+  for (const [path, seen] of Object.entries(watched)) {
+    if ((await readOrEmpty($, path)) !== seen) return true
+  }
+  return false
 }
 
 export const register: Register = on => {
@@ -50,6 +86,12 @@ export const register: Register = on => {
     await refresh($)
     return result
   })
+
+  on('tool.call', async ($, e, next) => {
+    const result = await next(e)
+    if (await watchedChanged($)) await refresh($)
+    return result
+  }).catch(($, e, next) => next(e))
 
   on('session.measure', async ($, e, next) => {
     if (e.changed.includes('rateLimits')) await refresh($)

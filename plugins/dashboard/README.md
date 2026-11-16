@@ -4,7 +4,7 @@
 
 <p align="center"><strong>See every because-i-needed mode you have on — and where each value comes from — in one line.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#what-it-shows">What it shows</a> &bull; <a href="#claude-code">Claude Code</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#how-a-plugin-joins">How a plugin joins</a> &bull; <a href="#limits-and-status">Limits and status</a> &bull; <a href="#installation">Installation</a></p>
 
@@ -20,7 +20,7 @@ because-i-needed plugins have switches that stay set — peer-coding's orchestra
 
 ```
 ────────────────────────────────────────────────────────────────────────────────────────────────
-💰budget: 80% · 5h now 24%   🙌free-hands: active 0/40 · 1 open (project) · owner lab-sess   🤝peer-coding: on (project)
+💰budget: 80% · 5h now 24%   🙌free-hands: active 0/40 · 2 open · ETA 15:29 (project) · ~6m left · owner 1c4c797d   🤝peer-coding: on (project)
 ```
 
 - A dim rule, then one `{icon}label: value` entry per switch an enabled because-i-needed plugin declares, with `(project)` or `(env)` when that level decides it and a detail such as the last measured usage window or a goal's owner session. On a narrow terminal the entries wrap, one per row.
@@ -29,7 +29,7 @@ because-i-needed plugins have switches that stay set — peer-coding's orchestra
 
 ## Claude Code
 
-The line sits above the prompt. It refreshes when the session starts, after each turn and when the usage window moves. dashboard finds the because-i-needed plugins Claude Code has installed and enabled.
+The line sits above the prompt. It refreshes when the session starts, after each turn and when the usage window moves — and, inside a turn, after a tool call that changed a file a switch names to watch (a free-hands goal file, so a goal worked through in one long turn shows each finished item). dashboard finds the because-i-needed plugins Claude Code has installed and enabled.
 
 ## Codex
 
@@ -50,7 +50,7 @@ A plugin declares its switches in `dashboard.json` at its root. Every because-i-
 { "entries": [ { "label": "peer-coding", "icon": "🤝", "status": ["bash", "scripts/mode.sh", "status", "--json"] } ] }
 ```
 
-The `icon` is one emoji shown before the label (`🔹` when it is missing). The `status` command is read-only, runs in the project directory and prints one JSON object: `value`, `source` (`env`, `project`, `global` or `default`), `project` and `global` (the value at each level, or `null`), and an optional `detail`. A command that fails, takes over two seconds or prints something else shows as `error`. A plugin added later appears without a dashboard release.
+The `icon` is one emoji shown before the label (`🔹` when it is missing). The `status` command is read-only, runs in the project directory and prints one JSON object: `value`, `source` (`env`, `project`, `global` or `default`), `project` and `global` (the value at each level, or `null`), an optional `detail`, and an optional `watch`: absolute paths of files whose change should redraw the line during a turn (Claude Code). A command that fails, takes over two seconds or prints something else shows as `error`. A plugin added later appears without a dashboard release.
 
 Plugins loaded from a folder with `claude --plugin-dir` are not in Claude Code's install records; list their folders in `BECAUSE_I_NEEDED_PLUGIN_DIRS` (separated like `PATH`) to show them.
 
@@ -62,8 +62,9 @@ Measured once per case on Claude Code 2.1.299 and Codex 0.162.1 ([z-lab `dashboa
 - On Codex `$dashboard:audit` printed the same entries from the installed plugins, the budget entry with the 7-day window; with no declaring plugin it said so (D04–D05).
 - Codex's `weekly-limit` item showed `weekly 28% left` (C02).
 - Since 0.2.0 ([`run-0.2.0`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab/run-0.2.0), Claude Code 2.1.300): the rule and the `{icon}label: value` entries on one row at 200 columns, and wrapped whole, one per row, at 80 columns; the Codex audit prints the same entries (D06–D08).
+- Since 0.3.0 ([`run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab/run-0.3.0), Claude Code 2.1.325): while a free-hands goal of three items ran in one turn, the line changed after each finished item, 1.4–2.0 seconds after it; 0.2.0 changed once in the same run and skipped a state (D09, D10). A Stop that free-hands blocks does not end the turn, which is why 0.2.0 waited ([`free-hands-lab/eta-probes-r4-2.1.325`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-probes-r4-2.1.325), T08).
 
-Not measured: terminals other than tmux, and the bold and dim styling; plugins installed through a Claude Code marketplace (the measured line read `--plugin-dir` folders; the install records are unit-tested); the line refreshing after a switch changes mid-session; desktop and IDE surfaces.
+Not measured: terminals other than tmux, and the bold and dim styling; plugins installed through a Claude Code marketplace (the measured line read `--plugin-dir` folders; the install records are unit-tested); the line refreshing mid-session after a switch that names no watched file changes; the time a refresh adds to a tool call; desktop and IDE surfaces.
 
 Claude Code's plugin hooks module API that draws the line is marked early access and may change between releases.
 

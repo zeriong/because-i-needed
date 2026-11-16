@@ -33,7 +33,7 @@ default_branch: <the repository's default branch>
 ## Goal
 <one sentence>
 ## Checklist
-- [ ] <a finite item with a check you can run or observe>
+- [ ] <a finite item with a check you can run or observe> (~<minutes>m <category>)
 ## Decisions
 ## Resume
 <state the next session needs: branches, PRs, what is in progress>
@@ -47,6 +47,12 @@ default_branch: <the repository's default branch>
   leave the line out: the first session whose hook sees the goal becomes its owner.
 - Items must be finite and checkable. No open conditions ("no more findings", "everything clean"); turn them into a
   bounded list or a command whose result decides.
+- End every item with your estimate `(~<minutes>m <category>)`: the wall-clock minutes you — this agent, not a person —
+  will spend on it, from starting it to marking it `[x]`, including reading, editing, running its check and fixing
+  what fails. `<category>` is one of `docs`, `fix`, `feature`, `refactor`, `test`, `research`, `ops`. Write the
+  estimate once and do not change it later. The plugin's hooks time every item in `.free-hands/timings.jsonl`, and the
+  dashboard shows the expected finish from the estimates of the open items; never edit that file or
+  `.free-hands/eta.json`.
 - No goal in the arguments: take it from the conversation (the prompt that led to the entry question). Only if there is
   none at all, ask for it once — the goal file does not exist yet, so this is the one question allowed.
 - An active goal file already exists: with no new goal, resume it. With a new goal, rename the old file to
