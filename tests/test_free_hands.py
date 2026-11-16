@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -502,6 +503,32 @@ class EtaTest(unittest.TestCase):
         self.eta.observe(self.folder, goal_text(items=("- [ ] a (~4m fix)",), owner="s1"), "post", {}, now=30)
         self.assertEqual([r["actual_min"] for r in self.rows()], [1.0])  # a stale text and a late clock change nothing
         self.assertEqual(json.loads((self.folder / "eta.json").read_text())["last"], 60)
+
+    def test_a_prompt_of_task_notifications_is_the_runs_time(self):
+        self.write(goal_text(items=("- [ ] a (~4m fix)",), owner="s1"))
+        self.hook("post", {"session_id": "s1"})
+        state = json.loads((self.folder / "eta.json").read_text())
+        state.update(last=time.time() - 600, active=0.0)
+        (self.folder / "eta.json").write_text(json.dumps(state))
+        notice = "<task-notification><task-id>x</task-id><status>completed</status></task-notification>"
+        self.hook("prompt", {"session_id": "s1", "prompt": notice})
+        self.assertGreater(json.loads((self.folder / "eta.json").read_text())["active"], 590)
+        state.update(last=time.time() - 600, active=0.0)
+        (self.folder / "eta.json").write_text(json.dumps(state))
+        self.hook("prompt", {"session_id": "s1", "prompt": "also add a test"})
+        self.assertEqual(json.loads((self.folder / "eta.json").read_text())["active"], 0.0)
+
+    def test_a_next_goal_sharing_one_item_starts_its_own_clock(self):
+        self.step(("- [ ] a (~4m fix)", "- [ ] run tests (~2m test)"), 0)
+        self.step(("- [x] a (~4m fix)", "- [x] run tests (~2m test)"), 300)
+        nxt = goal_text(items=("- [ ] b (~4m fix)", "- [ ] c (~4m docs)", "- [ ] run tests (~2m test)"),
+                        owner="s1").replace("ship it", "next goal")
+        self.goal.write_text(nxt)
+        self.eta.observe(self.folder, nxt, "post", {}, now=900)
+        self.goal.write_text(nxt.replace("- [ ] b", "- [x] b"))
+        self.eta.observe(self.folder, self.goal.read_text(), "post", {}, now=960)
+        self.assertEqual(self.rows()[-1]["item"], "b")
+        self.assertEqual(self.rows()[-1]["actual_min"], 1.0)  # not the 10 minutes since the last goal's end
 
     def test_odd_values_never_stop_the_clock(self):
         self.step(("- [ ] a (~4m Fix)",), 0, transcript_path=1)

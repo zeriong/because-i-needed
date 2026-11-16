@@ -35,7 +35,7 @@ Contents: the `run` skill and Codex adapter, five read-only panel roles, `dashbo
   G03; z-lab `free-hands-lab/analyze` D16):** agents rewrote the counter they were given, so a self-reported duration is
   not a measurement.
 - The clock does not count the gap after a turn that ended (an allowed Stop), before a new session or before a prompt
-  (a turn interrupted with Esc sends no Stop), and counts a gap over 20 minutes only as far as the tool call's
+  (a turn interrupted with Esc sends no Stop; a prompt made only of task notifications is not the user's and counts), and counts a gap over 20 minutes only as far as the tool call's
   `duration_ms` covers it. A paused goal with items open is not timed. Items finished in one edit share the time by
   estimate; an item that first appears already checked while the run is under way joins that edit. The goal file is
   read again under the lock and the clock never moves back. The model comes from the transcript tail, the effort from

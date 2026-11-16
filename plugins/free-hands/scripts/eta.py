@@ -197,10 +197,14 @@ def share(finished, elapsed):
 
 
 def same_run(state, goal, text):
-    """The clock belongs to this goal: the same `## Goal` text, or — after the agent rewords the goal — items in common."""
+    """The clock belongs to this goal: the same `## Goal` text, or — after the agent rewords the goal — most items in
+    common both ways. One shared boilerplate item ("run the tests") does not carry a finished goal's clock into the
+    next one."""
     if state.get("goal") == goal:
         return True
-    return bool({key for _, key, _, _ in checklist(text)} & set(state["items"]))
+    keys, known = {key for _, key, _, _ in checklist(text)}, set(state["items"])
+    shared = len(keys & known)
+    return shared * 2 > len(keys) and shared * 2 > len(known)
 
 
 def observe(folder, text, event, data, now=None, ended=False):

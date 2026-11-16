@@ -15,8 +15,8 @@
 ### Why
 
 The maintainer asked for an expected completion time on the dashboard that stays as close as possible to the real one,
-per model and per project (2026-11-16). Agents' own estimates were 5–12× too long in every family, category and
-project measured, so the estimates are kept but corrected.
+per model and per project (2026-11-16). Agents' own estimates were 5–12× too long on average per model family, and
+too long in every category and project measured, so the estimates are kept but corrected.
 
 Evidence (z-lab `free-hands-lab`, Claude Code 2.1.325): `eta-probes-2.1.325` T01–T06 (no hook input names the model;
 PostToolUse sees every edit route; isolation), `eta-probes-r3`/`-r4` T08–T11 (a blocked Stop never ends the turn);
@@ -26,7 +26,8 @@ doublings, category factors only to 0.74); `eta-validate-0.5.0` with `eta-valida
 held-out goals: raw 3.17 → 0.62 doublings with the family factor, 0.70 with category factors; the remaining time
 shown at a goal's start within 1.42× on median, 12 of 13 goals within 2×; the project factor helped Sonnet and hurt
 Opus, so no gain is claimed for it). Fixes from the product review after validation (repeated item texts, a paused
-goal, the time before a prompt, input types, a stale checklist under the lock, broken values) are unit-tested only
+goal, the time before a typed prompt — a prompt made only of task notifications still counts —, input types, a
+stale checklist under the lock, broken values, a next goal sharing one item) are unit-tested only
 (`EtaTest`; backlog item 17). The project factor and the default for unmeasured
 families are decisions (`analyze/improvement-backlog.md` D17, D20). Not measured: Codex, Haiku, effort levels other
 than xhigh, interactive sessions beyond the dashboard case (`dashboard-lab/run-0.3.0` D09, D11).

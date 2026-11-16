@@ -258,7 +258,8 @@ def on_prompt(data):
     goal, info, other = active_goal(data)
     if info is not None:
         emit("UserPromptSubmit", restore_note(goal, info) + (CORRECTION_NOTE if WORD.search(prompt) else ""))
-        record(data, "prompt")
+        # a prompt made only of task notifications (panel roles finishing) is the run's own time, not the user's
+        record(data, "prompt" if prompt.strip() else "notice")
     elif WORD.search(prompt):
         emit("UserPromptSubmit", ENTRY_NOTE + session_note(sid, other))
 
