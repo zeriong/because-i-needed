@@ -4,7 +4,7 @@
 
 <p align="center"><strong>用一行看到你開啟的每個 because-i-needed 模式，以及每個值的來源。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="授權：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 外掛"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="授權：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 外掛"></a></p>
 
 <p align="center"><a href="#顯示內容">顯示內容</a> &bull; <a href="#claude-code">Claude Code</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#外掛如何加入">外掛如何加入</a> &bull; <a href="#限制與狀態">限制與狀態</a> &bull; <a href="#安裝">安裝</a></p>
 
@@ -20,7 +20,7 @@ because-i-needed 的外掛有一些會持續保持設定的開關——peer-codi
 
 ```
 ────────────────────────────────────────────────────────────────────────────────────────────────
-💰budget: 80% · 5h now 24%   🙌free-hands: active 0/40 · 1 open (project) · owner lab-sess   🤝peer-coding: on (project)
+💰budget: 80% · 5h now 24%   🙌free-hands: active 0/40 · 2 open · ETA 15:29 (project) · ~6m left · owner 1c4c797d   🤝peer-coding: on (project)
 ```
 
 - 一條淡色分隔線下方，每個已啟用的 because-i-needed 外掛所宣告的開關各佔一項 `{icon}label: value`；由哪個層級決定時附上 `(project)` 或 `(env)`，以及一項細節，例如最近一次測得的用量額度或目標所屬的工作階段。終端機較窄時，各項會換行，每行一項。
@@ -29,7 +29,7 @@ because-i-needed 的外掛有一些會持續保持設定的開關——peer-codi
 
 ## Claude Code
 
-這一行位於提示上方。它會在工作階段開始時、每個回合之後以及用量額度變動時更新。dashboard 會找出 Claude Code 已安裝並啟用的 because-i-needed 外掛。
+這一行位於提示上方。它會在工作階段開始時、每個回合之後以及用量額度變動時更新；在回合之中，某次工具呼叫改動了開關指定要監看的檔案（例如 free-hands 的 goal 檔案）之後，也會更新。因此，即使目標在一個很長的回合裡推進，每完成一項，顯示都會改變。dashboard 會找出 Claude Code 已安裝並啟用的 because-i-needed 外掛。
 
 ## Codex
 
@@ -50,7 +50,7 @@ status_line = ["model-with-reasoning", "weekly-limit"]
 { "entries": [ { "label": "peer-coding", "icon": "🤝", "status": ["bash", "scripts/mode.sh", "status", "--json"] } ] }
 ```
 
-`icon` 是顯示在名稱前的一個表情符號（缺少時為 `🔹`）。`status` 命令是唯讀的，在專案目錄中執行，並印出一個 JSON 物件：`value`、`source`（`env`、`project`、`global` 或 `default`）、`project` 與 `global`（各層級的值，或 `null`），以及選用的 `detail`。命令失敗、執行超過兩秒或印出其他內容時，會顯示為 `error`。之後新增的外掛不需要 dashboard 發佈新版本就會出現。
+`icon` 是顯示在名稱前的一個表情符號（缺少時為 `🔹`）。`status` 命令是唯讀的，在專案目錄中執行，並印出一個 JSON 物件：`value`、`source`（`env`、`project`、`global` 或 `default`）、`project` 與 `global`（各層級的值，或 `null`），選用的 `detail`，以及選用的 `watch`（檔案絕對路徑清單，這些檔案一旦變更，就在回合中途重繪這一行，僅 Claude Code）。命令失敗、執行超過兩秒或印出其他內容時，會顯示為 `error`。之後新增的外掛不需要 dashboard 發佈新版本就會出現。
 
 以 `claude --plugin-dir` 從資料夾載入的外掛不在 Claude Code 的安裝紀錄中；若要顯示它們，請把它們的資料夾列在 `BECAUSE_I_NEEDED_PLUGIN_DIRS`（分隔方式與 `PATH` 相同）。
 
@@ -62,8 +62,9 @@ status_line = ["model-with-reasoning", "weekly-limit"]
 - 在 Codex 上，`$dashboard:audit` 從已安裝的外掛印出了相同的項目，其中 budget 項目帶有 7 天額度；沒有宣告開關的外掛時，它會如此說明（D04–D05）。
 - Codex 的 `weekly-limit` 項目顯示了 `weekly 28% left`（C02）。
 - 自 0.2.0 起（[`run-0.2.0`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab/run-0.2.0)，Claude Code 2.1.300）：在 200 欄下，分隔線與 `{icon}label: value` 各項排在一行；在 80 欄下，各項完整換行，每行一項；Codex 的 audit 也印出相同的各項（D06–D08）。
+- 自 0.3.0 起（[`run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab/run-0.3.0)，Claude Code 2.1.325）：一個三項的 free-hands 目標在一個回合內推進時，每完成一項，這一行就在 1.4–2.0 秒後改變；同一次執行中 0.2.0 只改變了一次，並跳過了一個中間狀態（D09、D10）。free-hands 攔下的 Stop 不會結束回合，所以 0.2.0 一直在等（[`free-hands-lab/eta-probes-r4-2.1.325`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-probes-r4-2.1.325)，T08）。
 
-未測量：tmux 以外的終端機，以及粗體與淡色樣式；透過 Claude Code 市集安裝的外掛（受測的那一行讀取的是 `--plugin-dir` 資料夾；安裝紀錄有單元測試）；工作階段中途開關變更後那一行是否更新；桌面與 IDE 介面。
+未測量：tmux 以外的終端機，以及粗體與淡色樣式；透過 Claude Code 市集安裝的外掛（受測的那一行讀取的是 `--plugin-dir` 資料夾；安裝紀錄有單元測試）；未指定監看檔案的開關在工作階段中途變更後那一行是否更新；一次更新為工具呼叫增加的時間；桌面與 IDE 介面。
 
 繪製那一行的 Claude Code 外掛 hooks 模組 API 標示為搶先體驗，各版本之間可能變動。
 

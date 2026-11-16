@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""free-hands hook guard. Usage: guard.py prompt|session|ask|stop|shell  (hook JSON on stdin) | guard.py status
+"""free-hands hook guard. Usage: guard.py prompt|session|ask|stop|shell|post  (hook JSON on stdin) | guard.py status
 
 While `.free-hands/goal.md` is active and has open items (`- [ ]`), it denies the ask tool, keeps the session from
 stopping (up to max_iterations) and re-injects the rules after a restart or compaction — in the session named by the
 goal's `owner:` only. Other sessions in the same repository are left alone. With no active goal it only routes the word
 "free-hands" in a prompt to the entry question. Any error means "no effect": a hook must never trap a session because of
-a broken goal file.
+a broken goal file. The same hooks of the owner session feed eta.py, which times each checklist item.
 """
 import fcntl
 import json
@@ -19,6 +19,7 @@ import tempfile
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import eta  # noqa: E402
 import shellguard  # noqa: E402
 
 GOAL = Path(".free-hands") / "goal.md"
@@ -113,7 +114,7 @@ def open_items(text):
 
 
 def emit(event, context):
-    print(json.dumps({"hookSpecificOutput": {"hookEventName": event, "additionalContext": context}}))
+    print(json.dumps({"hookSpecificOutput": {"hookEventName": event, "additionalContext": context}}), flush=True)
 
 
 def restore_note(goal, info):
@@ -129,8 +130,9 @@ def restore_note(goal, info):
             "decide with the brainstorming panel or yourself, record it under ## Decisions, continue (the one exception: "
             "when the budget plugin stops you at the user's usage threshold, do what it says); (2) never merge a "
             "PR or into the default branch, delete irreversibly, deploy or send anything outside — mark such items "
-            "`- [-] … — needs the user: <why>`; (3) keep the goal file current (`- [x]` when an item is done; status "
-            "done, waiting or paused at the end); (4) if the user asks to pause or stop, set `status: paused` first.")
+            "`- [-] … — needs the user: <why>`; (3) keep the goal file current (`- [x]` when an item is done; a new item "
+            "ends with its `(~<minutes>m <category>)` estimate; status done, waiting or paused at the end); (4) if the "
+            "user asks to pause or stop, set `status: paused` first.")
 
 
 ENTRY_NOTE = (
@@ -193,6 +195,55 @@ def peek_owner(data):
     return info["owner"] if guarded(info) else ""
 
 
+def timed(info, folder, text):
+    """Guarded, or the edit that checks the last item and ends the run (no item open in the file, one still open on the
+    clock). A paused goal with items open is not timed."""
+    return guarded(info) or (not info["items"] and eta.pending(folder, text))
+
+
+def eta_target(data):
+    """(goal path, text) when this hook event belongs to the run that eta.py times: the goal is this session's (or has
+    no owner, or the host sends no session id) and timed. A goal file left from a finished run is turned away before
+    any subprocess."""
+    near = has_goal(data)
+    info = parse(load(near)) if near else None
+    if info is None or not timed(info, near.parent, load(near)):
+        return None
+    goal = project_root(data) / GOAL
+    text = load(goal)
+    info = parse(text)
+    if info is None:
+        return None
+    sid = session_of(data)
+    if sid and info["owner"] and info["owner"] != sid:
+        return None
+    if not timed(info, goal.parent, text):
+        return None
+    return goal, text
+
+
+def record(data, event, ended=False):
+    """Feed the ETA clock; its failure never changes what the guard decided."""
+    try:
+        target = eta_target(data)
+        if target:
+            eta.observe(target[0].parent, target[1], event, data, ended=ended)
+    except Exception:
+        return
+
+
+def has_goal(data):
+    """The nearest `.free-hands/goal.md` from the hook's cwd up, found without a subprocess (most tool calls of most
+    sessions have none), or None."""
+    cwd = data.get("cwd")
+    start = Path(cwd if isinstance(cwd, str) and cwd else os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd())
+    return next((folder / GOAL for folder in (start, *start.parents) if (folder / GOAL).is_file()), None)
+
+
+def on_post(data):
+    record(data, "post")
+
+
 def on_prompt(data):
     prompt = data.get("prompt") or ""
     sid = session_of(data)
@@ -207,6 +258,7 @@ def on_prompt(data):
     goal, info, other = active_goal(data)
     if info is not None:
         emit("UserPromptSubmit", restore_note(goal, info) + (CORRECTION_NOTE if WORD.search(prompt) else ""))
+        record(data, "prompt")
     elif WORD.search(prompt):
         emit("UserPromptSubmit", ENTRY_NOTE + session_note(sid, other))
 
@@ -215,6 +267,7 @@ def on_session(data):
     goal, info, _ = active_goal(data)
     if info is not None:
         emit("SessionStart", restore_note(goal, info))
+        record(data, "session")
 
 
 def budget_question_open(data):
@@ -327,12 +380,21 @@ def bump(goal, sid=None):
 
 
 def on_stop(data):
+    blocked = False
+    try:
+        blocked = stop_block(data)
+    finally:
+        record(data, "stop", ended=not blocked)
+
+
+def stop_block(data):
+    """Print the block that keeps the run going; True when it did."""
     goal, info, _ = active_goal(data)
     if not engaged(info) or budget_question_open(data):
-        return
+        return False
     result = bump(goal, session_of(data))
     if result is None:
-        return
+        return False
     new, maximum, items = result
     last = (" This is the last continuation: if items are still open when you stop, set `status: paused` and report "
             "them." if new >= maximum else "")
@@ -342,22 +404,35 @@ def on_stop(data):
              if status in FINISHED else "")
     reason = (f"free-hands: {len(items)} items still open — keep working, do not stop or ask (continuation "
               f"{new}/{maximum}).{wrong}{last} Goal file: {goal}; rules: {SKILL}.\nOpen items:\n" + "\n".join(items))
-    print(json.dumps({"decision": "block", "reason": reason}))
+    print(json.dumps({"decision": "block", "reason": reason}), flush=True)  # delivered before the clock is fed
+    return True
 
 
 def status():
     """The goal's state for the dashboard (root Rule 11): one JSON object, read-only."""
     goal = project_root({}) / GOAL
-    info = parse(load(goal))
+    text = load(goal)
+    info = parse(text)
+    notes = []
     if info is None:
         state = None
     elif info["items"]:
         state = f"{info['status']} {info['iterations']}/{info['max']} · {len(info['items'])} open"
+        try:  # the expected finish is extra: its failure never costs the goal's state
+            expected = eta.predict(goal.parent, text) if info["status"] == "active" else None
+            if expected:
+                shown = (f" · ETA {eta.clock(expected['eta'])}{'+' if expected['unestimated'] else ''}",
+                         f"~{eta.duration(expected['minutes'])} left")
+                state += shown[0]
+                notes.append(shown[1])
+        except Exception:
+            pass
     else:
         state = info["status"]
-    detail = f"owner {info['owner'][:8]}" if info and info["owner"] else None
+    if info and info["owner"]:
+        notes.append(f"owner {info['owner'][:8]}")
     print(json.dumps({"value": state or "off", "source": "project" if state else "default", "project": state,
-                      "global": None, "detail": detail}))
+                      "global": None, "detail": " · ".join(notes) or None, "watch": [str(goal)]}))
 
 
 def main():
@@ -371,8 +446,8 @@ def main():
     if data is None:
         return
     try:
-        {"prompt": on_prompt, "session": on_session, "ask": on_ask, "stop": on_stop,
-         "shell": on_shell}.get(mode, lambda _: None)(data)
+        {"prompt": on_prompt, "session": on_session, "ask": on_ask, "stop": on_stop, "shell": on_shell,
+         "post": on_post}.get(mode, lambda _: None)(data)
     except Exception:  # a hook never traps the session on its own failure
         return
 

@@ -1,0 +1,9 @@
+{
+  "source": "z-lab free-hands-lab/eta-calibrate-0.5.0: actual / estimate, geometric mean per model family at effort xhigh (E03); one factor per family (E04); default = mean of the measured families, not measured for others (backlog D20)",
+  "families": {
+    "sonnet": {"all": 0.080, "n": 34},
+    "opus": {"all": 0.126, "n": 34},
+    "fable": {"all": 0.197, "n": 7},
+    "default": {"all": 0.125}
+  }
+}

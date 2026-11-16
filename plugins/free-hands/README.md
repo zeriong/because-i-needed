@@ -4,9 +4,9 @@
 
 <p align="center"><strong>Give an agent a finite goal; it works through the checklist without asking or stopping.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.4.1-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.5.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
-<p align="center"><a href="#start">Start</a> &bull; <a href="#goal-file">Goal file</a> &bull; <a href="#never-ask">Never ask</a> &bull; <a href="#hooks">Hooks</a> &bull; <a href="#the-panel">The panel</a> &bull; <a href="#stacked-prs">Stacked PRs</a> &bull; <a href="#limits-and-status">Limits and status</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#requirements">Requirements</a> &bull; <a href="#installation">Installation</a></p>
+<p align="center"><a href="#start">Start</a> &bull; <a href="#goal-file">Goal file</a> &bull; <a href="#expected-finish">Expected finish</a> &bull; <a href="#never-ask">Never ask</a> &bull; <a href="#hooks">Hooks</a> &bull; <a href="#the-panel">The panel</a> &bull; <a href="#stacked-prs">Stacked PRs</a> &bull; <a href="#limits-and-status">Limits and status</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#requirements">Requirements</a> &bull; <a href="#installation">Installation</a></p>
 
 <p align="center"><a href="README.md">English</a> &bull; <a href="README.ko.md">한국어</a> &bull; <a href="README.ja.md">日本語</a> &bull; <a href="README.zh-CN.md">简体中文</a> &bull; <a href="README.zh-TW.md">繁體中文</a></p>
 
@@ -34,7 +34,7 @@ owner: <session id>
 ## Goal
 <one sentence>
 ## Checklist
-- [ ] <a finite item with a check you can run or observe>
+- [ ] <a finite item with a check you can run or observe> (~<minutes>m <category>)
 ## Decisions
 ## Resume
 <what the next session needs to know>
@@ -43,6 +43,22 @@ owner: <session id>
 Marks are `- [ ]` open, `- [x]` done, and `- [-] … — needs the user` for work that cannot proceed under a hard limit or another blocker. Status is `active`, `done`, `waiting`, or `paused`. Only open `[ ]` items keep the ask and stop guards engaged, and `done` or `waiting` does not end the run while any `[ ]` item is left. When every item is done, the agent records `done`; when only items needing the user remain, it records `waiting`. At `max_iterations` (40), the restore note tells the agent to set `paused`, report the open items, and stop; asking is allowed again.
 
 `owner:` is the session the goal belongs to. The agent writes it from a hook note when it starts or resumes a run; see [Hooks](#hooks).
+
+## Expected finish
+
+When the agent writes the checklist it ends every item with its own estimate, such as `(~6m fix)`: the minutes it expects to spend on that item, and a category — `docs`, `fix`, `feature`, `refactor`, `test`, `research` or `ops`. From then on the hooks of the session that owns the goal time each item:
+
+- An active-time clock in `.free-hands/eta.json`. Time after a turn that ended, before a new session, before a prompt you type, or while the goal is paused does not count; a quiet gap over 20 minutes counts only as long as a tool call reports it ran.
+- One row per finished item in `.free-hands/timings.jsonl`: the item, its category, the estimate, the measured minutes, the model and the effort. This is your project's own record. It stays in the project folder, Git ignores it, and it is kept when a new goal starts.
+
+The agent never reports a duration itself, and it estimates without reading the record.
+
+The [dashboard](../dashboard) shows the expected finish as a clock time, `ETA 15:40`, with the minutes left in the detail (`~25m left`); a `+` after the time means some open items have no estimate. With dashboard 0.3.0 the line changes when an item is checked, also in the middle of a turn.
+
+The expected finish adds up, over the open items, the estimate × a factor for the model family and the category × a factor for this project:
+
+- **Model factor**, measured in z-lab. Every agent measured overestimated its own time: what the items actually took was 0.08 of the estimate for Sonnet, 0.13 for Opus and 0.20 for Fable (13 runs at effort xhigh). The shipped factors are Sonnet 0.080, Opus 0.126 and Fable 0.197. A model without a measured factor (Haiku, Codex's models) uses their mean, 0.125 — a choice, not a measurement.
+- **Project factor**: how much longer or shorter this project's items took than the model factor predicted, learned from the newest 60 rows of `timings.jsonl` and pulled toward 1 while the record is short. A new project starts at 1.
 
 ## Never ask
 
@@ -56,12 +72,13 @@ The hooks have different conditions:
 
 - The guards and the restore note below act only in the session named by `owner:` and in the subagents it starts. Another session in the same repository — a second terminal, or a `claude -p` that another tool starts — gets no restore note, no ask or stop guard, no counter and no shell guard; when its prompt mentions “free-hands”, the entry note says which session owns the run. Running `/free-hands:run` (Codex: `$free-hands:run`) in that session moves the run there. A goal without `owner:`, such as one written by 0.2.0, becomes the first session's that a hook sees.
 - Only `- [ ]` lines under `## Checklist`, outside code blocks, count as open items.
+- The clock of the [expected finish](#expected-finish) (`PostToolUse` on every tool, plus the prompt, session and stop hooks) runs only in the owner session and its subagents, like the guards; panel children never feed it. It also records the edit that checks the last item and ends the run.
 - The shell guard (`PreToolUse` on `Bash`) acts while the goal is `active`, or `done`/`waiting` with items still open — also when no `[ ]` item is left and at `max_iterations`. It denies the hard-limit commands described under [Limits and status](#limits-and-status).
 - The ask and stop guards act when the goal has open `[ ]` items, is below `max_iterations`, and is `active` — or `done`/`waiting` with items still open. The ask guard denies asking tools. At the limit, asking is allowed. The Stop hook blocks stopping and increments the counter on disk first, up to 40 continuations. While budget's usage question is open in the session, neither guard acts.
 - The restore note (`UserPromptSubmit`, and `SessionStart` including after a compaction) is emitted while the goal is `active` (also when no `[ ]` items remain) or `done`/`waiting` with items still open.
 - The entry note is emitted when there is no active, well-formed goal and a prompt mentions “free-hands”. Background-task notifications are not treated as prompts; a notification quoted inside a prompt is ignored and the rest of the prompt is read.
 
-Malformed hook input has no effect. A malformed or unreadable goal does not activate the restore, ask, or stop behavior; on a prompt containing “free-hands”, the prompt hook follows the no-active-goal entry route and may emit the entry question. Failed writes and lock timeouts also have no effect, so a hook failure lets the tool or stop proceed.
+Malformed hook input has no effect. A malformed or unreadable goal does not activate the restore, ask, or stop behavior; on a prompt containing “free-hands”, the prompt hook follows the no-active-goal entry route and may emit the entry question. Failed writes and lock timeouts also have no effect, so a hook failure lets the tool or stop proceed. A broken `eta.json` or `timings.jsonl` means no record and no expected finish; it never changes what a guard decides.
 
 ## The panel
 
@@ -109,13 +126,15 @@ Since 0.3.0 a goal belongs to one session. Measured once per case on Claude Code
 
 Since 0.4.0 the [budget](../budget) question gets through, and the goal shows on the [dashboard](../dashboard). On Claude Code 2.1.299 and Codex 0.162.1 ([z-lab `budget-lab`](https://github.com/zeriong/z-lab/tree/main/budget-lab), [`dashboard-lab`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab)): with a goal running, budget's dialog was shown, which 0.3.0 had blocked; on Codex the gated turn ended at once, while 0.3.0's stop guard kept it going three more times (budget-lab R04, R07, R12; codex-gate B03). `guard.py status` gave the dashboard `active 0/40 · 1 open` on both hosts (dashboard-lab D01, D04).
 
+Since 0.5.0 the goal shows an expected finish. Measured on Claude Code 2.1.325 with Sonnet, Opus and Fable at effort xhigh, on three projects of different size ([z-lab `eta-calibrate-0.5.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-calibrate-0.5.0), [`eta-validate-r2-0.5.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-validate-r2-0.5.0)): the hooks' times matched an independent log within 0.1 minute in every run (E01). On goals the factors were not fitted on, the model factor brought the median error from 3.2 doublings — the raw estimates were about 9× too long — to 0.6, about 1.5× (W01). The remaining time shown when a checklist was written was within 1.42× of what the goal took on median, and within 2× for 12 of 13 goals (W04). The project factor helped Sonnet and hurt Opus in these runs (W03), so no gain from it is claimed. The dashboard line changed after each finished item, mid-turn ([`dashboard-lab/run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab/run-0.3.0), D09). Not measured: Codex, Haiku, other effort levels, projects with a longer record.
+
 To pause, say **“pause”**, **“stop”**, or **“일시정지”**. The goal is recorded as `paused`; invoke the command again to resume.
 
 Origin: ported from a project-local skill.
 
 ## Codex
 
-Trust the plugin hooks in `/hooks` before relying on them. The ask hook matcher includes `request_user_input`; its denial has not been observed. Codex's default mode has no ask tool, so the Stop hook carries the keep-working rule. If hooks are not trusted or active, the skill continues under its written rules, but hook effects may be off.
+Trust the plugin hooks in `/hooks` before relying on them. The ask hook matcher includes `request_user_input`; its denial has not been observed. Codex's default mode has no ask tool, so the Stop hook carries the keep-working rule. If hooks are not trusted or active, the skill continues under its written rules, but hook effects may be off. The [expected finish](#expected-finish) uses the same hooks on Codex; it has not been measured there, Codex's models get the default factor, and `$dashboard:audit` shows it (Codex has no live line).
 
 The panel runs one `codex exec -s read-only` child per role (native subagents take a model but no read-only control, so they are not used — F10). Children can search the web whatever the role; `--search` is added for `evidence-hunter` and `trend-tracker` (F09). The children need network: from a sandboxed main, `panel.py run` must run outside the sandbox through an approved escalation, or the session must allow network. Otherwise every child fails, and the run continues with the main deciding alone, recorded as **panel degraded** (G06).
 

@@ -83,17 +83,18 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the peer-coding README →](plugins/peer-coding)
 
-### [free-hands](plugins/free-hands) · `v0.4.1`
+### [free-hands](plugins/free-hands) · `v0.5.0`
 
 **Carry a finite goal through its checklist without asking or stopping.** When a decision would normally go to you, a five-role panel advises and the main agent decides from evidence.
 
 - **Use it when** you want an agent to work through a bounded goal while recording decisions and resuming across interruptions.
 - **Entry:** `/free-hands:run <goal>` (Claude Code) · `$free-hands:run <goal>` (Codex), or include “free-hands” in a prompt to get one entry question
-- **Heads-up:** hooks run on every prompt, session start, ask, shell command and stop; with no active goal they are silent except for a one-question entry note when a prompt says “free-hands”. While items are open, Stop keeps the turn going up to 40 times; while a goal is active, a backstop hook denies the listed shell commands that merge into the default branch, delete remotely, deploy or publish (see the plugin README). Both act only in the session that started the run; other sessions in the repository are left alone.
+- **Expected finish:** each checklist item carries the agent's own estimate; the hooks time every item into the project's `.free-hands/timings.jsonl`, and the [dashboard](plugins/dashboard) shows when the goal should be done, corrected by measured model factors and the project's own record.
+- **Heads-up:** hooks run on every prompt, session start, tool call, ask, shell command and stop; with no active goal they are silent except for a one-question entry note when a prompt says “free-hands”. While items are open, Stop keeps the turn going up to 40 times; while a goal is active, a backstop hook denies the listed shell commands that merge into the default branch, delete remotely, deploy or publish (see the plugin README). Both act only in the session that started the run; other sessions in the repository are left alone.
 
 [Read the free-hands README →](plugins/free-hands)
 
-### [dashboard](plugins/dashboard) · `v0.2.0`
+### [dashboard](plugins/dashboard) · `v0.3.0`
 
 **See every because-i-needed mode you have on, in one line.** On Claude Code a line above the prompt shows each switch an enabled because-i-needed plugin declares — peer-coding's mode, a free-hands goal, a budget threshold, and any added later — with the level that sets it. On Codex the same is a command.
 

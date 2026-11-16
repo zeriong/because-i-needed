@@ -328,7 +328,7 @@ class GuardTest(unittest.TestCase):
                                     text=True)
             return json.loads(result.stdout)
         self.assertEqual(status(), {"value": "off", "source": "default", "project": None, "global": None,
-                                    "detail": None})
+                                    "detail": None, "watch": [str(self.goal.resolve())]})
         self.write(goal_text(owner="0123456789abcdef", iterations="3"))
         self.assertEqual(status()["value"], "active 3/40 · 1 open")
         self.assertEqual((status()["source"], status()["detail"]), ("project", "owner 01234567"))
@@ -345,6 +345,245 @@ class GuardTest(unittest.TestCase):
         (plain / ".free-hands").mkdir(parents=True)
         (plain / ".free-hands" / "goal.md").write_text(goal_text())
         self.assertIsNotNone(self.hook("ask", {"cwd": str(plain)}))
+
+
+def load_eta():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("free_hands_eta", PLUGIN / "scripts" / "eta.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+class EtaTest(unittest.TestCase):
+    tearDown, write, hook = GuardTest.tearDown, GuardTest.write, GuardTest.hook
+
+    def setUp(self):
+        GuardTest.setUp(self)
+        self.eta = load_eta()
+        self.eta.BASELINE = self.tmp / "no-baseline.json"  # estimates as written unless a test sets factors
+        self.folder = self.goal.parent
+
+    def rows(self):
+        path = self.folder / "timings.jsonl"
+        return [json.loads(line) for line in path.read_text().splitlines()] if path.exists() else []
+
+    def step(self, items, now, event="post", ended=False, **data):
+        self.write(goal_text(items=items, owner="s1"))
+        self.eta.observe(self.folder, self.goal.read_text(), event, data, now=now, ended=ended)
+
+    def test_items_carry_an_estimate_and_a_category(self):
+        text = goal_text(items=("- [ ] fix the pager (~6m fix)", "- [x] write docs (~2.5min, docs)",
+                                "- [-] deploy it (~3m ops) — needs the user: deploys are off", "- [ ] no estimate",
+                                "- [ ] odd (~0m fix)", "- [ ] other (~4m chores)", "```", "- [ ] quoted (~1m fix)",
+                                "```"))
+        self.assertEqual(self.eta.checklist(text), [
+            (" ", "fix the pager", 6.0, "fix"), ("x", "write docs", 2.5, "docs"), ("-", "deploy it", 3.0, "ops"),
+            (" ", "no estimate", None, None), (" ", "odd", None, None), (" ", "other", 4.0, None)])
+
+    def test_a_finished_item_records_the_active_time_since_the_previous_one(self):
+        self.step(("- [ ] a (~4m fix)", "- [ ] b (~8m docs)", "- [ ] c (~2m docs)"), 1000)
+        self.step(("- [x] a (~4m fix)", "- [ ] b (~8m docs)", "- [ ] c (~2m docs)"), 1300, effort={"level": "xhigh"})
+        self.step(("- [x] a (~4m fix)", "- [x] b (~8m docs)", "- [-] c (~2m docs) — needs the user: x"), 1900)
+        rows = self.rows()
+        self.assertEqual([(r["item"], r["actual_min"], r["batch"], r["outcome"]) for r in rows],
+                         [("a", 5.0, 1, "done"), ("b", 8.0, 2, "done"), ("c", 2.0, 2, "skipped")])
+        self.assertEqual((rows[0]["est_min"], rows[0]["cat"], rows[0]["effort"]), (4.0, "fix", "xhigh"))
+
+    def test_gaps_after_an_ended_turn_or_without_a_long_tool_call_are_not_work(self):
+        self.step(("- [ ] a (~4m fix)", "- [ ] b (~4m fix)"), 0)
+        self.step(("- [ ] a (~4m fix)", "- [ ] b (~4m fix)"), 60, event="stop", ended=True)
+        self.step(("- [ ] a (~4m fix)", "- [ ] b (~4m fix)"), 9000, event="prompt")
+        self.step(("- [x] a (~4m fix)", "- [ ] b (~4m fix)"), 9120)
+        self.step(("- [x] a (~4m fix)", "- [ ] b (~4m fix)"), 9120 + 7200)  # two quiet hours, no tool ran
+        self.step(("- [x] a (~4m fix)", "- [x] b (~4m fix)"), 9120 + 7200 + 1800 + 60, duration_ms=1800 * 1000)
+        self.assertEqual([r["actual_min"] for r in self.rows()], [3.0, 30.0])
+
+    def test_a_new_session_does_not_count_the_time_in_between(self):
+        self.step(("- [ ] a (~4m fix)",), 0)
+        self.step(("- [ ] a (~4m fix)",), 600, event="session", source="resume")
+        self.step(("- [x] a (~4m fix)",), 660)
+        self.assertEqual([r["actual_min"] for r in self.rows()], [1.0])
+
+    def test_a_new_goal_starts_a_new_clock_and_keeps_the_record(self):
+        self.step(("- [ ] a (~4m fix)",), 0)
+        self.step(("- [x] a (~4m fix)",), 120)
+        other = goal_text(items=("- [ ] z (~1m docs)",), owner="s1").replace("ship it", "next goal")
+        self.goal.write_text(other)
+        self.eta.observe(self.folder, other, "post", {}, now=500)
+        self.goal.write_text(other.replace("- [ ] z", "- [x] z"))
+        self.eta.observe(self.folder, self.goal.read_text(), "post", {}, now=560)
+        self.assertEqual([(r["item"], r["actual_min"]) for r in self.rows()], [("a", 2.0), ("z", 1.0)])
+
+    def test_the_model_comes_from_the_transcript_tail(self):
+        transcript = self.tmp / "t.jsonl"
+        transcript.write_text("\n".join(json.dumps(e) for e in (
+            {"type": "assistant", "message": {"model": "claude-opus-9-9"}}, {"type": "user", "message": {}},
+            {"type": "assistant", "message": {"model": "claude-sonnet-9-9"}}, {"type": "system"})) + "\n")
+        self.assertEqual(self.eta.model_from_transcript(str(transcript)), "claude-sonnet-9-9")
+        self.assertIsNone(self.eta.model_from_transcript(str(self.tmp / "missing")))
+        self.step(("- [ ] a (~4m fix)",), 0, transcript_path=str(transcript))
+        self.step(("- [x] a (~4m fix)",), 60, transcript_path=str(transcript))
+        self.assertEqual((self.rows()[0]["model"], self.rows()[0]["family"]), ("claude-sonnet-9-9", "sonnet"))
+
+    def test_the_prediction_uses_the_baseline_and_the_projects_record(self):
+        base = self.tmp / "baseline.json"
+        base.write_text(json.dumps({"families": {"sonnet": {"all": 2.0, "fix": 3.0}}}))
+        self.eta.BASELINE = base
+        transcript = self.tmp / "t.jsonl"
+        transcript.write_text(json.dumps({"type": "assistant", "message": {"model": "claude-sonnet-9"}}) + "\n")
+        items = ("- [ ] a (~4m fix)", "- [ ] b (~5m docs)", "- [ ] c")
+        self.step(items, 0, transcript_path=str(transcript))
+        expected = self.eta.predict(self.folder, self.goal.read_text(), now=0)
+        self.assertEqual((expected["minutes"], expected["unestimated"], expected["family"]), (22.0, 1, "sonnet"))
+        later = self.eta.predict(self.folder, self.goal.read_text(), now=600)  # 10 of a's 12 minutes used
+        self.assertAlmostEqual(later["minutes"], 12.0)
+        with open(self.folder / "timings.jsonl", "a") as record:
+            for _ in range(3):
+                record.write(json.dumps({"outcome": "done", "est_min": 5, "actual_min": 40, "family": "sonnet",
+                                         "cat": "docs"}) + "\n")
+        slow = self.eta.predict(self.folder, self.goal.read_text(), now=0)
+        self.assertAlmostEqual(slow["project"], 2.0)  # 4x slower than the baseline, shrunk: exp(3 ln 4 / 6)
+        self.assertAlmostEqual(slow["minutes"], 44.0)
+
+    def test_a_completion_the_clock_has_not_recorded_restarts_the_next_item(self):
+        self.step(("- [ ] a (~4m fix)", "- [ ] b (~6m fix)"), 0)
+        self.write(goal_text(items=("- [x] a (~4m fix)", "- [ ] b (~6m fix)"), owner="s1"))  # no hook ran yet
+        self.assertAlmostEqual(self.eta.predict(self.folder, self.goal.read_text(), now=600)["minutes"], 6.0)
+        self.eta.observe(self.folder, self.goal.read_text(), "post", {}, now=600)
+        # a took 10 minutes for 4 estimated: the project factor is 2.5 ** (1 / (1 + 3)); b has used 1 minute
+        self.assertAlmostEqual(self.eta.predict(self.folder, self.goal.read_text(), now=660)["minutes"],
+                               6 * 2.5 ** 0.25 - 1)
+
+    def test_a_family_without_a_factor_takes_the_default(self):
+        base = {"sonnet": {"all": 0.1, "fix": 0.2}, "default": {"all": 0.5}}
+        self.assertEqual([self.eta.factor(base, fam, cat) for fam, cat in
+                          (("sonnet", "fix"), ("sonnet", "docs"), ("haiku", "fix"), (None, None))], [0.2, 0.1, 0.5, 0.5])
+        self.assertEqual(self.eta.factor({}, "sonnet", "fix"), 1.0)
+        shipped = json.loads((PLUGIN / "scripts" / "eta-baseline.json").read_text())["families"]
+        self.assertTrue({"sonnet", "opus", "fable", "default"} <= set(shipped))
+        self.assertTrue(all(0 < cell["all"] < 1 for cell in shipped.values()))
+
+    def test_an_item_added_already_finished_mid_run_joins_that_edits_batch(self):
+        self.step(("- [ ] a (~4m fix)", "- [ ] b (~4m docs)"), 0)
+        self.step(("- [x] a (~4m fix)", "- [x] extra (~4m fix)", "- [ ] b (~4m docs)"), 480)
+        self.assertEqual([(r["item"], r["actual_min"], r["batch"]) for r in self.rows()],
+                         [("a", 4.0, 2), ("extra", 4.0, 2)])
+        self.step(("- [x] a (~4m fix)", "- [x] extra (~4m fix)", "- [ ] b renamed (~4m docs)"), 500)
+        self.step(("- [x] a (~4m fix)", "- [x] extra (~4m fix)", "- [x] b renamed (~4m docs)"), 560)
+        self.assertEqual(self.rows()[-1]["item"], "b renamed")
+        self.assertFalse(self.eta.pending(self.folder, self.goal.read_text()))  # the old key "b" no longer counts
+
+    def test_repeated_texts_keep_their_own_keys(self):
+        self.step(("- [ ] run tests (~2m test)", "- [ ] run tests (~2m test)"), 0)
+        self.step(("- [x] run tests (~2m test)", "- [ ] run tests (~2m test)"), 60)
+        for now in (70, 80, 90):
+            self.step(("- [x] run tests (~2m test)", "- [ ] run tests (~2m test)"), now)
+        self.assertEqual([(r["item"], r["actual_min"]) for r in self.rows()], [("run tests", 1.0)])
+        self.assertEqual([k for _, k, _, _ in self.eta.checklist(self.goal.read_text())], ["run tests", "run tests #2"])
+
+    def test_the_time_before_a_prompt_is_the_users(self):
+        self.step(("- [ ] a (~4m fix)",), 0)
+        self.step(("- [ ] a (~4m fix)",), 900, event="prompt")  # a turn interrupted with Esc sends no Stop
+        self.step(("- [x] a (~4m fix)",), 960)
+        self.assertEqual([r["actual_min"] for r in self.rows()], [1.0])
+
+    def test_rewording_the_goal_keeps_the_clock(self):
+        self.step(("- [ ] a (~4m fix)", "- [ ] b (~4m fix)"), 0)
+        reworded = goal_text(items=("- [x] a (~4m fix)", "- [ ] b (~4m fix)"), owner="s1").replace("ship it", "ship it now")
+        self.goal.write_text(reworded)
+        self.eta.observe(self.folder, reworded, "post", {}, now=120)
+        self.assertEqual([(r["item"], r["actual_min"]) for r in self.rows()], [("a", 2.0)])
+
+    def test_the_goal_file_is_read_again_under_the_lock(self):
+        self.step(("- [ ] a (~4m fix)",), 0)
+        self.write(goal_text(items=("- [x] a (~4m fix)",), owner="s1"))
+        self.eta.observe(self.folder, goal_text(items=("- [ ] a (~4m fix)",), owner="s1"), "post", {}, now=60)
+        self.eta.observe(self.folder, goal_text(items=("- [ ] a (~4m fix)",), owner="s1"), "post", {}, now=30)
+        self.assertEqual([r["actual_min"] for r in self.rows()], [1.0])  # a stale text and a late clock change nothing
+        self.assertEqual(json.loads((self.folder / "eta.json").read_text())["last"], 60)
+
+    def test_odd_values_never_stop_the_clock(self):
+        self.step(("- [ ] a (~4m Fix)",), 0, transcript_path=1)
+        self.assertEqual(self.eta.checklist(self.goal.read_text())[0][2:], (4.0, "fix"))
+        (self.folder / "eta.json").write_text(json.dumps({"goal": self.eta.goal_id(self.goal.read_text()),
+                                                         "items": {"a": {"mark": " ", "est": 4, "cat": "fix"}},
+                                                         "active": "x", "mark": None, "last": "y", "model": 7}))
+        transcript = self.tmp / "t.jsonl"
+        transcript.write_text('{"type": "assistant", "message": null}\n')
+        self.step(("- [x] a (~4m Fix)",), 60, transcript_path=str(transcript))
+        self.assertEqual(len(self.rows()), 1)
+        with open(self.folder / "timings.jsonl", "a") as record:
+            record.write('{"outcome": "done", "est_min": 2, "actual_min": 1, "family": ["sonnet"], "cat": {}}\n')
+        self.write(goal_text(items=("- [x] a (~4m Fix)", "- [ ] b (~4m fix)"), owner="s1"))
+        self.assertIsNotNone(self.eta.predict(self.folder, self.goal.read_text(), now=90))
+
+    def test_a_paused_goal_is_not_timed(self):
+        self.write(goal_text(items=("- [ ] a (~4m fix)", "- [ ] b (~4m fix)"), owner="s1"))
+        self.hook("post", {"session_id": "s1"})
+        before = json.loads((self.folder / "eta.json").read_text())["last"]
+        self.write(goal_text(status="paused", items=("- [ ] a (~4m fix)", "- [ ] b (~4m fix)"), owner="s1"))
+        self.hook("post", {"session_id": "s1"})
+        self.assertEqual(json.loads((self.folder / "eta.json").read_text())["last"], before)
+
+    def test_no_estimate_means_no_prediction(self):
+        self.write(goal_text(items=("- [ ] a", "- [x] b (~3m fix)")))
+        self.assertIsNone(self.eta.predict(self.folder, self.goal.read_text()))
+
+    def test_the_post_hook_records_only_the_owner_and_the_edit_that_ends_the_run(self):
+        self.write(goal_text(items=("- [ ] a (~4m fix)",), owner="s1"))
+        self.hook("post", {"session_id": "s2"})
+        self.assertFalse((self.folder / "eta.json").exists())
+        self.hook("post", {"session_id": "s1"})
+        self.assertTrue((self.folder / "eta.json").exists())
+        self.write(goal_text(status="done", items=("- [x] a (~4m fix)",), owner="s1"))
+        self.hook("post", {"session_id": "s1"})
+        self.assertEqual([r["item"] for r in self.rows()], ["a"])
+        self.hook("post", {"session_id": "s1"})
+        self.assertEqual(len(self.rows()), 1)
+        self.assertIsNone(self.hook("post", {"session_id": "s1"}, env={"FREE_HANDS_ROLE": "quick-thinker"}))
+
+    def test_the_stop_hook_still_blocks_and_ends_the_clock_when_it_lets_go(self):
+        self.write(goal_text(items=("- [ ] a (~4m fix)",), owner="s1"))
+        self.assertEqual(self.hook("stop", {"session_id": "s1"})["decision"], "block")
+        self.assertFalse(json.loads((self.folder / "eta.json").read_text())["idle"])
+        self.write(goal_text(items=("- [x] a (~4m fix)",), owner="s1", status="done"))
+        self.assertIsNone(self.hook("stop", {"session_id": "s1"}))  # the last item's run ends: recorded, then idle
+        self.assertTrue(json.loads((self.folder / "eta.json").read_text())["idle"])
+        self.assertEqual([r["item"] for r in self.rows()], ["a"])
+
+    def test_status_shows_the_expected_finish_while_active(self):
+        def status():
+            result = subprocess.run([sys.executable, str(GUARD), "status"], cwd=self.repo / "sub", capture_output=True,
+                                    text=True)
+            return json.loads(result.stdout)
+        self.write(goal_text(items=("- [ ] a (~4m fix)", "- [ ] b"), owner="0123456789abcdef"))
+        out = status()
+        self.assertRegex(out["value"], r"^active 0/40 · 2 open · ETA \d\d:\d\d\+$")
+        self.assertRegex(out["detail"], r"^~\d+m left · owner 01234567$")
+        self.write(goal_text(status="paused", items=("- [ ] a (~4m fix)",)))
+        self.assertEqual(status()["value"], "paused 0/40 · 1 open")
+
+    def test_non_finite_or_huge_records_never_break_the_status(self):
+        self.write(goal_text(items=("- [ ] a (~4m fix)",), owner="s1"))
+        (self.folder / "timings.jsonl").write_text(
+            '{"outcome": "done", "est_min": 1, "actual_min": Infinity, "family": "sonnet"}\n'
+            '{"outcome": "done", "est_min": NaN, "actual_min": 3}\n'
+            '{"outcome": "done", "est_min": 1e308, "actual_min": 1e308}\n'
+            '{"outcome": "done", "est_min": true, "actual_min": 2}\n')
+        self.assertEqual(self.eta.records(self.folder), [])
+        result = subprocess.run([sys.executable, str(GUARD), "status"], cwd=self.repo / "sub", capture_output=True,
+                                text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertRegex(json.loads(result.stdout)["value"], r"^active 0/40 · 1 open · ETA \d\d:\d\d$")
+
+    def test_a_broken_record_or_state_is_ignored(self):
+        self.write(goal_text(items=("- [ ] a (~4m fix)",), owner="s1"))
+        (self.folder / "eta.json").write_text("{not json")
+        (self.folder / "timings.jsonl").write_text("[1]\nnot json\n")
+        self.assertAlmostEqual(self.eta.predict(self.folder, self.goal.read_text(), now=0)["minutes"], 4.0)
+        self.hook("post", {"session_id": "s1"})
+        self.assertEqual(json.loads((self.folder / "eta.json").read_text())["items"]["a"]["est"], 4.0)
 
 
 def reply(option, **extra):

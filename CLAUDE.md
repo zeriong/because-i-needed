@@ -216,8 +216,10 @@ Host adapters make those choices explicit while keeping each workflow in one sha
   emoji the dashboard puts before the label) and a `status` command (an argv list, paths relative to the plugin root).
 - The `status` command is read-only, runs offline in under a second on both hosts (`python3` or `sh`), and prints one
   JSON object: `value` (what is in effect), `source` (`env`, `project`, `global` or `default`), and `project` and
-  `global` (the value set at each level, or `null`), with an optional `detail` string. Other persistent state a user
-  should see (a free-hands goal, a budget threshold) may be declared the same way.
+  `global` (the value set at each level, or `null`), with an optional `detail` string and an optional `watch` list of
+  absolute file paths whose change should redraw the dashboard mid-turn (dashboard 0.3.0: a Stop a plugin blocks never
+  ends the turn — z-lab `free-hands-lab/eta-probes-r4-2.1.325` T08). Other persistent state a user should see (a
+  free-hands goal, a budget threshold) may be declared the same way.
 - A new mode, or a change to where a mode is stored, updates `dashboard.json` in the same commit.
   `tests/test_dashboard_contract.py` runs every declared command and checks its output.
 

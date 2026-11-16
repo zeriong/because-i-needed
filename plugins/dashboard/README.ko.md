@@ -4,7 +4,7 @@
 
 <p align="center"><strong>켜 둔 because-i-needed 모드와 각 값의 출처를 한 줄로 모두 확인합니다.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="버전"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="라이선스: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 플러그인"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.3.0-blue" alt="버전"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="라이선스: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 플러그인"></a></p>
 
 <p align="center"><a href="#표시되는-내용">표시되는 내용</a> &bull; <a href="#claude-code">Claude Code</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#플러그인이-참여하는-방법">플러그인이 참여하는 방법</a> &bull; <a href="#한계와-상태">한계와 상태</a> &bull; <a href="#설치">설치</a></p>
 
@@ -20,7 +20,7 @@ because-i-needed 플러그인에는 프로젝트나 사용자 수준에서 계�
 
 ```
 ────────────────────────────────────────────────────────────────────────────────────────────────
-💰budget: 80% · 5h now 24%   🙌free-hands: active 0/40 · 1 open (project) · owner lab-sess   🤝peer-coding: on (project)
+💰budget: 80% · 5h now 24%   🙌free-hands: active 0/40 · 2 open · ETA 15:29 (project) · ~6m left · owner 1c4c797d   🤝peer-coding: on (project)
 ```
 
 - 흐린 구분선 아래에 활성화된 because-i-needed 플러그인이 선언한 스위치마다 `{icon}label: value` 항목 하나가 나옵니다. 그 값을 정한 수준이 프로젝트나 환경 변수일 때는 `(project)` 또는 `(env)`가, 마지막으로 측정한 사용량 창이나 목표의 소유 세션 같은 세부 정보가 함께 표시됩니다. 터미널이 좁으면 항목이 한 줄에 하나씩 줄바꿈됩니다.
@@ -29,7 +29,7 @@ because-i-needed 플러그인에는 프로젝트나 사용자 수준에서 계�
 
 ## Claude Code
 
-이 줄은 프롬프트 위에 표시됩니다. 세션이 시작될 때, 매 차례 뒤, 사용량 창이 움직일 때 갱신됩니다. dashboard는 Claude Code에 설치되어 활성화된 because-i-needed 플러그인을 찾아냅니다.
+이 줄은 프롬프트 위에 표시됩니다. 세션이 시작될 때, 매 차례 뒤, 사용량 창이 움직일 때 갱신되고, 차례 도중에는 스위치가 지켜보라고 지정한 파일(예: free-hands의 goal 파일)을 바꾼 도구 호출 뒤에도 갱신됩니다. 그래서 한 차례 안에서 길게 진행되는 목표도 항목이 끝날 때마다 표시가 바뀝니다. dashboard는 Claude Code에 설치되어 활성화된 because-i-needed 플러그인을 찾아냅니다.
 
 ## Codex
 
@@ -50,7 +50,7 @@ status_line = ["model-with-reasoning", "weekly-limit"]
 { "entries": [ { "label": "peer-coding", "icon": "🤝", "status": ["bash", "scripts/mode.sh", "status", "--json"] } ] }
 ```
 
-`icon`은 이름 앞에 붙는 이모지 하나입니다(없으면 `🔹`). `status` 명령은 읽기 전용이며 프로젝트 디렉터리에서 실행되고 JSON 객체 하나를 출력합니다. 필드는 `value`, `source`(`env`, `project`, `global`, `default` 중 하나), `project`와 `global`(각 수준의 값, 없으면 `null`), 그리고 선택 사항인 `detail`입니다. 실패하거나, 2초를 넘기거나, 다른 것을 출력하는 명령은 `error`로 표시됩니다. 나중에 추가된 플러그인은 dashboard 릴리스 없이도 나타납니다.
+`icon`은 이름 앞에 붙는 이모지 하나입니다(없으면 `🔹`). `status` 명령은 읽기 전용이며 프로젝트 디렉터리에서 실행되고 JSON 객체 하나를 출력합니다. 필드는 `value`, `source`(`env`, `project`, `global`, `default` 중 하나), `project`와 `global`(각 수준의 값, 없으면 `null`), 선택 사항인 `detail`, 그리고 선택 사항인 `watch`(바뀌면 차례 도중에도 줄을 다시 그릴 파일의 절대 경로 목록, Claude Code)입니다. 실패하거나, 2초를 넘기거나, 다른 것을 출력하는 명령은 `error`로 표시됩니다. 나중에 추가된 플러그인은 dashboard 릴리스 없이도 나타납니다.
 
 `claude --plugin-dir`로 폴더에서 로드한 플러그인은 Claude Code의 설치 기록에 없습니다. 이를 표시하려면 해당 폴더를 `BECAUSE_I_NEEDED_PLUGIN_DIRS`에 나열하세요(`PATH`와 같은 방식으로 구분).
 
@@ -62,8 +62,9 @@ Claude Code 2.1.299와 Codex 0.162.1에서 사례별 1회씩 측정했습니다(
 - Codex에서는 `$dashboard:audit`이 설치된 플러그인에서 같은 항목을 출력했고, budget 항목에는 7일 창이 나왔습니다. 선언한 플러그인이 없으면 그렇다고 알렸습니다(D04–D05).
 - Codex의 `weekly-limit` 항목은 `weekly 28% left`를 보여 줬습니다(C02).
 - 0.2.0부터([`run-0.2.0`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab/run-0.2.0), Claude Code 2.1.300): 200칸에서는 구분선과 `{icon}label: value` 항목이 한 줄에 나왔고, 80칸에서는 항목이 잘리지 않고 한 줄에 하나씩 줄바꿈됐습니다. Codex의 audit도 같은 항목을 출력했습니다(D06–D08).
+- 0.3.0부터([`run-0.3.0`](https://github.com/zeriong/z-lab/tree/main/dashboard-lab/run-0.3.0), Claude Code 2.1.325): 항목 세 개짜리 free-hands 목표가 한 차례 안에서 진행되는 동안, 줄은 항목이 끝날 때마다 1.4–2.0초 뒤에 바뀌었습니다. 같은 실행에서 0.2.0은 한 번만 바뀌었고 중간 상태 하나를 건너뛰었습니다(D09, D10). free-hands가 막은 Stop은 차례를 끝내지 않기 때문에 0.2.0이 기다렸던 것입니다([`free-hands-lab/eta-probes-r4-2.1.325`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-probes-r4-2.1.325), T08).
 
-측정하지 않은 항목: tmux 이외의 터미널, 굵게·흐리게 표시되는 스타일; Claude Code 마켓플레이스로 설치한 플러그인(측정한 줄은 `--plugin-dir` 폴더를 읽었고, 설치 기록은 단위 테스트만 수행); 세션 도중 스위치가 바뀐 뒤의 줄 갱신; 데스크톱과 IDE 화면.
+측정하지 않은 항목: tmux 이외의 터미널, 굵게·흐리게 표시되는 스타일; Claude Code 마켓플레이스로 설치한 플러그인(측정한 줄은 `--plugin-dir` 폴더를 읽었고, 설치 기록은 단위 테스트만 수행); 지켜볼 파일을 지정하지 않은 스위치가 세션 도중 바뀐 뒤의 줄 갱신; 갱신이 도구 호출에 더하는 시간; 데스크톱과 IDE 화면.
 
 줄을 그리는 Claude Code의 플러그인 훅 모듈 API는 얼리 액세스로 표시되어 있으며 릴리스 사이에 바뀔 수 있습니다.
 

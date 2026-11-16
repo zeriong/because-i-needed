@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.3.0] - 2026-11-16
+
+### Added
+
+- A status may name absolute file paths in `watch` (`scripts/dashboard.py` passes them on). On Claude Code the module
+  re-reads them after every tool call and redraws the band when one changed — also inside a turn. No plugin is named
+  in the dashboard and no timer runs.
+
+### Why
+
+A free-hands goal is worked through inside one turn, and a Stop that free-hands blocks does not end that turn, so 0.2.0
+showed a goal's progress only when the whole run ended (z-lab `free-hands-lab/eta-probes-r3-2.1.325`, `-r4` T08). A
+mod's `tool.call` handler sees the tool's effect on disk and can redraw mid-turn (`-r4` T09, T10).
+
+Evidence: z-lab `dashboard-lab/run-0.3.0` on Claude Code 2.1.325: with free-hands 0.5.0 naming its goal file, the band
+changed after each of three finished items, 1.4–2.0 s after each (D09); 0.2.0 changed once in the same run and skipped
+a state (D10). Not measured: Codex (unchanged: a command), the time a refresh adds to a tool call, terminals other than
+tmux.
+
 ## [0.2.0] - 2026-10-16
 
 ### Changed

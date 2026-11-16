@@ -71,7 +71,7 @@
       "name": "free-hands",
       "source": "./plugins/free-hands",
       "description": "Autonomous mode that works through a finite goal checklist without asking or stopping; user-level decisions go to a five-role brainstorming panel. (adds UserPromptSubmit, SessionStart, PreToolUse and Stop hooks)",
-      "version": "0.4.1",
+      "version": "0.5.0",
       "author": {
         "name": "zeriong"
       },
@@ -88,7 +88,7 @@
       "name": "dashboard",
       "source": "./plugins/dashboard",
       "description": "One line above the prompt with the state of every because-i-needed mode you have on; on Codex, a command. (adds a Claude Code hooks module)",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "author": {
         "name": "zeriong"
       },
