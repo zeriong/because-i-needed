@@ -83,7 +83,7 @@ Each plugin documents its Codex settings below. Models and effort can be selecte
 
 [Read the peer-coding README →](plugins/peer-coding)
 
-### [free-hands](plugins/free-hands) · `v0.6.0`
+### [free-hands](plugins/free-hands) · `v0.7.0`
 
 **Carry a finite goal through its checklist without asking or stopping.** When a decision would normally go to you, a five-role panel advises and the main agent decides from evidence.
 

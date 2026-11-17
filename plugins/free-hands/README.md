@@ -4,7 +4,7 @@
 
 <p align="center"><strong>Give an agent a finite goal; it works through the checklist without asking or stopping.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.6.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.7.0-blue" alt="Version"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code Plugin"></a></p>
 
 <p align="center"><a href="#start">Start</a> &bull; <a href="#goal-file">Goal file</a> &bull; <a href="#expected-finish">Expected finish</a> &bull; <a href="#never-ask">Never ask</a> &bull; <a href="#hooks">Hooks</a> &bull; <a href="#the-panel">The panel</a> &bull; <a href="#stacked-prs">Stacked PRs</a> &bull; <a href="#limits-and-status">Limits and status</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#requirements">Requirements</a> &bull; <a href="#installation">Installation</a></p>
 
@@ -59,6 +59,8 @@ The expected finish adds up, over the open items, the estimate × a factor for t
 
 - **Model factor**, measured in z-lab. Haiku's estimates were far longer than the work took: the items took 0.040 of Haiku's estimate when Sonnet did them, 0.070 with Opus and 0.074 with Fable — the shipped factors ([`eta-haiku-calibrate-0.6.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-haiku-calibrate-0.6.0), 26 measured goal runs at effort xhigh). A working model without a measured factor (Haiku, Codex's models) uses their mean, 0.061 — a choice, not a measurement. Goals written by 0.5.0, whose items still carry the agent's own `(~6m fix)`, keep 0.5.0's factors for those estimates.
 - **Project factor**: how much longer or shorter this project's items took than the model factor predicted, learned from the newest 60 rows of `timings.jsonl` and pulled toward 1 while the record is short. A new project starts at 1.
+
+When the item in progress runs past its prediction, the rest of the goal is likely under-predicted too: the expected finish then counts half the item's elapsed time again for it, scales the later items by the square root of the overrun (twice the prediction → ×1.41) and moves while the item runs. Replayed on measured runs, this halved the error of the remaining time once an item had run twice its prediction: 0.79 → 0.28 doublings in a real project, 1.03 → 0.59 in the lab ([`eta-live-replay-0.7.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-live-replay-0.7.0), V01). The model factors were fitted on small lab tasks (items of 1–3 minutes); on larger real items the finish shown when a goal starts can still come out a few times too early ([`eta-local-replay-0.7.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-local-replay-0.7.0), L03) until the project's record and the overrun correct it — a recalibration on larger tasks is planned.
 
 ## Never ask
 

@@ -83,7 +83,7 @@ codex plugin add context-rail@because-i-needed
 
 [peer-coding 한국어 README 보기 →](plugins/peer-coding/README.ko.md)
 
-### [free-hands](plugins/free-hands) · `v0.6.0`
+### [free-hands](plugins/free-hands) · `v0.7.0`
 
 **유한한 목표를 질문이나 중단 없이 체크리스트 끝까지 처리합니다.** 사용자가 결정할 사안은 다섯 역할 패널이 검토하고 메인 에이전트가 증거를 바탕으로 결정합니다.
 

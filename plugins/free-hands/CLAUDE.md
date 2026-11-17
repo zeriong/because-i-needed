@@ -52,9 +52,12 @@ Contents: the `run` skill and Codex adapter, five read-only panel roles, `dashbo
   processes and a user's thinking time must not become an item's time.
 - Prediction = estimate × the shipped factor for the estimator (`haiku`; `self` for 0.5.0 goals with inline estimates)
   and the working family (`eta-baseline.json`, family keys only — no versioned model id) × the project factor from
-  `timings.jsonl`, shrunk toward 1 with weight 3. Records join an estimate that lands after its item finished. **Why
-  (analyze D17, D22; `eta-haiku-calibrate-0.6.0` H03, H04):** one correction path; the factor depends on who estimated
-  and who worked.
+  `timings.jsonl`, shrunk toward 1 with weight 3. Records join an estimate that lands after its item finished. When
+  the item in progress has run past its prediction (s > 1), it gets half its elapsed time again and the later items ×√s;
+  `eta-tick` is rewritten whenever the shown finish changes and is watched. **Why (analyze D17, D22, item 25;
+  `eta-haiku-calibrate-0.6.0` H03, H04; `eta-live-replay-0.7.0` V01):** one correction path; the factor depends on who
+  estimated and who worked; on real items the small-task factors fall short, and the running item's overrun is the
+  first evidence of it.
 - The recorder and the prediction fail open like the guards: a broken state or record means no row and no ETA, never
   a changed guard decision; the stop decision is printed and flushed before the clock is fed, and a hook input of the
   wrong type (a `transcript_path` that is not a string) is ignored. **Why (product review, 2026-11-16):** an integer
@@ -71,6 +74,9 @@ Contents: the `run` skill and Codex adapter, five read-only panel roles, `dashbo
 Use SemVer for this plugin: MAJOR for a breaking goal-file format or command change; MINOR when a rule, role, or hook behavior is added or changed; PATCH for documentation changes. **Why (root Rule 2):** installed copies are version-keyed, so changes must be classified and released consistently.
 
 ## Evidence
+
+0.7.0 overrun: z-lab `free-hands-lab/eta-local-replay-0.7.0` L01–L04 (the report reproduced; local learning
+alone did not help) and `eta-live-replay-0.7.0` V01–V03 (replay only); backlog item 25, D23.
 
 0.6.0 isolated estimator: z-lab `free-hands-lab/eta-isolated-probes-2.1.325` I01–I05 (I02 corrected by
 `-r3` I06, I07), `eta-haiku-calibrate-0.6.0` H01–H05, `eta-isolated-run-r2-0.6.0` J01–J05 (round 1

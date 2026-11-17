@@ -20,6 +20,7 @@ import time
 STATE = "eta.json"
 HISTORY = "timings.jsonl"
 ESTIMATES = "estimates.jsonl"
+TICK = "eta-tick"  # the expected finish as shown; rewritten only when it changes, so the dashboard redraws then
 BASELINE = Path(__file__).resolve().parent / "eta-baseline.json"
 CATEGORIES = ("docs", "fix", "feature", "refactor", "test", "research", "ops")
 ESTIMATE = re.compile(r"\(~\s*(\d+(?:\.\d+)?)\s*m(?:in)?\b[ ,]*([A-Za-z]*)\s*\)")
@@ -27,7 +28,7 @@ ITEM = re.compile(r"^\s*- \[([ xX-])\]\s?(.*)$")
 NEEDS_USER = re.compile(r"\s+—\s+needs the user\b.*$")
 FAMILIES = ("fable", "opus", "sonnet", "haiku")
 CAP = 20 * 60          # a quiet gap longer than this is not work, unless a tool call ran that long
-FLOOR = 0.1            # an overrunning item keeps this share of its prediction
+FLOOR = 0.1            # an item near its prediction keeps this share of it
 RECENT = 60            # project factor: the newest records only
 PRIOR = 3              # project factor: weight of "no adjustment" against the project's own records
 TAIL = 256 * 1024      # bytes read from the end of the transcript (the model) and of the record
@@ -341,6 +342,21 @@ def observe(folder, text, event, data, now=None, ended=False):
         if ended:
             state["idle"] = True
         write_json(state_path, state)
+        tick(folder, text, now)
+
+
+def tick(folder, text, now):
+    """Rewrite `eta-tick` when the expected finish as shown changes — it moves while an item overruns — so a dashboard
+    that watches the file redraws then, and only then."""
+    expected = predict(folder, text, now)
+    shown = f"{clock(expected['eta'], now)}{'+' if expected['unestimated'] else ''}" if expected else ""
+    path = folder / TICK
+    try:
+        if path.read_text(encoding="utf-8") == shown:
+            return
+    except (OSError, UnicodeDecodeError):
+        pass
+    path.write_text(shown, encoding="utf-8")
 
 
 def pending(folder, text):
@@ -445,12 +461,18 @@ def predict(folder, text, now=None):
         live = max(0.0, now - last) if last is not None else 0.0
         elapsed = number(state.get("active")) - number(state.get("mark"))
         elapsed += live if not state.get("idle") and live <= CAP else 0.0
-    total = 0.0
-    for index, (key, minutes, category, estimator) in enumerate(estimated):
-        expected = minutes * factor(base, fam, category, estimator) * adjust
-        if index == 0 and open_items[0][0] == key:  # the item in progress has already used part of its time
-            expected = max(expected - elapsed / 60.0, expected * FLOOR)
-        total += expected
+    expected = [minutes * factor(base, fam, category, estimator) * adjust
+                 for _, minutes, category, estimator in estimated]
+    if open_items[0][0] == estimated[0][0]:  # the item in progress has already used part of its time
+        spent, first = elapsed / 60.0, expected[0]
+        if spent > first:
+            # it ran past its prediction: the rest of the goal is likely under-predicted too — half the elapsed time
+            # again for this item, the later ones scaled by the square root of the overrun (z-lab eta-live-replay V01)
+            total = 0.5 * spent + math.sqrt(spent / first) * sum(expected[1:])
+        else:
+            total = max(first - spent, first * FLOOR) + sum(expected[1:])
+    else:
+        total = sum(expected)
     if not math.isfinite(total) or total > 365 * LONGEST:  # a broken state must not reach the clock
         return None
     return {"eta": now + total * 60.0, "minutes": total, "unestimated": len(open_items) - len(estimated),

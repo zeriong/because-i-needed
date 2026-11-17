@@ -4,7 +4,7 @@
 
 <p align="center"><strong>交給代理一個有限目標，它就會不提問、不停止地完成清單。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.6.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="授權：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 外掛"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.7.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="授權：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 外掛"></a></p>
 
 <p align="center"><a href="#開始">開始</a> &bull; <a href="#目標檔案">目標檔案</a> &bull; <a href="#預計完成時間">預計完成時間</a> &bull; <a href="#不提問">不提問</a> &bull; <a href="#hooks">Hooks</a> &bull; <a href="#討論面板">討論面板</a> &bull; <a href="#堆疊pr">堆疊 PR</a> &bull; <a href="#限制與狀態">限制與狀態</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#需求">需求</a> &bull; <a href="#安裝">安裝</a></p>
 
@@ -59,6 +59,8 @@ owner: <session id>
 
 - **模型係數**：在 z-lab 中實測。Haiku 的估計遠長於實際工作：項目實際用時是 Haiku 估計的 Sonnet 0.040、Opus 0.070、Fable 0.074，隨外掛提供的就是這些係數（[`eta-haiku-calibrate-0.6.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-haiku-calibrate-0.6.0)，以 effort xhigh 測得的 26 次目標執行）。沒有實測係數的工作模型（Haiku、Codex 的模型）使用它們的平均值 0.061——這是選擇，不是測量。像 0.5.0 寫下的目標那樣，項目中仍附有代理自己的 `(~6m fix)` 時，這些估計繼續使用 0.5.0 的係數。
 - **專案係數**：本專案的項目比模型係數預測的多用或少用了多少時間，從 `timings.jsonl` 最新的 60 行學得；紀錄較少時向 1 收攏。新專案從 1 開始。
+
+當進行中的項目超出了預測，目標的其餘部分很可能也被低估了：此時預計完成時間為該項目再計入一半的已用時間，把後續項目按超出倍數的平方根放大（預測的 2 倍 → ×1.41），並在項目進行中持續變化。以已測量的執行重播，項目超過預測 2 倍時，剩餘時間的誤差減半：真實專案中 0.79 → 0.28 個倍數，實驗中 1.03 → 0.59（[`eta-live-replay-0.7.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-live-replay-0.7.0)，V01）。模型係數是用小型實驗任務（每項 1–3 分鐘）擬合的；在真實的大項目上，在專案紀錄與超出修正趕上之前，目標開始時顯示的預計完成時間仍可能早好幾倍（[`eta-local-replay-0.7.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-local-replay-0.7.0)，L03）。計畫用更大的任務重新校準。
 
 ## 不提問
 

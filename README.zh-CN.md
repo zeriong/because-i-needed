@@ -83,7 +83,7 @@ codex plugin add context-rail@because-i-needed
 
 [查看 peer-coding 简体中文 README →](plugins/peer-coding/README.zh-CN.md)
 
-### [free-hands](plugins/free-hands) · `v0.6.0`
+### [free-hands](plugins/free-hands) · `v0.7.0`
 
 **将有限目标的清单逐项完成，不提问、不停下。** 遇到原本需要用户决定的问题时，由五角色讨论面板提供建议，主智能体依据证据作决定。
 

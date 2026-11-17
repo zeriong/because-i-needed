@@ -333,7 +333,8 @@ class GuardTest(unittest.TestCase):
             return json.loads(result.stdout)
         self.assertEqual(status(), {"value": "off", "source": "default", "project": None, "global": None,
                                     "detail": None, "watch": [str(self.goal.resolve()),
-                                                              str(self.goal.resolve().parent / "estimates.jsonl")]})
+                                                              str(self.goal.resolve().parent / "estimates.jsonl"),
+                                                              str(self.goal.resolve().parent / "eta-tick")]})
         self.write(goal_text(owner="0123456789abcdef", iterations="3"))
         self.assertEqual(status()["value"], "active 3/40 · 1 open")
         self.assertEqual((status()["source"], status()["detail"]), ("project", "owner 01234567"))
@@ -675,6 +676,24 @@ class EtaTest(unittest.TestCase):
         self.assertTrue(self.eta.pending(self.folder, self.goal.read_text()))
         self.step(("- [x] b: add docs",), 180)
         self.assertFalse(self.eta.pending(self.folder, self.goal.read_text()))
+
+    def test_an_item_past_its_prediction_pushes_the_rest_out(self):
+        self.step(("- [ ] a (~4m fix)", "- [ ] b (~4m fix)", "- [ ] c (~4m fix)"), 0)
+        text = self.goal.read_text()
+        self.assertAlmostEqual(self.eta.predict(self.folder, text, now=120)["minutes"], 2 + 8)  # within: as before
+        self.assertAlmostEqual(self.eta.predict(self.folder, text, now=480)["minutes"], 4 + 8 * 2 ** 0.5)  # 2x over
+        self.assertAlmostEqual(self.eta.predict(self.folder, text, now=960)["minutes"], 8 + 8 * 2)  # 4x over
+
+    def test_the_tick_changes_only_when_the_shown_finish_does(self):
+        self.step(("- [ ] a (~4m fix)", "- [ ] b (~4m fix)"), 1000)
+        tick = self.folder / "eta-tick"
+        first = tick.read_text()
+        self.assertEqual(first, self.eta.clock(1000 + 8 * 60, 1000))
+        mtime = tick.stat().st_mtime_ns
+        self.step(("- [ ] a (~4m fix)", "- [ ] b (~4m fix)"), 1030)  # on time: the same finish, the file left alone
+        self.assertEqual(tick.stat().st_mtime_ns, mtime)
+        self.step(("- [ ] a (~4m fix)", "- [ ] b (~4m fix)"), 1000 + 16 * 60)  # 4x over: the finish moves
+        self.assertNotEqual(tick.read_text(), first)
 
     def test_no_estimate_means_no_prediction(self):
         self.write(goal_text(items=("- [ ] a", "- [x] b (~3m fix)")))

@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.7.0] - 2026-11-17
+
+### Changed
+
+- When the item in progress has run past its prediction (overrun s = elapsed / prediction), the expected finish counts
+  half its elapsed time again for it and scales the later items by √s, so it moves while the item runs; before, it
+  only floored the item's remaining time at 10 % of its prediction and left the rest alone.
+- The owner's hooks rewrite `.free-hands/eta-tick` whenever the finish as shown changes, and `status` names it in
+  `watch`, so dashboard 0.3.0 redraws while an item overruns.
+
+### Why
+
+The maintainer reported (2026-11-17) that a 12-step goal's finish seemed to cover the first step only. A replay of
+their project with 0.6.0 showed every open item was summed, but the factors — fitted on small lab tasks — made the sum
+a few times too short for their 15–48 min items (z-lab `free-hands-lab/eta-local-replay-0.7.0` L03, L04); learning
+faster from finished items did not help at a goal's start (L01). Using the time the running item has already spent did:
+once an item had run twice its prediction, the error of the remaining time fell from 0.79 to 0.28 doublings in the real
+project and from 1.03 to 0.59 in the lab (`eta-live-replay-0.7.0` V01; at four times it split on 4–7 moments, V02). The
+project's numbers were used without any text (maintainer's choice). Not measured: the correction in a live session
+(replay only) and the tick's redraw (the watch mechanism is dashboard-lab `run-0.3.0` D09); a recalibration on larger
+tasks is the next experiment.
+
+
 ## [0.6.0] - 2026-11-16
 
 ### Changed
