@@ -36,7 +36,10 @@ Contents: the `run` skill and Codex adapter, five read-only panel roles, `dashbo
   or `PATH`; one `claude -p --safe-mode --no-session-persistence --model haiku --effort low --tools Read Glob Grep`
   session; answers appended to `.free-hands/estimates.jsonl`; at most one start per minute per goal folder, one at a
   time (lock), an item asked once per run; an item the agent rewords keeps its estimate (open keys that vanish pair in
-  order with keys that appear in the same edit; J05). Actual times come only from hooks: the clock in `.free-hands/eta.json`, one
+  order with keys that appear in the same edit; J05). Every item key the record files hold, written or looked up, goes
+  through `eta.ref` (the first 200 characters): an estimate stored cut and looked up whole never matched, so a long item
+  was left out of the finish and asked about again on every start (`eta-large-calibrate-0.7.0` K04, `eta-key-fix-0.7.0`
+  Q01–Q03). Actual times come only from hooks: the clock in `.free-hands/eta.json`, one
   row per finished item in `.free-hands/timings.jsonl`. Keep the three file names (root Rule 8). **Why (maintainer
   request, 2026-11-16, backlog D22; z-lab `eta-isolated-probes` I01, I03–I05, `-r3` I06, I07; run-0.1.0 F04, r2 G03):**
   the expected finish must not cost the main agent's context; a hook that held stdout would block the call and its
@@ -76,7 +79,9 @@ Use SemVer for this plugin: MAJOR for a breaking goal-file format or command cha
 ## Evidence
 
 0.7.0 overrun: z-lab `free-hands-lab/eta-local-replay-0.7.0` L01–L04 (the report reproduced; local learning
-alone did not help) and `eta-live-replay-0.7.0` V01–V03 (replay only); backlog item 25, D23.
+alone did not help) and `eta-live-replay-0.7.0` V01–V03 (replay only); backlog item 25, D23. Factors on larger tasks:
+`eta-large-calibrate-0.7.0` K01–K07 (no change by the frozen rule; Haiku's ratio does not depend on its estimate's size),
+backlog item 26, D25. Long items: K04 → `eta-key-fix-0.7.0` Q01–Q04, item 27.
 
 0.6.0 isolated estimator: z-lab `free-hands-lab/eta-isolated-probes-2.1.325` I01–I05 (I02 corrected by
 `-r3` I06, I07), `eta-haiku-calibrate-0.6.0` H01–H05, `eta-isolated-run-r2-0.6.0` J01–J05 (round 1

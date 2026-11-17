@@ -10,6 +10,13 @@
 - The owner's hooks rewrite `.free-hands/eta-tick` whenever the finish as shown changes, and `status` names it in
   `watch`, so dashboard 0.3.0 redraws while an item overruns.
 
+### Fixed
+
+- An item whose text is longer than 200 characters gets its estimate. The estimator stored it under the first 200
+  characters and the clock looked it up under the whole text, so the item stayed out of the expected finish (the
+  dashboard showed `+`), its finished row carried no estimate, and every start of the estimator asked about it again.
+  Every key the record files hold, written or looked up, now goes through one function, `eta.ref`.
+
 ### Why
 
 The maintainer reported (2026-11-17) that a 12-step goal's finish seemed to cover the first step only. A replay of
@@ -19,8 +26,15 @@ faster from finished items did not help at a goal's start (L01). Using the time 
 once an item had run twice its prediction, the error of the remaining time fell from 0.79 to 0.28 doublings in the real
 project and from 1.03 to 0.59 in the lab (`eta-live-replay-0.7.0` V01; at four times it split on 4–7 moments, V02). The
 project's numbers were used without any text (maintainer's choice). Not measured: the correction in a live session
-(replay only) and the tick's redraw (the watch mechanism is dashboard-lab `run-0.3.0` D09); a recalibration on larger
-tasks is the next experiment.
+(replay only) and the tick's redraw (the watch mechanism is dashboard-lab `run-0.3.0` D09).
+
+The factors stay as they were. On two goals of four larger tasks (`eta-large-calibrate-0.7.0`, Opus and Sonnet, 29 USD)
+the agents still finished their items in 1–13 minutes, Haiku's measured-to-estimate ratio did not fall as its
+estimates grew (slope 0.95), and refitted factors beat the shipped ones by less than the 0.25 doublings the frozen rule
+required (K02, K03, K07); the per-project factor remains the correction for projects whose items run longer. The same
+cells found the long-item defect (K04: 0 of 6 items matched in one cell, one item asked 57 times, `+` on 9 of 13 dashboard
+entries). The fix was replayed on the recorded cells (0 → 10 of 10 long items) and run live in two Sonnet cells: one
+estimate per item, every finished row with its estimate, no `+` (`eta-key-fix-0.7.0` Q01–Q03).
 
 
 ## [0.6.0] - 2026-11-16

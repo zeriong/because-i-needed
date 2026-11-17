@@ -33,6 +33,7 @@ RECENT = 60            # project factor: the newest records only
 PRIOR = 3              # project factor: weight of "no adjustment" against the project's own records
 TAIL = 256 * 1024      # bytes read from the end of the transcript (the model) and of the record
 LONGEST = 24 * 60      # minutes: an estimate or a measured item beyond a day is not a usable record
+REF = 200              # characters of an item's text the record files keep (estimates.jsonl, timings.jsonl)
 
 
 def checklist(text):
@@ -89,6 +90,13 @@ def run_of(state):
     return round(number(state.get("started")), 3) if isinstance(state, dict) else None
 
 
+def ref(key):
+    """An item's key as the record files hold it. Every write and lookup goes through here: an estimate stored under
+    the cut text of an item longer than REF once never matched it, so the item stayed out of the total and was asked
+    again every minute (z-lab eta-large-calibrate-0.7.0)."""
+    return key[:REF] if isinstance(key, str) else None
+
+
 def estimates(folder, run):
     """{key: (minutes or None, category, estimator)} the isolated estimator wrote for this run; the newest row wins. A
     row without minutes marks an item that was asked and got no answer."""
@@ -102,7 +110,7 @@ def estimates(folder, run):
             minutes = row.get("minutes") if usable(row.get("minutes")) else None
             category = row.get("cat") if row.get("cat") in CATEGORIES else None
             estimator = row.get("estimator") if isinstance(row.get("estimator"), str) else "haiku"
-            found[row["item"]] = (minutes, category, estimator)
+            found[ref(row["item"])] = (minutes, category, estimator)
     return found
 
 
@@ -115,7 +123,7 @@ def estimate_of(item, found, known=None):
         return minutes, category, "self"
     entry = (known or {}).get(key)
     was = entry.get("was") if isinstance(entry, dict) else None
-    hit = found.get(key) or (found.get(was) if was else None)
+    hit = found.get(ref(key)) or (found.get(ref(was)) if was else None)
     return hit if hit and hit[0] else (None, None, None)
 
 
@@ -147,7 +155,7 @@ def unestimated(folder, text):
         entry = known.get(key)
         return entry.get("was") if isinstance(entry, dict) else None
     return run, [key for mark, key, minutes, _ in checklist(text)
-                 if mark == " " and not minutes and key not in asked and was(key) not in asked]
+                 if mark == " " and not minutes and ref(key) not in asked and ref(was(key)) not in asked]
 
 
 def family(model):
@@ -331,8 +339,8 @@ def observe(folder, text, event, data, now=None, ended=False):
             rows = []
             for (key, minutes, category, estimator, mark), seconds in zip(finished, share(finished, elapsed)):
                 was = known.get(key, {}).get("was")
-                rows.append({"v": 2, "at": stamp, "goal": goal, "run": run, "item": key[:200],
-                             **({"was": was[:200]} if was else {}), "cat": category,
+                rows.append({"v": 2, "at": stamp, "goal": goal, "run": run, "item": ref(key),
+                             **({"was": ref(was)} if was else {}), "cat": category,
                              "est_min": minutes, "estimator": estimator, "actual_min": round(seconds / 60.0, 2),
                              "batch": len(finished), "outcome": "done" if mark == "x" else "skipped",
                              "model": state["model"], "family": family(state["model"]), "effort": state.get("effort")})
@@ -405,7 +413,7 @@ def records(folder):
         except ValueError:
             continue
         if isinstance(entry, dict) and usable(entry.get("minutes")) and isinstance(entry.get("item"), str):
-            late[(entry.get("run"), entry["item"])] = (entry["minutes"], entry.get("cat"), entry.get("estimator"))
+            late[(entry.get("run"), ref(entry["item"]))] = (entry["minutes"], entry.get("cat"), entry.get("estimator"))
     for line in tail_lines(folder / HISTORY):
         try:
             row = json.loads(line)
@@ -415,8 +423,8 @@ def records(folder):
             continue
         minutes, category, estimator = row.get("est_min"), row.get("cat"), row.get("estimator") or "self"
         if not usable(minutes):
-            minutes, category, estimator = late.get((row.get("run"), row.get("item"))) \
-                or late.get((row.get("run"), row.get("was"))) or (None, None, None)
+            minutes, category, estimator = late.get((row.get("run"), ref(row.get("item")))) \
+                or late.get((row.get("run"), ref(row.get("was")))) or (None, None, None)
         if usable(minutes):
             rows.append({"est_min": minutes, "actual_min": row["actual_min"],
                          "family": row.get("family") if isinstance(row.get("family"), str) else None,

@@ -665,6 +665,25 @@ class EtaTest(unittest.TestCase):
                           ("b: docs added", "b: add docs", 2, 2.0)])
         self.assertFalse(self.eta.pending(self.folder, self.goal.read_text()))
 
+    def test_an_item_longer_than_the_record_is_found_under_its_cut_text(self):
+        long = "a: fix the pager" + ", then check every page" * 10  # longer than eta.REF
+        self.step((f"- [ ] {long}", "- [ ] b"), 0)
+        self.estimate_rows((long[:200], 4), ("b", 2))  # as estimator.py writes it
+        self.assertEqual(self.eta.unestimated(self.folder, self.goal.read_text())[1], [])
+        self.assertEqual(self.eta.predict(self.folder, self.goal.read_text(), now=0)["unestimated"], 0)
+        self.step((f"- [x] {long}", "- [ ] b"), 240)
+        self.assertEqual([(len(r["item"]), r["est_min"]) for r in self.rows()], [(200, 4)])
+
+    def test_the_estimator_asks_about_a_long_item_once(self):
+        long = "fix the pager" + ", then check every page" * 10
+        self.write(goal_text(items=(f"- [ ] {long}",), owner="s1"))
+        env = self.fake_claude({"result": json.dumps({"items": [{"n": 1, "minutes": 7, "category": "fix"}]})})
+        self.hook("post", {"session_id": "s1"}, env=env)
+        self.assertTrue(self.wait_for(self.folder / "estimates.jsonl"))
+        time.sleep(1)  # an estimator that missed its own answer asked again at once (z-lab eta-large-calibrate-0.7.0)
+        self.assertEqual(len((self.tmp / "argv.jsonl").read_text().splitlines()), 1)
+        self.assertEqual(self.eta.unestimated(self.folder, self.goal.read_text())[1], [])
+
     def test_a_reworded_open_item_is_not_estimated_again(self):
         self.step(("- [ ] a: fix the pager", "- [ ] b: add docs"), 0)
         self.estimate_rows(("a: fix the pager", 4), ("b: add docs", 2))
