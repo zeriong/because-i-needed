@@ -83,7 +83,7 @@ codex plugin add context-rail@because-i-needed
 
 [peer-coding の日本語 README を読む →](plugins/peer-coding/README.ja.md)
 
-### [free-hands](plugins/free-hands) · `v0.6.0`
+### [free-hands](plugins/free-hands) · `v0.7.0`
 
 **有限の目標を、質問や中断なしでチェックリストの最後まで進めます。** ユーザーが決める場面では5役のパネルが助言し、メインエージェントが証拠に基づいて決定します。
 

@@ -4,7 +4,7 @@
 
 <p align="center"><strong>有限の目標を渡すと、エージェントが質問や中断をせずチェックリストを最後まで進めます。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.6.0-blue" alt="バージョン"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="ライセンス: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code プラグイン"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.7.0-blue" alt="バージョン"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="ライセンス: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code プラグイン"></a></p>
 
 <p align="center"><a href="#開始">開始</a> &bull; <a href="#目標ファイル">目標ファイル</a> &bull; <a href="#完了予定時刻">完了予定時刻</a> &bull; <a href="#質問しない">質問しない</a> &bull; <a href="#フック">フック</a> &bull; <a href="#パネル">パネル</a> &bull; <a href="#積み上げpr">積み上げ PR</a> &bull; <a href="#制限と状態">制限と状態</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#必要条件">必要条件</a> &bull; <a href="#インストール">インストール</a></p>
 
@@ -59,6 +59,8 @@ owner: <session id>
 
 - **モデル係数**: z-lab で測定しました。Haiku の見積もりは実際の作業よりはるかに長く、項目に実際にかかった時間は Haiku の見積もりの Sonnet 0.040、Opus 0.070、Fable 0.074 でした。これを係数として同梱します（[`eta-haiku-calibrate-0.6.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-haiku-calibrate-0.6.0)、effort xhigh で測った目標実行26件）。係数を測定していない作業モデル（Haiku、Codex のモデル）はその平均 0.061 を使います。これは測定ではなく選択です。0.5.0 が書いた目標のように項目にエージェント自身の `(~6m fix)` が残っている場合、その見積もりには 0.5.0 の係数をそのまま使います。
 - **プロジェクト係数**: このプロジェクトの項目が、モデル係数の予測よりどれだけ長く、または短くかかったかです。`timings.jsonl` の最新60行から学び、記録が少ない間は 1 に寄せられます。新しいプロジェクトは 1 から始まります。
+
+進行中の項目が予測を超えると、目標の残りも少なく見積もられている可能性が高くなります。そのとき完了予定時刻は、その項目に経過時間の半分をさらに見込み、後の項目を超過倍率の平方根だけ伸ばし（予測の2倍 → ×1.41）、項目が進む間も変わり続けます。測定済みの実行で再生したところ、項目が予測の2倍を超えた時点の残り時間の誤差が半分になりました。実際のプロジェクトで 0.79 → 0.28 倍数、実験で 1.03 → 0.59 倍数です（[`eta-live-replay-0.7.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-live-replay-0.7.0)、V01）。モデル係数は小さな実験課題（項目あたり1–3分）で合わせた値のため、実際の大きな項目では、プロジェクトの記録と超過の反映が追いつくまで、目標開始時の完了予定時刻が数倍早く出ることがあります（[`eta-local-replay-0.7.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-local-replay-0.7.0)、L03）。より大きな実験課題で測り直しましたが、係数は変えていません。課題が大きくなっても Haiku の見積もりがより大きく外れることはありませんでした（[`eta-large-calibrate-0.7.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-large-calibrate-0.7.0)、K02、K03）。
 
 ## 質問しない
 

@@ -4,7 +4,7 @@
 
 <p align="center"><strong>给智能体一个有限目标，它就会不提问、不停下地完成清单。</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.6.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="许可证：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 插件"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.7.0-blue" alt="版本"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="许可证：MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 插件"></a></p>
 
 <p align="center"><a href="#开始">开始</a> &bull; <a href="#目标文件">目标文件</a> &bull; <a href="#预计完成时间">预计完成时间</a> &bull; <a href="#不提问">不提问</a> &bull; <a href="#钩子">钩子</a> &bull; <a href="#讨论面板">讨论面板</a> &bull; <a href="#堆叠pr">堆叠 PR</a> &bull; <a href="#限制与状态">限制与状态</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#要求">要求</a> &bull; <a href="#安装">安装</a></p>
 
@@ -59,6 +59,8 @@ owner: <session id>
 
 - **模型系数**：在 z-lab 中实测。Haiku 的估计远长于实际工作：事项实际用时是 Haiku 估计的 Sonnet 0.040、Opus 0.070、Fable 0.074，随插件提供的就是这些系数（[`eta-haiku-calibrate-0.6.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-haiku-calibrate-0.6.0)，以 effort xhigh 测得的 26 次目标运行）。没有实测系数的工作模型（Haiku、Codex 的模型）使用它们的平均值 0.061——这是选择，不是测量。像 0.5.0 写下的目标那样，事项中仍带有智能体自己的 `(~6m fix)` 时，这些估计继续使用 0.5.0 的系数。
 - **项目系数**：本项目的事项比模型系数预测的多用或少用了多少时间，从 `timings.jsonl` 最新的 60 行学得；记录较少时向 1 收拢。新项目从 1 开始。
+
+当进行中的事项超出了预测，目标的其余部分很可能也被低估了：此时预计完成时间为该事项再计入一半的已用时间，把后续事项按超出倍数的平方根放大（预测的 2 倍 → ×1.41），并在事项进行中持续变化。用已测量的运行重放，事项超过预测 2 倍时，剩余时间的误差减半：真实项目中 0.79 → 0.28 个倍数，实验中 1.03 → 0.59（[`eta-live-replay-0.7.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-live-replay-0.7.0)，V01）。模型系数是用小型实验任务（每项 1–3 分钟）拟合的；在真实的大事项上，在项目记录和超出修正赶上之前，目标开始时显示的预计完成时间仍可能早好几倍（[`eta-local-replay-0.7.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-local-replay-0.7.0)，L03）。用更大的实验任务重新测量后，系数保持不变：任务变大时，Haiku 的估计并没有偏差更大（[`eta-large-calibrate-0.7.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-large-calibrate-0.7.0)，K02、K03）。
 
 ## 不提问
 

@@ -4,7 +4,7 @@
 
 <p align="center"><strong>에이전트에게 유한한 목표를 주면 체크리스트를 질문하거나 멈추지 않고 처리합니다.</strong></p>
 
-<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.6.0-blue" alt="버전"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="라이선스: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 플러그인"></a></p>
+<p align="center"><a href=".claude-plugin/plugin.json"><img src="https://img.shields.io/badge/version-0.7.0-blue" alt="버전"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="라이선스: MIT"></a> <a href="https://docs.claude.com/en/docs/claude-code/plugins"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-orange" alt="Claude Code 플러그인"></a></p>
 
 <p align="center"><a href="#시작하기">시작하기</a> &bull; <a href="#목표-파일">목표 파일</a> &bull; <a href="#예상-완료-시각">예상 완료 시각</a> &bull; <a href="#묻지-않기">묻지 않기</a> &bull; <a href="#훅">훅</a> &bull; <a href="#패널">패널</a> &bull; <a href="#누적-pr">누적 PR</a> &bull; <a href="#한계와-상태">한계와 상태</a> &bull; <a href="#codex">Codex</a> &bull; <a href="#요구사항">요구사항</a> &bull; <a href="#설치">설치</a></p>
 
@@ -59,6 +59,8 @@ owner: <session id>
 
 - **모델 계수**: z-lab에서 측정했습니다. Haiku의 예상은 실제 작업보다 훨씬 길었습니다. 항목에 실제로 걸린 시간은 Haiku 예상의 Sonnet 0.040, Opus 0.070, Fable 0.074였고, 이 값을 계수로 제공합니다([`eta-haiku-calibrate-0.6.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-haiku-calibrate-0.6.0), effort xhigh로 측정한 목표 실행 26개). 측정한 계수가 없는 작업 모델(Haiku, Codex의 모델)은 그 평균 0.061을 씁니다. 이것은 측정이 아니라 선택입니다. 0.5.0이 쓴 목표처럼 항목에 에이전트 자신의 `(~6m fix)`가 남아 있으면, 그 예상에는 0.5.0의 계수를 그대로 씁니다.
 - **프로젝트 계수**: 이 프로젝트의 항목이 모델 계수의 예측보다 얼마나 더 걸리거나 덜 걸렸는지입니다. `timings.jsonl`의 최근 60줄에서 배우며, 기록이 적을 때는 1 쪽으로 당겨집니다. 새 프로젝트는 1에서 시작합니다.
+
+진행 중인 항목이 예측을 넘기면 목표의 나머지도 적게 잡혔을 가능성이 큽니다. 이때 완료 예상 시각은 그 항목에 경과 시간의 절반을 더 잡고, 뒤 항목들은 초과 배율의 제곱근만큼 늘려 잡으며(예측의 2배 → ×1.41), 항목이 진행되는 동안 계속 바뀝니다. 측정한 실행으로 재생해 보니, 항목이 예측의 2배를 넘긴 시점의 남은 시간 오차가 절반으로 줄었습니다. 실제 프로젝트에서 0.79 → 0.28배수, 실험에서 1.03 → 0.59배수였습니다([`eta-live-replay-0.7.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-live-replay-0.7.0), V01). 모델 계수는 작은 실험 과제(항목당 1–3분)로 맞춘 값이라, 실제의 큰 항목에서는 프로젝트 기록과 초과 반영이 따라잡기 전까지 목표 시작 시의 완료 예상 시각이 몇 배 이르게 나올 수 있습니다([`eta-local-replay-0.7.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-local-replay-0.7.0), L03). 더 큰 실험 과제로 다시 측정했지만 계수는 바꾸지 않았습니다. 과제가 커져도 Haiku의 추정이 더 크게 빗나가지 않았습니다([`eta-large-calibrate-0.7.0`](https://github.com/zeriong/z-lab/tree/main/free-hands-lab/eta-large-calibrate-0.7.0), K02, K03).
 
 ## 묻지 않기
 

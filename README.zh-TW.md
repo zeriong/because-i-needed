@@ -83,7 +83,7 @@ codex plugin add context-rail@because-i-needed
 
 [閱讀 peer-coding 繁體中文 README →](plugins/peer-coding/README.zh-TW.md)
 
-### [free-hands](plugins/free-hands) · `v0.6.0`
+### [free-hands](plugins/free-hands) · `v0.7.0`
 
 **將有限目標的清單逐項完成，不提問、不停止。** 遇到原本需要使用者決定的問題時，由五角色討論面板提供建議，主代理依據證據做決定。
 

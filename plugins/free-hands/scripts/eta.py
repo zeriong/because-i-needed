@@ -20,6 +20,7 @@ import time
 STATE = "eta.json"
 HISTORY = "timings.jsonl"
 ESTIMATES = "estimates.jsonl"
+TICK = "eta-tick"  # the expected finish as shown; rewritten only when it changes, so the dashboard redraws then
 BASELINE = Path(__file__).resolve().parent / "eta-baseline.json"
 CATEGORIES = ("docs", "fix", "feature", "refactor", "test", "research", "ops")
 ESTIMATE = re.compile(r"\(~\s*(\d+(?:\.\d+)?)\s*m(?:in)?\b[ ,]*([A-Za-z]*)\s*\)")
@@ -27,11 +28,12 @@ ITEM = re.compile(r"^\s*- \[([ xX-])\]\s?(.*)$")
 NEEDS_USER = re.compile(r"\s+—\s+needs the user\b.*$")
 FAMILIES = ("fable", "opus", "sonnet", "haiku")
 CAP = 20 * 60          # a quiet gap longer than this is not work, unless a tool call ran that long
-FLOOR = 0.1            # an overrunning item keeps this share of its prediction
+FLOOR = 0.1            # an item near its prediction keeps this share of it
 RECENT = 60            # project factor: the newest records only
 PRIOR = 3              # project factor: weight of "no adjustment" against the project's own records
 TAIL = 256 * 1024      # bytes read from the end of the transcript (the model) and of the record
 LONGEST = 24 * 60      # minutes: an estimate or a measured item beyond a day is not a usable record
+REF = 200              # characters of an item's text the record files keep (estimates.jsonl, timings.jsonl)
 
 
 def checklist(text):
@@ -88,6 +90,13 @@ def run_of(state):
     return round(number(state.get("started")), 3) if isinstance(state, dict) else None
 
 
+def ref(key):
+    """An item's key as the record files hold it. Every write and lookup goes through here: an estimate stored under
+    the cut text of an item longer than REF once never matched it, so the item stayed out of the total and was asked
+    again every minute (z-lab eta-large-calibrate-0.7.0)."""
+    return key[:REF] if isinstance(key, str) else None
+
+
 def estimates(folder, run):
     """{key: (minutes or None, category, estimator)} the isolated estimator wrote for this run; the newest row wins. A
     row without minutes marks an item that was asked and got no answer."""
@@ -101,7 +110,7 @@ def estimates(folder, run):
             minutes = row.get("minutes") if usable(row.get("minutes")) else None
             category = row.get("cat") if row.get("cat") in CATEGORIES else None
             estimator = row.get("estimator") if isinstance(row.get("estimator"), str) else "haiku"
-            found[row["item"]] = (minutes, category, estimator)
+            found[ref(row["item"])] = (minutes, category, estimator)
     return found
 
 
@@ -114,7 +123,7 @@ def estimate_of(item, found, known=None):
         return minutes, category, "self"
     entry = (known or {}).get(key)
     was = entry.get("was") if isinstance(entry, dict) else None
-    hit = found.get(key) or (found.get(was) if was else None)
+    hit = found.get(ref(key)) or (found.get(ref(was)) if was else None)
     return hit if hit and hit[0] else (None, None, None)
 
 
@@ -146,7 +155,7 @@ def unestimated(folder, text):
         entry = known.get(key)
         return entry.get("was") if isinstance(entry, dict) else None
     return run, [key for mark, key, minutes, _ in checklist(text)
-                 if mark == " " and not minutes and key not in asked and was(key) not in asked]
+                 if mark == " " and not minutes and ref(key) not in asked and ref(was(key)) not in asked]
 
 
 def family(model):
@@ -330,8 +339,8 @@ def observe(folder, text, event, data, now=None, ended=False):
             rows = []
             for (key, minutes, category, estimator, mark), seconds in zip(finished, share(finished, elapsed)):
                 was = known.get(key, {}).get("was")
-                rows.append({"v": 2, "at": stamp, "goal": goal, "run": run, "item": key[:200],
-                             **({"was": was[:200]} if was else {}), "cat": category,
+                rows.append({"v": 2, "at": stamp, "goal": goal, "run": run, "item": ref(key),
+                             **({"was": ref(was)} if was else {}), "cat": category,
                              "est_min": minutes, "estimator": estimator, "actual_min": round(seconds / 60.0, 2),
                              "batch": len(finished), "outcome": "done" if mark == "x" else "skipped",
                              "model": state["model"], "family": family(state["model"]), "effort": state.get("effort")})
@@ -341,6 +350,21 @@ def observe(folder, text, event, data, now=None, ended=False):
         if ended:
             state["idle"] = True
         write_json(state_path, state)
+        tick(folder, text, now)
+
+
+def tick(folder, text, now):
+    """Rewrite `eta-tick` when the expected finish as shown changes — it moves while an item overruns — so a dashboard
+    that watches the file redraws then, and only then."""
+    expected = predict(folder, text, now)
+    shown = f"{clock(expected['eta'], now)}{'+' if expected['unestimated'] else ''}" if expected else ""
+    path = folder / TICK
+    try:
+        if path.read_text(encoding="utf-8") == shown:
+            return
+    except (OSError, UnicodeDecodeError):
+        pass
+    path.write_text(shown, encoding="utf-8")
 
 
 def pending(folder, text):
@@ -389,7 +413,7 @@ def records(folder):
         except ValueError:
             continue
         if isinstance(entry, dict) and usable(entry.get("minutes")) and isinstance(entry.get("item"), str):
-            late[(entry.get("run"), entry["item"])] = (entry["minutes"], entry.get("cat"), entry.get("estimator"))
+            late[(entry.get("run"), ref(entry["item"]))] = (entry["minutes"], entry.get("cat"), entry.get("estimator"))
     for line in tail_lines(folder / HISTORY):
         try:
             row = json.loads(line)
@@ -399,8 +423,8 @@ def records(folder):
             continue
         minutes, category, estimator = row.get("est_min"), row.get("cat"), row.get("estimator") or "self"
         if not usable(minutes):
-            minutes, category, estimator = late.get((row.get("run"), row.get("item"))) \
-                or late.get((row.get("run"), row.get("was"))) or (None, None, None)
+            minutes, category, estimator = late.get((row.get("run"), ref(row.get("item")))) \
+                or late.get((row.get("run"), ref(row.get("was")))) or (None, None, None)
         if usable(minutes):
             rows.append({"est_min": minutes, "actual_min": row["actual_min"],
                          "family": row.get("family") if isinstance(row.get("family"), str) else None,
@@ -445,12 +469,18 @@ def predict(folder, text, now=None):
         live = max(0.0, now - last) if last is not None else 0.0
         elapsed = number(state.get("active")) - number(state.get("mark"))
         elapsed += live if not state.get("idle") and live <= CAP else 0.0
-    total = 0.0
-    for index, (key, minutes, category, estimator) in enumerate(estimated):
-        expected = minutes * factor(base, fam, category, estimator) * adjust
-        if index == 0 and open_items[0][0] == key:  # the item in progress has already used part of its time
-            expected = max(expected - elapsed / 60.0, expected * FLOOR)
-        total += expected
+    expected = [minutes * factor(base, fam, category, estimator) * adjust
+                 for _, minutes, category, estimator in estimated]
+    if open_items[0][0] == estimated[0][0]:  # the item in progress has already used part of its time
+        spent, first = elapsed / 60.0, expected[0]
+        if spent > first:
+            # it ran past its prediction: the rest of the goal is likely under-predicted too — half the elapsed time
+            # again for this item, the later ones scaled by the square root of the overrun (z-lab eta-live-replay V01)
+            total = 0.5 * spent + math.sqrt(spent / first) * sum(expected[1:])
+        else:
+            total = max(first - spent, first * FLOOR) + sum(expected[1:])
+    else:
+        total = sum(expected)
     if not math.isfinite(total) or total > 365 * LONGEST:  # a broken state must not reach the clock
         return None
     return {"eta": now + total * 60.0, "minutes": total, "unestimated": len(open_items) - len(estimated),

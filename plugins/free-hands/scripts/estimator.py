@@ -101,7 +101,7 @@ def main():
             # an item the reply left out, or a failed call, is recorded as asked: it is not asked again in this run
             rows += [(key, None, None) for key in keys if key not in answered]
             with open(folder / eta.ESTIMATES, "a", encoding="utf-8") as out:
-                out.write("".join(json.dumps({"v": 1, "at": stamp, "run": run, "item": key[:200], "minutes": minutes,
+                out.write("".join(json.dumps({"v": 1, "at": stamp, "run": run, "item": eta.ref(key), "minutes": minutes,
                                               "cat": category, "estimator": MODEL, "model": model,
                                               "seconds": seconds, "cost_usd": cost}) + "\n"
                                   for key, minutes, category in rows))

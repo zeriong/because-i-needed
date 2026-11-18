@@ -333,7 +333,8 @@ class GuardTest(unittest.TestCase):
             return json.loads(result.stdout)
         self.assertEqual(status(), {"value": "off", "source": "default", "project": None, "global": None,
                                     "detail": None, "watch": [str(self.goal.resolve()),
-                                                              str(self.goal.resolve().parent / "estimates.jsonl")]})
+                                                              str(self.goal.resolve().parent / "estimates.jsonl"),
+                                                              str(self.goal.resolve().parent / "eta-tick")]})
         self.write(goal_text(owner="0123456789abcdef", iterations="3"))
         self.assertEqual(status()["value"], "active 3/40 · 1 open")
         self.assertEqual((status()["source"], status()["detail"]), ("project", "owner 01234567"))
@@ -664,6 +665,25 @@ class EtaTest(unittest.TestCase):
                           ("b: docs added", "b: add docs", 2, 2.0)])
         self.assertFalse(self.eta.pending(self.folder, self.goal.read_text()))
 
+    def test_an_item_longer_than_the_record_is_found_under_its_cut_text(self):
+        long = "a: fix the pager" + ", then check every page" * 10  # longer than eta.REF
+        self.step((f"- [ ] {long}", "- [ ] b"), 0)
+        self.estimate_rows((long[:200], 4), ("b", 2))  # as estimator.py writes it
+        self.assertEqual(self.eta.unestimated(self.folder, self.goal.read_text())[1], [])
+        self.assertEqual(self.eta.predict(self.folder, self.goal.read_text(), now=0)["unestimated"], 0)
+        self.step((f"- [x] {long}", "- [ ] b"), 240)
+        self.assertEqual([(len(r["item"]), r["est_min"]) for r in self.rows()], [(200, 4)])
+
+    def test_the_estimator_asks_about_a_long_item_once(self):
+        long = "fix the pager" + ", then check every page" * 10
+        self.write(goal_text(items=(f"- [ ] {long}",), owner="s1"))
+        env = self.fake_claude({"result": json.dumps({"items": [{"n": 1, "minutes": 7, "category": "fix"}]})})
+        self.hook("post", {"session_id": "s1"}, env=env)
+        self.assertTrue(self.wait_for(self.folder / "estimates.jsonl"))
+        time.sleep(1)  # an estimator that missed its own answer asked again at once (z-lab eta-large-calibrate-0.7.0)
+        self.assertEqual(len((self.tmp / "argv.jsonl").read_text().splitlines()), 1)
+        self.assertEqual(self.eta.unestimated(self.folder, self.goal.read_text())[1], [])
+
     def test_a_reworded_open_item_is_not_estimated_again(self):
         self.step(("- [ ] a: fix the pager", "- [ ] b: add docs"), 0)
         self.estimate_rows(("a: fix the pager", 4), ("b: add docs", 2))
@@ -675,6 +695,24 @@ class EtaTest(unittest.TestCase):
         self.assertTrue(self.eta.pending(self.folder, self.goal.read_text()))
         self.step(("- [x] b: add docs",), 180)
         self.assertFalse(self.eta.pending(self.folder, self.goal.read_text()))
+
+    def test_an_item_past_its_prediction_pushes_the_rest_out(self):
+        self.step(("- [ ] a (~4m fix)", "- [ ] b (~4m fix)", "- [ ] c (~4m fix)"), 0)
+        text = self.goal.read_text()
+        self.assertAlmostEqual(self.eta.predict(self.folder, text, now=120)["minutes"], 2 + 8)  # within: as before
+        self.assertAlmostEqual(self.eta.predict(self.folder, text, now=480)["minutes"], 4 + 8 * 2 ** 0.5)  # 2x over
+        self.assertAlmostEqual(self.eta.predict(self.folder, text, now=960)["minutes"], 8 + 8 * 2)  # 4x over
+
+    def test_the_tick_changes_only_when_the_shown_finish_does(self):
+        self.step(("- [ ] a (~4m fix)", "- [ ] b (~4m fix)"), 1000)
+        tick = self.folder / "eta-tick"
+        first = tick.read_text()
+        self.assertEqual(first, self.eta.clock(1000 + 8 * 60, 1000))
+        mtime = tick.stat().st_mtime_ns
+        self.step(("- [ ] a (~4m fix)", "- [ ] b (~4m fix)"), 1030)  # on time: the same finish, the file left alone
+        self.assertEqual(tick.stat().st_mtime_ns, mtime)
+        self.step(("- [ ] a (~4m fix)", "- [ ] b (~4m fix)"), 1000 + 16 * 60)  # 4x over: the finish moves
+        self.assertNotEqual(tick.read_text(), first)
 
     def test_no_estimate_means_no_prediction(self):
         self.write(goal_text(items=("- [ ] a", "- [x] b (~3m fix)")))

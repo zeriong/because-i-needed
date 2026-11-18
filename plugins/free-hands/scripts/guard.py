@@ -478,7 +478,7 @@ def status():
         notes.append(f"owner {info['owner'][:8]}")
     print(json.dumps({"value": state or "off", "source": "project" if state else "default", "project": state,
                       "global": None, "detail": " · ".join(notes) or None,
-                      "watch": [str(goal), str(goal.parent / eta.ESTIMATES)]}))
+                      "watch": [str(goal), str(goal.parent / eta.ESTIMATES), str(goal.parent / eta.TICK)]}))
 
 
 def main():
